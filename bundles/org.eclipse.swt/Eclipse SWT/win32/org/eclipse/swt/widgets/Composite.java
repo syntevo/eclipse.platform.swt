@@ -1547,6 +1547,10 @@ LRESULT WM_PAINT (long /*int*/ wParam, long /*int*/ lParam) {
 				RECT prcTarget = new RECT ();
 				OS.SetRect (prcTarget, ps.left, ps.top, ps.right, ps.bottom);
 				long /*int*/ hBufferedPaint = OS.BeginBufferedPaint (hDC, prcTarget, flags, null, phdc);
+				if (hBufferedPaint == 0) {
+					final int error = OS.GetLastError();
+					SWT.error(SWT.ERROR_NO_HANDLES, null, " [GetLastError=0x" + Integer.toHexString(error) + "]");//$NON-NLS-1$ $NON-NLS-2$
+				}
 				GCData data = new GCData ();
 				data.device = display;
 				data.foreground = getForegroundPixel ();
