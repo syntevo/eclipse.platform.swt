@@ -3858,6 +3858,8 @@ long identity() {
 }
 
 void init(Drawable drawable, GCData data, long hDC) {
+	if (hDC == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+
 	int foreground = data.foreground;
 	if (foreground != -1) {
 		data.state &= ~(FOREGROUND | FOREGROUND_TEXT | PEN);
