@@ -2435,6 +2435,9 @@ void keyDown (long /*int*/ id, long /*int*/ sel, long /*int*/ theEvent) {
 		Shell s = this.getShell();
 		s.keyInputHappened = false;
 		boolean textInput = OS.objc_msgSend (id, OS.sel_conformsToProtocol_, OS.objc_getProtocol ("NSTextInput")) != 0;
+		if (isDisposed()) {
+			return;
+		}
 		if (!textInput) {
 			// Not a text field, so send a key event here.
 			NSEvent nsEvent = new NSEvent (theEvent);
@@ -2446,6 +2449,9 @@ void keyDown (long /*int*/ id, long /*int*/ sel, long /*int*/ theEvent) {
 		} else {
 			// Control is some kind of text field, so the key event will be sent from insertText: or doCommandBySelector:
 			super.keyDown (id, sel, theEvent);
+			if (isDisposed()) {
+				return;
+			}
 
 			if (imeInComposition ()) return;
 			// If none of those methods triggered a key event send one now.
