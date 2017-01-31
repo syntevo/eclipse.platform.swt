@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -3624,19 +3624,7 @@ public TreeColumn getSortColumn () {
 
 int getSortColumnPixel () {
 	int pixel = OS.IsWindowEnabled (handle) ? getBackgroundPixel () : OS.GetSysColor (OS.COLOR_3DFACE);
-	int red = pixel & 0xFF;
-	int green = (pixel & 0xFF00) >> 8;
-	int blue = (pixel & 0xFF0000) >> 16;
-	if (red > 240 && green > 240 && blue > 240) {
-		red -= 8;
-		green -= 8;
-		blue -= 8;
-	} else {
-		red = Math.min (0xFF, (red / 10) + red);
-		green = Math.min (0xFF, (green / 10) + green);
-		blue = Math.min (0xFF, (blue / 10) + blue);
-	}
-	return (red & 0xFF) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 16);
+	return getSlightlyDifferentColor(pixel);
 }
 
 /**
