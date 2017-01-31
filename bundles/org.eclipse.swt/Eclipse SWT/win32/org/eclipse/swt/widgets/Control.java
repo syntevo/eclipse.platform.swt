@@ -1623,7 +1623,7 @@ Point getSizeInPixels () {
  * @param pixel the color to start with
  */
 int getSlightlyDifferentColor(int pixel) {
-	return getDifferentColor(pixel, 0.1);
+	return getDifferentColor(pixel, 8);
 }
 
 /**
@@ -1632,28 +1632,20 @@ int getSlightlyDifferentColor(int pixel) {
  * @param pixel the color to start with
  */
 int getDifferentColor(int pixel) {
-	return getDifferentColor(pixel, 0.2);
+	return getDifferentColor(pixel, 16);
 }
 
 /**
- * @param factor must be between [0..1]. The bounds are not checked
+ * @param offset the offset to move all color components in the direction of 127. Must not be greater than 127.
  */
-int getDifferentColor(int pixel, double factor) {
+int getDifferentColor(int pixel, int offset) {
 	int red = pixel & 0xFF;
 	int green = (pixel & 0xFF00) >> 8;
 	int blue = (pixel & 0xFF0000) >> 16;
-	red += calcDiff(red, factor);
-	green += calcDiff(green, factor);
-	blue += calcDiff(blue, factor);
+	red = red > 127 ? red-offset : red+offset;
+	green = green > 127 ? green-offset : green+offset;
+	blue = blue > 127 ? blue-offset : blue+offset;
 	return (red & 0xFF) | ((green & 0xFF) << 8) | ((blue & 0xFF) << 16);
-}
-
-long /* int */ calcDiff(int component, double factor) {
-	if (component > 127) {
-		return Math.round(component * -1 * factor);
-	} else {
-		return Math.round((255 - component) * factor);
-	}
 }
 
 /**
