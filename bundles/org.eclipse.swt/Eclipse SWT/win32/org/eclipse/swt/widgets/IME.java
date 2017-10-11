@@ -522,6 +522,9 @@ LRESULT WM_IME_COMPOSITION_START (long /*int*/ wParam, long /*int*/ lParam) {
 }
 
 LRESULT WM_IME_ENDCOMPOSITION (long /*int*/ wParam, long /*int*/ lParam) {
+	// Reset defaults. Otherwise the next composition overwrites the previous one.
+	startOffset = -1;
+	caretOffset = 0;
 	return isInlineEnabled () ? LRESULT.ONE : null;
 }
 
