@@ -1289,7 +1289,7 @@ public Shell getActiveShell () {
 public Rectangle getBounds () {
 	checkDevice ();
 	NSArray screens = NSScreen.screens();
-	return getBounds (screens);
+	return screens != null ? getBounds (screens) : new Rectangle(0, 0, 1024, 768);
 }
 
 Rectangle getBounds (NSArray screens) {
