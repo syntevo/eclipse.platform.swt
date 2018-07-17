@@ -6902,7 +6902,7 @@ LRESULT wmNotifyHeader (NMHDR hdr, long /*int*/ wParam, long /*int*/ lParam) {
 					if ((nmcd.uItemState & OS.CDIS_SELECTED) != 0) {
 						pixel = getDifferentColor(pixel);
 					} else if (columns[(int) nmcd.dwItemSpec] == sortColumn && sortDirection != SWT.NONE) {
-						pixel = getSlightlyDifferentColor(pixel);
+//						pixel = getSlightlyDifferentColor(pixel);
 					}
 					long /*int*/ brush = OS.CreateSolidBrush(pixel);
 					OS.FillRect(nmcd.hdc, rect, brush);
