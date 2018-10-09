@@ -55,7 +55,7 @@ WGL_OBJS   = wgl.obj wgl_structs.obj wgl_stats.obj
 #NATIVE_STATS = -DNATIVE_STATS
 
 #CFLAGS = $(cdebug) $(cflags) $(cvarsmt) $(CFLAGS) \
-CFLAGS = -O1 -Zi -DNDEBUG -DUNICODE -D_UNICODE /c $(cflags) $(cvarsmt) $(CFLAGS) \
+CFLAGS = -Od -Zi -DNDEBUG -DUNICODE -D_UNICODE /c $(cflags) $(cvarsmt) $(CFLAGS) \
 	-DSWT_VERSION=$(maj_ver)$(min_ver) -DSWT_REVISION=$(rev) $(NATIVE_STATS) -DUSE_ASSEMBLER \
 	/I"$(SWT_JAVA_HOME)\include" /I"$(SWT_JAVA_HOME)\include\win32" /I.
 	
