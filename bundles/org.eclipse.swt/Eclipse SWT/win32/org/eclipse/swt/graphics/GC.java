@@ -2363,13 +2363,13 @@ boolean useGDIP (long hdc, char[] buffer) {
 				case '\t':
 				case '\n':
 				case '\r':
-					break;
+					return false;
 				default:
 					return true;
 			}
 		}
 	}
-	return false;
+	return true;
 }
 
 void drawText(long gdipGraphics, String string, int x, int y, int flags, Point size) {
