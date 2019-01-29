@@ -863,7 +863,7 @@ void drawFocusInPixels (int x, int y, int width, int height) {
 			clipRgn = Gdip.Region_GetHRGN(rgn, gdipGraphics);
 		}
 		Gdip.Region_delete(rgn);
-		Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeHalf);
+		Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 		float[] lpXform = null;
 		long matrix = Gdip.Matrix_new(1, 0, 0, 1, 0, 0);
 		if (matrix == 0) SWT.error(SWT.ERROR_NO_HANDLES);
@@ -3331,7 +3331,7 @@ Rectangle getClippingInPixels() {
 		Rect rect = new Rect();
 		Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 		Gdip.Graphics_GetVisibleClipBounds(gdipGraphics, rect);
-		Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeHalf);
+		Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 		return new Rectangle(rect.X, rect.Y, rect.Width, rect.Height);
 	}
 	RECT rect = new RECT();
@@ -3365,7 +3365,7 @@ public void getClipping (Region region) {
 			Rect rect = new Rect();
 			Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 			Gdip.Graphics_GetVisibleClipBounds(gdipGraphics, rect);
-			Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeHalf);
+			Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 			OS.SetRectRgn(region.handle, rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height);
 		} else {
 			long matrix = Gdip.Matrix_new(1, 0, 0, 1, 0, 0);
@@ -3828,7 +3828,7 @@ void initGdip() {
 	gdipGraphics = data.gdipGraphics = Gdip.Graphics_new(handle);
 	if (gdipGraphics == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	Gdip.Graphics_SetPageUnit(gdipGraphics, Gdip.UnitPixel);
-	Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeHalf);
+	Gdip.Graphics_SetPixelOffsetMode(gdipGraphics, Gdip.PixelOffsetModeNone);
 	if ((data.style & SWT.MIRRORED) != 0) {
 		long matrix = identity();
 		Gdip.Graphics_SetTransform(gdipGraphics, matrix);
