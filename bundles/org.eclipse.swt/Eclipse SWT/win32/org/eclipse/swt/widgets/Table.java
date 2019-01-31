@@ -1501,11 +1501,8 @@ void createHandle () {
 	super.createHandle ();
 	state &= ~(CANVAS | THEME_BACKGROUND);
 
-	/* Use the Explorer theme */
-	if (OS.IsAppThemed ()) {
-		explorerTheme = true;
-		OS.SetWindowTheme (handle, Display.EXPLORER, null);
-	}
+	/* Use the Explorer theme, if possible */
+	setSystemTheme(SWT.THEME_SWT_DEFAULT);
 
 	/* Get the header window handle */
 	hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
@@ -5129,6 +5126,19 @@ void setSubImagesVisible (boolean visible) {
 	if ((dwExStyle & OS.LVS_EX_SUBITEMIMAGES) != 0 == visible) return;
 	int bits = visible ? OS.LVS_EX_SUBITEMIMAGES : 0;
 	OS.SendMessage (handle, OS.LVM_SETEXTENDEDLISTVIEWSTYLE, OS.LVS_EX_SUBITEMIMAGES, bits);
+}
+
+@Override
+public void setSystemTheme(int themeID) {
+	if (themeID == SWT.THEME_SWT_DEFAULT) {
+		if (Display.isSystemThemeAvailable(SWT.THEME_SYSTEMUI)) {
+			explorerTheme = true;
+			super.setSystemTheme(SWT.THEME_SYSTEMUI);
+			return;
+		}
+	}
+
+	super.setSystemTheme(themeID);
 }
 
 void setTableEmpty () {

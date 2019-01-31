@@ -154,6 +154,7 @@ public class Display extends Device {
 	long /*int*/ hButtonTheme, hEditTheme, hExplorerBarTheme, hScrollBarTheme, hTabTheme;
 	static final char [] BUTTON = new char [] {'B', 'U', 'T', 'T', 'O', 'N', 0};
 	static final char [] EDIT = new char [] {'E', 'D', 'I', 'T', 0};
+	static final char [] DARKMODE_EXPLORER = new char [] {'D', 'A', 'R', 'K', 'M', 'O', 'D', 'E', '_', 'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 0};
 	static final char [] EXPLORER = new char [] {'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 0};
 	static final char [] EXPLORERBAR = new char [] {'E', 'X', 'P', 'L', 'O', 'R', 'E', 'R', 'B', 'A', 'R', 0};
 	static final char [] SCROLLBAR = new char [] {'S', 'C', 'R', 'O', 'L', 'L', 'B', 'A', 'R', 0};
@@ -2751,6 +2752,49 @@ boolean isXMouseActive () {
 
 boolean isValidThread () {
 	return thread == Thread.currentThread ();
+}
+
+static boolean isThemeAvailable(String testedThemeString, String baseThemeString) {
+	final TCHAR testedThemeTCHAR = new TCHAR(0, testedThemeString, true);
+	final long /*int*/ testedThemeData = OS.OpenThemeData(0, testedThemeTCHAR.chars);
+	if (testedThemeData == 0) return false;
+
+	final TCHAR baseThemeTCHAR = new TCHAR(0, baseThemeString, true);
+	final long /*int*/ baseThemeData = OS.OpenThemeData(0, baseThemeTCHAR.chars);
+	if (baseThemeData == 0) {
+		OS.CloseThemeData(testedThemeData);
+		return false;
+	}
+
+	/*
+	* OpenThemeData() will ignore unknown theme packages and still return something.
+	* Example: If 'DarkMode_Explorer' is not available then 'DarkMode_Explorer::ScrollBar' will return the same as 'ScrollBar'.
+	* If data handles are equal, then theme isn't really available.
+	*/
+	final boolean isAvailable = (testedThemeData != baseThemeData);
+
+	OS.CloseThemeData(testedThemeData);
+	OS.CloseThemeData(baseThemeData);
+
+	return isAvailable;
+}
+
+/**
+ * Tests whether system theme is available.
+ * @param themeID see SWT.THEME_xxx constants.
+ */
+public static boolean isSystemThemeAvailable(int themeID) {
+	switch (themeID) {
+		case SWT.THEME_SWT_DEFAULT:
+		case SWT.THEME_SYSTEM_DEFAULT:
+			return true;
+		case SWT.THEME_SYSTEMUI:
+			return OS.IsAppThemed();
+		case SWT.THEME_SYSTEMUI_DARK:
+			return OS.IsAppThemed() && isThemeAvailable("DarkMode_Explorer::ScrollBar", "ScrollBar");
+	}
+
+	return false;
 }
 
 /**

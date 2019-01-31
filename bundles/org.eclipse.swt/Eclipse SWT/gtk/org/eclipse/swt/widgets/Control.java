@@ -5605,6 +5605,18 @@ private void setRotateGesture () {
     }
 }
 
+/**
+ * Sets system theme to a control.
+ * Not all themes could be available.
+ * Setting a system-supported, but currently unavailable theme could cause SWT.THEME_SYSTEM_DEFAULT to be selected.
+ *
+ * @see SWT#THEME_SWT_DEFAULT
+ * @see Display#isSystemThemeAvailable
+ */
+public void setSystemTheme(int themeID) {
+	/* Not implemented for this platform */
+}
+
 private void setZoomGesture () {
         if (GTK.GTK_VERSION >= OS.VERSION(3, 14, 0)) {
 			zoomGesture = GTK.gtk_gesture_zoom_new(handle);
