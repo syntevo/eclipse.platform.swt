@@ -3800,6 +3800,40 @@ public void setSize (Point size) {
 	setSizeInPixels(size.x, size.y);
 }
 
+static void setSystemTheme(long /*int*/ handle, int themeID) {
+	switch (themeID) {
+		case SWT.THEME_SWT_DEFAULT: {
+			// Some controls will override this method
+			OS.SetWindowTheme(handle, null, null);
+			break;
+		}
+		case SWT.THEME_SYSTEM_DEFAULT: {
+			OS.SetWindowTheme(handle, null, null);
+			break;
+		}
+		case SWT.THEME_SYSTEMUI: {
+			OS.SetWindowTheme(handle, Display.EXPLORER, null);
+			break;
+		}
+		case SWT.THEME_SYSTEMUI_DARK: {
+			OS.SetWindowTheme(handle, Display.DARKMODE_EXPLORER, null);
+			break;
+		}
+	}
+}
+
+/**
+ * Sets system theme to a control.
+ * Not all themes could be available.
+ * Setting a system-supported, but currently unavailable theme could cause SWT.THEME_SYSTEM_DEFAULT to be selected.
+ *
+ * @see SWT#THEME_SWT_DEFAULT
+ * @see Display#isSystemThemeAvailable
+ */
+public void setSystemTheme(int themeID) {
+	setSystemTheme(handle, themeID);
+}
+
 @Override
 boolean setTabItemFocus () {
 	if (!isShowing ()) return false;

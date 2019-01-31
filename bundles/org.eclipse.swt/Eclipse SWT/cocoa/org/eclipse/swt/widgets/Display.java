@@ -3261,6 +3261,20 @@ boolean isValidThread () {
 }
 
 /**
+ * Tests whether system theme is available.
+ * @param themeID see SWT.THEME_xxx constants.
+ */
+public static boolean isSystemThemeAvailable(int themeID) {
+	switch (themeID) {
+		case SWT.THEME_SWT_DEFAULT:
+		case SWT.THEME_SYSTEM_DEFAULT:
+			return true;
+	}
+
+	return false;
+}
+
+/**
  * Generate a low level system event.
  *
  * <code>post</code> is used to generate low level keyboard

@@ -4475,6 +4475,10 @@ public class SWT {
 	 */
 	public static final int SCROLLBAR_OVERLAY = 1 << 1;
 
+	public static final int THEME_SWT_DEFAULT = 1;
+	public static final int THEME_SYSTEM_DEFAULT = 2;
+	public static final int THEME_SYSTEMUI = 3;
+	public static final int THEME_SYSTEMUI_DARK = 4;
 
 /**
  * Returns a boolean indicating whether this SWT implementation can

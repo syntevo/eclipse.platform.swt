@@ -4455,6 +4455,18 @@ public void setVisible (boolean visible) {
 	if (fixFocus) fixFocus (control);
 }
 
+/**
+ * Sets system theme to a control.
+ * Not all themes could be available.
+ * Setting a system-supported, but currently unavailable theme could cause SWT.THEME_SYSTEM_DEFAULT to be selected.
+ *
+ * @see SWT#THEME_SWT_DEFAULT
+ * @see Display#isSystemThemeAvailable
+ */
+public void setSystemTheme(int themeID) {
+	/* Not implemented for this platform */
+}
+
 void setZOrder () {
 	NSView topView = topView ();
 	parent.contentView().addSubview(topView, OS.NSWindowBelow, null);

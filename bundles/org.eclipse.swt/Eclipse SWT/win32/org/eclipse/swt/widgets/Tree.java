@@ -1857,10 +1857,10 @@ void createHandle () {
 	super.createHandle ();
 	state &= ~(CANVAS | THEME_BACKGROUND);
 
-	/* Use the Explorer theme */
-	if (OS.IsAppThemed ()) {
-		explorerTheme = true;
-		OS.SetWindowTheme (handle, Display.EXPLORER, null);
+	/* Use the Explorer theme, if possible */
+	setSystemTheme(SWT.THEME_SWT_DEFAULT);
+
+	if (explorerTheme) {
 		int bits = OS.TVS_EX_DOUBLEBUFFER | OS.TVS_EX_RICHTOOLTIP;
 		if (ENABLE_TVS_EX_FADEINOUTEXPANDOS) bits |= OS.TVS_EX_FADEINOUTEXPANDOS;
 		/*
@@ -5139,6 +5139,33 @@ public void setSortDirection (int direction) {
 	if (sortColumn != null && !sortColumn.isDisposed ()) {
 		sortColumn.setSortDirection (direction);
 	}
+}
+
+void setSystemThemeInternal(int themeID) {
+	super.setSystemTheme(themeID);
+
+	/* Also set theme to intermediate parent window.
+	 * This window intentionally obscures Tree's scrollbars with its own scrollbars, and we want scrollbars themed.
+	 */
+	if (hwndParent != 0) {
+		setSystemTheme(hwndParent, themeID);
+	}
+}
+
+/**
+ * NOTE: Changing from SWT.THEME_SYSTEMUI themes to SWT.THEME_SYSTEM_DEFAULT is not currently supported.
+ */
+@Override
+public void setSystemTheme(int themeID) {
+	if (themeID == SWT.THEME_SWT_DEFAULT) {
+		if (Display.isSystemThemeAvailable(SWT.THEME_SYSTEMUI)) {
+			explorerTheme = true;
+			setSystemThemeInternal(SWT.THEME_SYSTEMUI);
+			return;
+		}
+	}
+
+	setSystemThemeInternal(themeID);
 }
 
 /**
