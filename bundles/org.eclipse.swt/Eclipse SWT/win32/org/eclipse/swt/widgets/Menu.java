@@ -660,7 +660,7 @@ public MenuItem [] getItems () {
 	int length = OS.GetMenuItemCount (handle);
 	if (length < 0) {
 		int error = OS.GetLastError();
-		SWT.error(SWT.ERROR_CANNOT_GET_COUNT, null, " [GetLastError=0x" + Integer.toHexString(error) + "]");//$NON-NLS-1$ $NON-NLS-2$
+		SWT.error(SWT.ERROR_CANNOT_GET_COUNT, null, "Length=" + length + ", state=" + state + " [GetLastError=0x" + Integer.toHexString(error) + "]");//$NON-NLS-1$ $NON-NLS-2$
 	}
 	MenuItem [] items = new MenuItem [length];
 	MENUITEMINFO info = new MENUITEMINFO ();
