@@ -51,6 +51,8 @@ git clean -xdf #If new files were added to repo.
 git reset --hard  #If existing binary was overwritten.
 "
 
+export PKG_CONFIG_PATH=/home/vm_user/Downloads/OpenSource/_Built/gtk4/lib/x86_64-linux-gnu/pkgconfig
+
 if [ "$1" = "-h" -o "$1" = "--help" ]; then
 	echo "$HELP"
 	exit
