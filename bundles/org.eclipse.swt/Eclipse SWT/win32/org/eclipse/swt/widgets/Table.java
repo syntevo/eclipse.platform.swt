@@ -887,25 +887,26 @@ LRESULT CDDS_PREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 			if (control != null && control.backgroundImage != null) {
 				fillImageBackground (nmcd.hdc, control, rect, 0, 0);
 			} else {
-				final boolean enabled = OS.IsWindowEnabled (handle);
-				if (enabled && (int)OS.SendMessage (handle, OS.LVM_GETBKCOLOR, 0, 0) == OS.CLR_NONE || !enabled && hasCustomBackground()) {
-					if (control == null) control = this;
-					fillBackground (nmcd.hdc, control.getBackgroundPixel (), rect);
-					if (OS.IsAppThemed ()) {
-						if (sortColumn != null && sortDirection != SWT.NONE) {
-							int index = indexOf (sortColumn);
-							if (index != -1) {
-								parent.forceResize ();
-								int clrSortBk = getSortColumnPixel ();
-								RECT columnRect = new RECT (), headerRect = new RECT ();
-								OS.GetClientRect (handle, columnRect);
-								long hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
-								if (OS.SendMessage (hwndHeader, OS.HDM_GETITEMRECT, index, headerRect) != 0) {
-									OS.MapWindowPoints (hwndHeader, handle, headerRect, 2);
-									columnRect.left = headerRect.left;
-									columnRect.right = headerRect.right;
-									if (OS.IntersectRect(columnRect, columnRect, rect)) {
-										fillBackground (nmcd.hdc, clrSortBk, columnRect);
+				if ((int)OS.SendMessage (handle, OS.LVM_GETBKCOLOR, 0, 0) == OS.CLR_NONE || hasCustomBackground()) {
+					if (OS.IsWindowEnabled (handle) || hasCustomBackground()) {
+						if (control == null) control = this;
+						fillBackground (nmcd.hdc, control.getBackgroundPixel (), rect);
+						if (OS.IsAppThemed ()) {
+							if (sortColumn != null && sortDirection != SWT.NONE) {
+								int index = indexOf (sortColumn);
+								if (index != -1) {
+									parent.forceResize ();
+									int clrSortBk = getSortColumnPixel ();
+									RECT columnRect = new RECT (), headerRect = new RECT ();
+									OS.GetClientRect (handle, columnRect);
+									long hwndHeader = OS.SendMessage (handle, OS.LVM_GETHEADER, 0, 0);
+									if (OS.SendMessage (hwndHeader, OS.HDM_GETITEMRECT, index, headerRect) != 0) {
+										OS.MapWindowPoints (hwndHeader, handle, headerRect, 2);
+										columnRect.left = headerRect.left;
+										columnRect.right = headerRect.right;
+										if (OS.IntersectRect(columnRect, columnRect, rect)) {
+											fillBackground (nmcd.hdc, clrSortBk, columnRect);
+										}
 									}
 								}
 							}
@@ -1015,8 +1016,8 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 	* image.  The fix is emulate LVS_EX_FULLROWSELECT by
 	* drawing the selection.
 	*/
-	final boolean enabled = OS.IsWindowEnabled (handle);
-	if (OS.IsWindowVisible (handle) && enabled) {
+	final boolean isWindowEnabled = OS.IsWindowEnabled (handle);
+	if (OS.IsWindowVisible (handle) && isWindowEnabled) {
 		if (!explorerTheme && !ignoreDrawSelection && (style & SWT.FULL_SELECTION) != 0) {
 			int bits = (int)OS.SendMessage (handle, OS.LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
 			if ((bits & OS.LVS_EX_FULLROWSELECT) == 0) {
@@ -1076,7 +1077,7 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 		if (hasAttributes) {
 			if (hFont == -1) hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 			OS.SelectObject (hDC, hFont);
-			if (enabled) {
+			if (isWindowEnabled) {
 				nmcd.clrText = clrText == -1 ? getForegroundPixel () : clrText;
 				if (clrTextBk == -1) {
 					nmcd.clrTextBk = OS.CLR_NONE;
@@ -1097,36 +1098,40 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 			code |= OS.CDRF_NEWFONT;
 		}
 	}
-	/*
-	* Feature in Windows.  When there is a sort column, the sort column
-	* color draws on top of the background color for an item.  The fix
-	* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
-	* in CDDS_SUBITEMPOSTPAINT.
-	*
-	* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
-	* to prevent infinite WM_PAINT on Vista.
-	*/
-	if ((enabled && clrTextBk != -1) || (!enabled && hasCustomBackground())) {
-		int oldColumn = (int)OS.SendMessage (handle, OS.LVM_GETSELECTEDCOLUMN, 0, 0);
-		if (oldColumn != -1 && oldColumn == nmcd.iSubItem) {
-			long rgn = OS.CreateRectRgn (0, 0, 0, 0);
-			int result = OS.GetUpdateRgn (handle, rgn, true);
-			OS.SendMessage (handle, OS.LVM_SETSELECTEDCOLUMN, -1, 0);
-			OS.ValidateRect (handle, null);
-			if (result != OS.NULLREGION) OS.InvalidateRgn (handle, rgn, true);
-			OS.DeleteObject (rgn);
-			code |= OS.CDRF_NOTIFYPOSTPAINT;
+	if (isWindowEnabled || hasCustomBackground()) {
+		/*
+		* Feature in Windows.  When there is a sort column, the sort column
+		* color draws on top of the background color for an item.  The fix
+		* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
+		* in CDDS_SUBITEMPOSTPAINT.
+		*
+		* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
+		* to prevent infinite WM_PAINT on Vista.
+		*/
+		if (clrTextBk != -1 || hasCustomBackground()) {
+			int oldColumn = (int)OS.SendMessage (handle, OS.LVM_GETSELECTEDCOLUMN, 0, 0);
+			if (oldColumn != -1 && oldColumn == nmcd.iSubItem) {
+				long rgn = OS.CreateRectRgn (0, 0, 0, 0);
+				int result = OS.GetUpdateRgn (handle, rgn, true);
+				OS.SendMessage (handle, OS.LVM_SETSELECTEDCOLUMN, -1, 0);
+				OS.ValidateRect (handle, null);
+				if (result != OS.NULLREGION) OS.InvalidateRgn (handle, rgn, true);
+				OS.DeleteObject (rgn);
+				code |= OS.CDRF_NOTIFYPOSTPAINT;
+			}
 		}
 	}
-	if (!enabled) {
+	if (!isWindowEnabled || hasCustomBackground() || hasCustomForeground()) {
 		/*
 		* Feature in Windows.  When the table is disabled, it draws
 		* with a gray background but does not gray the text.  The fix
 		* is to explicitly gray the text, but only, when it wasn't customized.
 		*/
-		nmcd.clrText = OS.GetSysColor (OS.COLOR_GRAYTEXT);
-		if (findImageControl () != null || hasCustomBackground()) {
+		nmcd.clrText = isWindowEnabled ? getForegroundPixel() : OS.GetSysColor (OS.COLOR_GRAYTEXT);
+		if (findImageControl () != null || hasCustomBackground() || isWindowEnabled) {
 			nmcd.clrTextBk = OS.CLR_NONE;
+		} else {
+			nmcd.clrTextBk = OS.GetSysColor (OS.COLOR_3DFACE);
 		}
 		nmcd.uItemState &= ~OS.CDIS_SELECTED;
 		OS.MoveMemory (lParam, nmcd, NMLVCUSTOMDRAW.sizeof);
