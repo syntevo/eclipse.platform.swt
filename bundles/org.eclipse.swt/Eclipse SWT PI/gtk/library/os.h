@@ -473,6 +473,10 @@
 #define NO__1gdk_1event_1get_1string
 #define NO__1gdk_1event_1get_1key_1group
 #define NO__1gdk_1event_1get_1crossing_1mode
+
+#define NO__1gdk_1drawing_1context_1get_1cairo_1context
+#define NO__1gtk_1native_1dialog_1run
+#define NO__1gdk_1window_1end_1draw_1frame
 #endif
 
 #include "os_custom.h"
