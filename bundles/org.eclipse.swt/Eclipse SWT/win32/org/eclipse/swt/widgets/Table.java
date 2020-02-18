@@ -92,6 +92,7 @@ public class Table extends Composite {
 	int itemHeight, lastIndexOf, lastWidth, sortDirection, resizeCount, selectionForeground, hotIndex;
 	int headerBackground = -1;
 	int headerForeground = -1;
+	int headerLineColor = -1;
 	static /*final*/ long HeaderProc;
 	static final int INSET = 4;
 	static final int GRID_WIDTH = 1;
@@ -104,6 +105,7 @@ public class Table extends Composite {
 	static final int V_SCROLL_LIMIT = 16;
 	static final int DRAG_IMAGE_SIZE = 301;
 	static boolean COMPRESS_ITEMS = true;
+	static final String KEY_HEADER_LINE_COLOR = "org.eclipse.swt.widgets.Table.headerLineColor"; //$NON-NLS-1$
 	static final long TableProc;
 	static final TCHAR TableClass = new TCHAR (0, OS.WC_LISTVIEW, true);
 	static final TCHAR HeaderClass = new TCHAR (0, OS.WC_HEADER, true);
@@ -4363,6 +4365,20 @@ void setCheckboxImageList (int width, int height, boolean fixScroll) {
 	}
 }
 
+@Override
+public void setData (String key, Object value) {
+	if (KEY_HEADER_LINE_COLOR.equals(key)) {
+		if (null == value) {
+			headerLineColor = -1;
+		} else {
+			if (!(value instanceof Color)) error(SWT.ERROR_INVALID_ARGUMENT);
+			headerLineColor = ((Color)value).handle;
+		}
+	}
+
+	super.setData(key, value);
+}
+
 void setFocusIndex (int index) {
 //	checkWidget ();
 	/*
@@ -6971,7 +6987,8 @@ LRESULT wmNotifyHeader (NMHDR hdr, long wParam, long lParam) {
 						OS.SelectObject (nmcd.hdc, oldPen);
 						OS.DeleteObject (pen);
 
-						pen = OS.CreatePen (OS.PS_SOLID, getGridLineWidthInPixels(), OS.GetSysColor(OS.COLOR_3DFACE));
+						int lineColor = (headerLineColor != -1) ? headerLineColor : OS.GetSysColor(OS.COLOR_3DFACE);
+						pen = OS.CreatePen (OS.PS_SOLID, getGridLineWidthInPixels(), lineColor);
 						oldPen = OS.SelectObject (nmcd.hdc, pen);
 						/* To differentiate headers, always draw header column separator. */
 						OS.Polyline(nmcd.hdc, new int[] {rects[i].right - alignmentCorrection, rects[i].top, rects[i].right - alignmentCorrection, rects[i].bottom}, 2);
