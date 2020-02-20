@@ -67,6 +67,9 @@ public class Menu extends Widget {
 	Decorations parent;
 	MenuItem selectedMenuItem;
 
+	static final String KEY_FOREGROUND_COLOR = "org.eclipse.swt.internal.win32.Menu.foregroundColor"; //$NON-NLS-1$
+	static final String KEY_BACKGROUND_COLOR = "org.eclipse.swt.internal.win32.Menu.backgroundColor"; //$NON-NLS-1$
+
 	/* Timer ID for MenuItem ToolTip */
 	static final int ID_TOOLTIP_TIMER = 110;
 
@@ -1098,6 +1101,28 @@ void reskinChildren (int flags) {
 	if (pixel == foreground) return;
 	foreground = pixel;
 	updateForeground ();
+}
+
+@Override
+public void setData (String key, Object value) {
+	if (KEY_FOREGROUND_COLOR.equals(key)) {
+		/*
+		 * Limitation: This only applies to items that are already created.
+		 * Limitation: This will switch appearance from XP Theme to old theme.
+		 * Works quite well for menu bars. The effect is controversial for popup menus.
+		 */
+		setForeground((Color)value);
+	}
+
+	if (KEY_BACKGROUND_COLOR.equals(key)) {
+		/*
+		 * Limitation: Has no effect on menu bars unless `KEY_FOREGROUND_COLOR` is also set.
+		 * Works quite well for menu bars. The effect is controversial for popup menus.
+		 */
+		setBackground((Color)value);
+	}
+
+	super.setData(key, value);
 }
 
 /**

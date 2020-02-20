@@ -2094,6 +2094,35 @@ long windowProc () {
 	return parent != null ? DialogProc : super.windowProc ();
 }
 
+Rectangle getClientRectInWindow() {
+	RECT windowRect = new RECT();
+	OS.GetWindowRect(handle, windowRect);
+
+	POINT clientWindowLT = new POINT();
+	OS.ClientToScreen(handle, clientWindowLT);
+	clientWindowLT.x -= windowRect.left;
+	clientWindowLT.y -= windowRect.top;
+
+	RECT clientRect = new RECT();
+	OS.GetClientRect(handle, clientRect);
+
+	return new Rectangle(
+			clientWindowLT.x + clientRect.left,
+			clientWindowLT.y + clientRect.top,
+			clientRect.right - clientRect.left,
+			clientRect.bottom - clientRect.top);
+}
+
+void overpaintMenuBorder() {
+	Rectangle clientArea = getClientRectInWindow();
+	long dc = OS.GetWindowDC(handle);
+	long oldPen = OS.SelectObject(dc, display.menuBarBottomPen);
+	OS.MoveToEx(dc, clientArea.x, clientArea.y - 1, 0);
+	OS.LineTo(dc, clientArea.x + clientArea.width, clientArea.y - 1);
+	OS.SelectObject(dc, oldPen);
+	OS.ReleaseDC(handle, dc);
+}
+
 @Override
 long windowProc (long hwnd, int msg, long wParam, long lParam) {
 	if (handle == 0) return 0;
@@ -2131,6 +2160,19 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 			}
 		}
 	}
+
+	if ((menuBar != null) && (display != null) && (display.menuBarBottomPen != 0)) {
+		switch (msg) {
+			case OS.WM_NCACTIVATE:
+			case OS.WM_NCPAINT:
+			{
+				long ret = super.windowProc (hwnd, msg, wParam, lParam);
+				overpaintMenuBorder();
+				return ret;
+			}
+		}
+	}
+
 	return super.windowProc (hwnd, msg, wParam, lParam);
 }
 

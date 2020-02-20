@@ -221,6 +221,7 @@ public class Display extends Device {
 	static final String USE_WS_BORDER_TABLE_KEY = "org.eclipse.swt.internal.win32.Table.USE_WS_BORDER"; //$NON-NLS-1$
 	static final String USE_WS_BORDER_TEXT_KEY = "org.eclipse.swt.internal.win32.Text.USE_WS_BORDER"; //$NON-NLS-1$
 	static final String USE_WS_BORDER_TREE_KEY = "org.eclipse.swt.internal.win32.Tree.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String MENUBAR_BORDER_COLOR_KEY = "org.eclipse.swt.internal.win32.Menu.Bar.borderColor"; //$NON-NLS-1$
 	Thread thread;
 
 	/* Display Shutdown */
@@ -430,6 +431,7 @@ public class Display extends Device {
 	boolean useWsBorderTable = false;
 	boolean useWsBorderText = false;
 	boolean useWsBorderTree = false;
+	long menuBarBottomPen = 0;
 
 	/* Package Name */
 	static final String PACKAGE_PREFIX = "org.eclipse.swt.widgets."; //$NON-NLS-1$
@@ -3791,6 +3793,12 @@ void releaseDisplay () {
 	}
 	cursors = null;
 
+	/* Release GDI objects */
+	if (menuBarBottomPen != 0) {
+		OS.DeleteObject(menuBarBottomPen);
+		menuBarBottomPen = 0;
+	}
+
 	/* Release Acquired Resources */
 	if (resources != null) {
 		for (Resource resource : resources) {
@@ -4323,6 +4331,17 @@ boolean _toBoolean(Object value) {
 	return value != null && ((Boolean)value).booleanValue ();
 }
 
+void setMenuBarBottomPen(Object value) {
+	if (menuBarBottomPen != 0) {
+		OS.DeleteObject(menuBarBottomPen);
+		menuBarBottomPen = 0;
+	}
+
+	if (value != null) {
+		menuBarBottomPen = OS.CreatePen(OS.PS_SOLID, 1, ((Color)value).handle);
+	}
+}
+
 /**
  * Sets the application defined property of the receiver
  * with the specified name to the given argument.
@@ -4392,6 +4411,9 @@ public void setData (String key, Object value) {
 		case USE_WS_BORDER_TREE_KEY:
 			useWsBorderTree = _toBoolean(value);
 			return;
+		case MENUBAR_BORDER_COLOR_KEY:
+			setMenuBarBottomPen(value);
+			break;
 	}
 
 	/* Remove the key/value pair */
