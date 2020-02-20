@@ -1298,6 +1298,7 @@ public class OS extends C {
 	public static final int SM_CXVSCROLL = 0x2;
 	public static final int SM_CYBORDER = 0x6;
 	public static final int SM_CYCURSOR = 0xe;
+	public static final int SM_CYEDGE = 0x2e;
 	public static final int SM_CYFOCUSBORDER = 84;
 	public static final int SM_CYHSCROLL = 0x3;
 	public static final int SM_CYMENU = 0xf;

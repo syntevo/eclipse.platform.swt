@@ -2018,6 +2018,14 @@ public boolean isVisible () {
 	return getVisible () && parent.isVisible ();
 }
 
+/**
+ * Custom theming: whether to use WS_BORDER instead of WS_EX_CLIENTEDGE for SWT.BORDER
+ * Intended for override.
+ */
+boolean isUseWsBorder () {
+	return (display != null) && ((display != null) && display.useWsBorderAll);
+}
+
 @Override
 void mapEvent (long hwnd, Event event) {
 	if (hwnd != handle) {
@@ -4707,10 +4715,11 @@ CREATESTRUCT widgetCreateStruct () {
 
 int widgetExtStyle () {
 	int bits = 0;
-	if ((style & SWT.BORDER) != 0) bits |= OS.WS_EX_CLIENTEDGE;
-//	if ((style & SWT.BORDER) != 0) {
-//		if ((style & SWT.FLAT) == 0) bits |= OS.WS_EX_CLIENTEDGE;
-//	}
+
+	if (!isUseWsBorder ()) {
+		if ((style & SWT.BORDER) != 0) bits |= OS.WS_EX_CLIENTEDGE;
+	}
+
 	bits |= OS.WS_EX_NOINHERITLAYOUT;
 	if ((style & SWT.RIGHT_TO_LEFT) != 0) bits |= OS.WS_EX_LAYOUTRTL;
 	if ((style & SWT.FLIP_TEXT_DIRECTION) != 0) bits |= OS.WS_EX_RTLREADING;
@@ -4724,9 +4733,11 @@ long widgetParent () {
 int widgetStyle () {
 	/* Force clipping of siblings by setting WS_CLIPSIBLINGS */
 	int bits = OS.WS_CHILD | OS.WS_VISIBLE | OS.WS_CLIPSIBLINGS;
-//	if ((style & SWT.BORDER) != 0) {
-//		if ((style & SWT.FLAT) != 0) bits |= OS.WS_BORDER;
-//	}
+
+	if (isUseWsBorder ()) {
+		if ((style & SWT.BORDER) != 0) bits |= OS.WS_BORDER;
+	}
+
 	return bits;
 
 	/*

@@ -3833,6 +3833,11 @@ boolean isItemSelected (NMTVCUSTOMDRAW nmcd) {
 	return selected;
 }
 
+@Override
+boolean isUseWsBorder () {
+	return super.isUseWsBorder () || ((display != null) && display.useWsBorderTree);
+}
+
 void redrawSelection () {
 	if ((style & SWT.SINGLE) != 0) {
 		long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_CARET, 0);

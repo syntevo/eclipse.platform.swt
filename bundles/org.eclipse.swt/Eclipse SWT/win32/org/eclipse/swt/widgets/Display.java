@@ -213,6 +213,14 @@ public class Display extends Device {
 	static final String USE_OWNDC_KEY = "org.eclipse.swt.internal.win32.useOwnDC"; //$NON-NLS-1$
 	static final String ACCEL_KEY_HIT = "org.eclipse.swt.internal.win32.accelKeyHit"; //$NON-NLS-1$
 	static final String EXTERNAL_EVENT_LOOP_KEY = "org.eclipse.swt.internal.win32.externalEventLoop"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_ALL_KEY = "org.eclipse.swt.internal.win32.all.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_CANVAS_KEY = "org.eclipse.swt.internal.win32.Canvas.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_LABEL_KEY = "org.eclipse.swt.internal.win32.Label.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_LIST_KEY = "org.eclipse.swt.internal.win32.List.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_SPINNER_KEY = "org.eclipse.swt.internal.win32.Spinner.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_TABLE_KEY = "org.eclipse.swt.internal.win32.Table.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_TEXT_KEY = "org.eclipse.swt.internal.win32.Text.USE_WS_BORDER"; //$NON-NLS-1$
+	static final String USE_WS_BORDER_TREE_KEY = "org.eclipse.swt.internal.win32.Tree.USE_WS_BORDER"; //$NON-NLS-1$
 	Thread thread;
 
 	/* Display Shutdown */
@@ -412,6 +420,16 @@ public class Display extends Device {
 	/* Skinning support */
 	Widget [] skinList = new Widget [GROW_SIZE];
 	int skinCount;
+
+	/* Custom theming support */
+	boolean useWsBorderAll = false;
+	boolean useWsBorderCanvas = false;
+	boolean useWsBorderLabel = false;
+	boolean useWsBorderList = false;
+	boolean useWsBorderSpinner = false;
+	boolean useWsBorderTable = false;
+	boolean useWsBorderText = false;
+	boolean useWsBorderTree = false;
 
 	/* Package Name */
 	static final String PACKAGE_PREFIX = "org.eclipse.swt.widgets."; //$NON-NLS-1$
@@ -4350,7 +4368,30 @@ public void setData (String key, Object value) {
 		case EXTERNAL_EVENT_LOOP_KEY:
 			externalEventLoop = _toBoolean(value);
 			return;
-		}
+		case USE_WS_BORDER_ALL_KEY:
+			useWsBorderAll = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_CANVAS_KEY:
+			useWsBorderCanvas = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_LABEL_KEY:
+			useWsBorderLabel = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_LIST_KEY:
+			useWsBorderList = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_SPINNER_KEY:
+			useWsBorderSpinner = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TABLE_KEY:
+			useWsBorderTable = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TEXT_KEY:
+			useWsBorderText = _toBoolean(value);
+			return;
+		case USE_WS_BORDER_TREE_KEY:
+			useWsBorderTree = _toBoolean(value);
+			return;
 	}
 
 	/* Remove the key/value pair */
