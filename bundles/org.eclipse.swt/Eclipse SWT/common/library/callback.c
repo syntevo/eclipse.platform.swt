@@ -23,7 +23,7 @@
 #endif
 
 /* define this to print out debug statements */
-/* #define DEBUG_CALL_PRINTS */
+#define DEBUG_CALL_PRINTS
 
 /* --------------- callback globals ----------------- */
 
