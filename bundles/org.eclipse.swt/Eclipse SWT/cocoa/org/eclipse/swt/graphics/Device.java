@@ -609,9 +609,11 @@ protected void init () {
 
 	/* Initialize the system font slot */
 	boolean smallFonts = System.getProperty("org.eclipse.swt.internal.carbon.smallFonts") != null;
+	boolean monospaceDigitFont = System.getProperty("org.eclipse.swt.internal.carbon.monospacedDigitFont") != null;
 	double systemFontSize = smallFonts ? NSFont.smallSystemFontSize() : NSFont.systemFontSize();
 	Point dpi = this.dpi = getDPI(), screenDPI = getScreenDPI();
-	NSFont font = NSFont.systemFontOfSize(systemFontSize * dpi.y / screenDPI.y);
+	double fontSize = systemFontSize * dpi.y / screenDPI.y;
+	NSFont font = monospaceDigitFont ? NSFont.monospacedDigitSystemFontOfSize(fontSize) : NSFont.systemFontOfSize(fontSize);
 	font.retain();
 	systemFont = Font.cocoa_new(this, font);
 }
