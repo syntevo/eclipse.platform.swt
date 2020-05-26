@@ -69,6 +69,11 @@ public static NSFont menuBarFontOfSize(double fontSize) {
 	return result != 0 ? new NSFont(result) : null;
 }
 
+public static NSFont monospacedDigitSystemFontOfSize(double fontSize) {
+	long result = OS.objc_msgSend(OS.class_NSFont, OS.sel_monospacedDigitSystemFontOfSize_weight_, fontSize, 0);
+	return result != 0 ? new NSFont(result) : null;
+}
+
 public double pointSize() {
 	return OS.objc_msgSend_fpret(this.id, OS.sel_pointSize);
 }
