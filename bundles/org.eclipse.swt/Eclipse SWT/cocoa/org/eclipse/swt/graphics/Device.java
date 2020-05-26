@@ -602,7 +602,10 @@ protected void init () {
 	boolean smallFonts = System.getProperty("org.eclipse.swt.internal.carbon.smallFonts") != null;
 	double systemFontSize = smallFonts ? NSFont.smallSystemFontSize() : NSFont.systemFontSize();
 	Point dpi = this.dpi = getDPI(), screenDPI = getScreenDPI();
-	NSFont font = NSFont.systemFontOfSize(systemFontSize * dpi.y / screenDPI.y);
+	double fontSize = systemFontSize * dpi.y / screenDPI.y;
+	// @@@@ FIXME
+//	NSFont font = NSFont.systemFontOfSize(fontSize);
+	NSFont font = NSFont.monospacedDigitSystemFontOfSize(fontSize);
 	font.retain();
 	systemFont = Font.cocoa_new(this, font);
 }

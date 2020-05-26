@@ -662,6 +662,7 @@ public enum Selector {
 	, sel_minimumSize("minimumSize")
 	, sel_minuteOfHour("minuteOfHour")
 	, sel_modifierFlags("modifierFlags")
+	, sel_monospacedDigitSystemFontOfSize_weight_("monospacedDigitSystemFontOfSize:weight:")
 	, sel_monthOfYear("monthOfYear")
 	, sel_mouse_inRect_("mouse:inRect:")
 	, sel_mouseDown_("mouseDown:")
