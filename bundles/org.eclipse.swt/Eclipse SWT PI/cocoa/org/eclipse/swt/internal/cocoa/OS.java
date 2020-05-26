@@ -1393,6 +1393,7 @@ public static final long sel_miniaturize_ = Selector.sel_miniaturize_.value;
 public static final long sel_minimumSize = Selector.sel_minimumSize.value;
 public static final long sel_minuteOfHour = Selector.sel_minuteOfHour.value;
 public static final long sel_modifierFlags = Selector.sel_modifierFlags.value;
+public static final long sel_monospacedDigitSystemFontOfSize_weight_ = Selector.sel_monospacedDigitSystemFontOfSize_weight_.value;
 public static final long sel_monthOfYear = Selector.sel_monthOfYear.value;
 public static final long sel_mouse_inRect_ = Selector.sel_mouse_inRect_.value;
 public static final long sel_mouseDown_ = Selector.sel_mouseDown_.value;
