@@ -925,13 +925,7 @@ LRESULT CDDS_SUBITEMPOSTPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 	if (ignoreDrawForeground) OS.RestoreDC (hDC, -1);
 	if (OS.IsWindowVisible (handle)) {
 		/*
-		* Feature in Windows.  When there is a sort column, the sort column
-		* color draws on top of the background color for an item.  The fix
-		* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
-		* in CDDS_SUBITEMPOSTPAINT.
-		*
-		* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
-		* to prevent infinite WM_PAINT on Vista.
+		* Restore sort column that was removed in CDDS_SUBITEMPREPAINT
 		*/
 		if ((int)OS.SendMessage (handle, OS.LVM_GETBKCOLOR, 0, 0) != OS.CLR_NONE) {
 			if ((sortDirection & (SWT.UP | SWT.DOWN)) != 0) {
@@ -1098,15 +1092,15 @@ LRESULT CDDS_SUBITEMPREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 		}
 	}
 	/*
-	* Feature in Windows.  When there is a sort column, the sort column
-	* color draws on top of the background color for an item.  The fix
+	* Feature in Windows.  When there is a sort column, Windows fills it
+	* with hardcoded color, over-painting our painting. The fix
 	* is to clear the sort column in CDDS_SUBITEMPREPAINT, and reset it
 	* in CDDS_SUBITEMPOSTPAINT.
 	*
 	* Update region is saved and restored around LVM_SETSELECTEDCOLUMN
 	* to prevent infinite WM_PAINT on Vista.
 	*/
-	if ((enabled && clrTextBk != -1) || (!enabled && hasCustomBackground())) {
+	if ((enabled && clrTextBk != -1) || hasCustomBackground()) {
 		int oldColumn = (int)OS.SendMessage (handle, OS.LVM_GETSELECTEDCOLUMN, 0, 0);
 		if (oldColumn != -1 && oldColumn == nmcd.iSubItem) {
 			long rgn = OS.CreateRectRgn (0, 0, 0, 0);
