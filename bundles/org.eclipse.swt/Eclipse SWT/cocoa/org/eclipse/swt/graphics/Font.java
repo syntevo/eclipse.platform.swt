@@ -321,31 +321,73 @@ void init(String name, float height, int style, String nsName) {
 	if (height < 0) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 	Point dpi = device.dpi, screenDPI = device.getScreenDPI();
 	float size = height * dpi.y / screenDPI.y;
-	NSFont systemFont = NSFont.systemFontOfSize(size);
-	NSFont boldSystemFont = NSFont.boldSystemFontOfSize(size);
-	String systemFontName = systemFont.familyName().getString();
-	String boldSystemFontName = boldSystemFont.familyName().getString();
-	if (systemFontName.equals(name) || boldSystemFontName.equals(name)) {
-		// Use system font to prevent baseline problems with bold text
-		handle = ((style & SWT.BOLD) == 0 ? systemFont : boldSystemFont);
-	} else if (nsName != null) {
-		handle = NSFont.fontWithName(NSString.stringWith(nsName), size);
-	} else {
-		NSString family = NSString.stringWith(name);
-		handle = NSFont.fontWithName(family, size);
+
+	String fontName = (nsName != null) ? nsName : name;
+
+	// @@@ FIXME: Use OS methods like NSFontAttributeName()
+	NSString NSFontSizeAttribute = NSString.stringWith("NSFontSizeAttribute");
+	NSString NSFontNameAttribute = NSString.stringWith("NSFontNameAttribute");
+	NSString NSFontFeatureSelectorIdentifierKey = NSString.stringWith("CTFeatureSelectorIdentifier");
+	NSString NSFontFeatureTypeIdentifierKey = NSString.stringWith("CTFeatureTypeIdentifier");
+	NSString NSFontFeatureSettingsAttribute = NSString.stringWith("NSCTFontFeatureSettingsAttribute");
+	NSString NSFontWeightTrait = NSString.stringWith("NSCTFontWeightTrait");
+	NSString NSFontSymbolicTrait = NSString.stringWith("NSCTFontSymbolicTrait");
+	NSString NSFontTraitsAttribute = NSString.stringWith("NSCTFontTraitsAttribute");
+
+	NSMutableDictionary fontAttributes = NSMutableDictionary.dictionaryWithCapacity(5);
+	// @@@@ FIXME: size is overridden in 'NSFont.fontWithDescriptor' anyway
+	fontAttributes.setObject(NSNumber.numberWithDouble(size), NSFontSizeAttribute);
+	fontAttributes.setObject(NSString.stringWith(fontName), NSFontNameAttribute);
+
+	// @@@@ FIXME: should be based on system property
+	if (true) {
+		int kNumberSpacingType = 6;
+		int kMonospacedNumbersSelector = 0;
+
+		NSMutableDictionary monospacedNumbers = NSMutableDictionary.dictionaryWithCapacity(2);
+		monospacedNumbers.setObject(NSNumber.numberWithInt(kMonospacedNumbersSelector), NSFontFeatureSelectorIdentifierKey);
+		monospacedNumbers.setObject(NSNumber.numberWithInt(kNumberSpacingType), NSFontFeatureTypeIdentifierKey);
+
+		NSMutableArray featureSettings = NSMutableArray.arrayWithCapacity(1);
+		featureSettings.addObject(monospacedNumbers);
+
+		fontAttributes.setObject(featureSettings, NSFontFeatureSettingsAttribute);
 	}
+
+	if ((style & (SWT.ITALIC | SWT.BOLD)) != 0) {
+		int NSFontItalicTrait = (1 << 0);
+		int NSFontBoldTrait   = (1 << 1);
+		double NSFontWeightBold = 0.4;
+
+		NSMutableDictionary fontTraits = NSMutableDictionary.dictionaryWithCapacity(2);
+
+		int symbolicTrait = 0;
+		if ((style & SWT.ITALIC) != 0) {
+			symbolicTrait |= NSFontItalicTrait;
+		}
+
+		if ((style & SWT.BOLD) != 0) {
+			symbolicTrait |= NSFontBoldTrait;
+			fontTraits.setObject(NSNumber.numberWithDouble(NSFontWeightBold), NSFontWeightTrait);
+		}
+
+		fontTraits.setObject(NSNumber.numberWithInt(symbolicTrait), NSFontSymbolicTrait);
+
+		fontAttributes.setObject(fontTraits, NSFontTraitsAttribute);
+	}
+
+	NSFontDescriptor fontDescriptor = NSFontDescriptor.fontDescriptorWithFontAttributes(fontAttributes);
+	handle = NSFont.fontWithDescriptor(fontDescriptor, size);
+
+	// @@@@ FIXME replace all references with disaply.getSystemFont(size) ?
+	NSFont systemFont = NSFont.systemFontOfSize(size);
+
 	initTraits(style, systemFont);
 	handle.retain();
 }
 
 private void initTraits(int style, NSFont systemFont) {
 	NSFontManager manager = NSFontManager.sharedFontManager();
-	if (handle != null && (manager.traitsOfFont(handle) & OS.NSBoldFontMask) == 0 && ((style & SWT.BOLD) != 0)) {
-		handle = manager.convertFont(handle, OS.NSBoldFontMask);
-	}
-	if (handle != null && (manager.traitsOfFont(handle) & OS.NSItalicFontMask) == 0 && ((style & SWT.ITALIC) != 0)) {
-		handle = manager.convertFont(handle, OS.NSItalicFontMask);
-	}
 	if (handle == null) {
 		handle = systemFont;
 	}

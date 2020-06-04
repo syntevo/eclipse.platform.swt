@@ -55,6 +55,11 @@ public NSString fontName() {
 	return result != 0 ? new NSString(result) : null;
 }
 
+public static NSFont fontWithDescriptor(NSFontDescriptor fontDescriptor, double fontSize) {
+	long result = OS.objc_msgSend(OS.class_NSFont, OS.sel_fontWithDescriptor_size_, fontDescriptor != null ? fontDescriptor.id : 0, fontSize);
+	return result != 0 ? new NSFont(result) : null;
+}
+
 public static NSFont fontWithName(NSString fontName, double fontSize) {
 	long result = OS.objc_msgSend(OS.class_NSFont, OS.sel_fontWithName_size_, fontName != null ? fontName.id : 0, fontSize);
 	return result != 0 ? new NSFont(result) : null;
