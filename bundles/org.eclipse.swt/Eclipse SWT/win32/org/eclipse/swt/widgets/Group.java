@@ -282,6 +282,16 @@ public String getText () {
 }
 
 @Override
+boolean isUseWsBorder () {
+	/*
+	 * WS_BORDER gives a nice thin border. However, 'Group' had 3D border for
+	 * ages. I doubt anyone uses border with it, yet still, let's maintain
+	 * compatibility.
+	 */
+	return false;
+}
+
+@Override
 boolean mnemonicHit (char key) {
 	return setFocus ();
 }

@@ -1813,37 +1813,6 @@ LRESULT WM_UPDATEUISTATE (long wParam, long lParam) {
 }
 
 @Override
-LRESULT wmNCPaint (long hwnd, long wParam, long lParam) {
-	LRESULT result = super.wmNCPaint (hwnd, wParam, lParam);
-	if (result != null) return result;
-	long borderHandle = borderHandle ();
-	if ((state & CANVAS) != 0 || (hwnd == borderHandle && handle != borderHandle)) {
-		if (OS.IsAppThemed ()) {
-			int bits1 = OS.GetWindowLong (hwnd, OS.GWL_EXSTYLE);
-			if ((bits1 & OS.WS_EX_CLIENTEDGE) != 0) {
-				long code = 0;
-				int bits2 = OS.GetWindowLong (hwnd, OS.GWL_STYLE);
-				if ((bits2 & (OS.WS_HSCROLL | OS.WS_VSCROLL)) != 0) {
-					code = callWindowProc (hwnd, OS.WM_NCPAINT, wParam, lParam);
-				}
-				long hDC = OS.GetWindowDC (hwnd);
-				RECT rect = new RECT ();
-				OS.GetWindowRect (hwnd, rect);
-				rect.right -= rect.left;
-				rect.bottom -= rect.top;
-				rect.left = rect.top = 0;
-				int border = OS.GetSystemMetrics (OS.SM_CXEDGE);
-				OS.ExcludeClipRect (hDC, border, border, rect.right - border, rect.bottom - border);
-				OS.DrawThemeBackground (display.hEditTheme (), hDC, OS.EP_EDITTEXT, OS.ETS_NORMAL, rect, null);
-				OS.ReleaseDC (hwnd, hDC);
-				return new LRESULT (code);
-			}
-		}
-	}
-	return result;
-}
-
-@Override
 LRESULT wmNotify (NMHDR hdr, long wParam, long lParam) {
 	switch (hdr.code) {
 		/*

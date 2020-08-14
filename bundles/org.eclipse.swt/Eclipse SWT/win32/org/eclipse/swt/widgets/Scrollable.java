@@ -133,6 +133,17 @@ Rectangle computeTrimInPixels (int x, int y, int width, int height) {
 	OS.SetRect (rect, x, y, x + width, y + height);
 	int bits1 = OS.GetWindowLong (scrolledHandle, OS.GWL_STYLE);
 	int bits2 = OS.GetWindowLong (scrolledHandle, OS.GWL_EXSTYLE);
+
+	/*
+	 * For compatibility reasons, isUseWsBorder() shall not change layout size
+	 * compared to previously used WS_EX_CLIENTEDGE. Removing this workaround
+	 * saves screen space, but could break some layouts.
+	 */
+	if ((bits1 & OS.WS_BORDER) != 0) {
+		bits1 &= ~OS.WS_BORDER;
+		bits2 |= OS.WS_EX_CLIENTEDGE;
+	}
+
 	OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 	if (horizontalBar != null) rect.bottom += OS.GetSystemMetrics (OS.SM_CYHSCROLL);
 	if (verticalBar != null) rect.right += OS.GetSystemMetrics (OS.SM_CXVSCROLL);

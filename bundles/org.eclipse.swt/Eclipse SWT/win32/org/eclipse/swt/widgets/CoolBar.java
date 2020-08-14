@@ -677,6 +677,12 @@ public int indexOf (CoolItem item) {
 	return (int)OS.SendMessage (handle, OS.RB_IDTOINDEX, item.id, 0);
 }
 
+@Override
+boolean isUseWsBorder () {
+	/* CoolBar with WS_BORDER has no border at all */
+	return false;
+}
+
 void resizeToPreferredWidth (int index) {
 	/*
 	* Bug in Windows.  When RB_GETBANDBORDERS is sent

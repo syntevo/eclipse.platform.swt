@@ -787,16 +787,6 @@ public void clearSelection () {
 		rect.y -= 1;
 		rect.width += 2;
 		rect.height += 2;
-
-		// When WS_BORDER is used instead of WS_EX_CLIENTEDGE, compensate the size difference
-		if (isUseWsBorder ()) {
-			int dx = OS.GetSystemMetrics (OS.SM_CXEDGE) - OS.GetSystemMetrics (OS.SM_CXBORDER);
-			int dy = OS.GetSystemMetrics (OS.SM_CYEDGE) - OS.GetSystemMetrics (OS.SM_CYBORDER);
-			rect.x -= dx;
-			rect.y -= dy;
-			rect.width += 2*dx;
-			rect.height += 2*dy;
-		}
 	}
 
 	return rect;
@@ -1642,11 +1632,6 @@ public void insert (String string) {
 		super.updateTextDirection (AUTO_TEXT_DIRECTION);
 	}
 	applySegments ();
-}
-
-@Override
-boolean isUseWsBorder () {
-	return super.isUseWsBorder () || ((display != null) && display.useWsBorderText);
 }
 
 /**

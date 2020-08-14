@@ -502,6 +502,16 @@ public int indexOf (TabItem item) {
 }
 
 @Override
+boolean isUseWsBorder () {
+	/*
+	 * WS_BORDER gives a nice thin border. However, 'TabFolder' had 3D border for
+	 * ages. I doubt anyone uses border with it, yet still, let's maintain
+	 * compatibility.
+	 */
+	 return false;
+}
+
+@Override
 Point minimumSize (int wHint, int hHint, boolean flushCache) {
 	int width = 0, height = 0;
 	for (Control child : _getChildren ()) {

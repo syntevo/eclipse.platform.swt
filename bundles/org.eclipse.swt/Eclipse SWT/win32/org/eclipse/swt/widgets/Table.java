@@ -3001,11 +3001,6 @@ public boolean isSelected (int index) {
 }
 
 @Override
-boolean isUseWsBorder () {
-	return super.isUseWsBorder () || ((display != null) && display.useWsBorderTable);
-}
-
-@Override
 void register () {
 	super.register ();
 	if (hwndHeader != 0) display.addControl (hwndHeader, this);

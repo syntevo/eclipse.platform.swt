@@ -662,6 +662,15 @@ public int indexOf (ToolItem item) {
 	return (int)OS.SendMessage (handle, OS.TB_COMMANDTOINDEX, item.id, 0);
 }
 
+@Override
+boolean isUseWsBorder () {
+	/*
+	 * WS_BORDER gives a nice thin border.
+	 * However, 'ExpandBar' had 3D border for ages.
+	 */
+	return false;
+}
+
 void layoutItems () {
 	/*
 	* Feature in Windows.  When a tool bar has the style

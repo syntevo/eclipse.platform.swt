@@ -2123,10 +2123,6 @@ LRESULT wmMouseHWheel (long hwnd, long wParam, long lParam) {
 	return sendMouseWheelEvent(SWT.MouseHorizontalWheel, hwnd, wParam, lParam) ? null : LRESULT.ZERO;
 }
 
-LRESULT wmNCPaint (long hwnd, long wParam, long lParam) {
-	return null;
-}
-
 LRESULT wmPaint (long hwnd, long wParam, long lParam) {
 
 	/* Exit early - don't draw the background */
@@ -2164,33 +2160,6 @@ LRESULT wmPaint (long hwnd, long wParam, long lParam) {
 	OS.DeleteObject (rgn);
 	if (result == 0) return LRESULT.ZERO;
 	return new LRESULT (result);
-}
-
-LRESULT wmPrint (long hwnd, long wParam, long lParam) {
-	/*
-	* Bug in Windows.  When WM_PRINT is used to print the contents
-	* of a control that has WS_EX_CLIENTEDGE, the old 3D border is
-	* drawn instead of the theme border.  The fix is to call the
-	* default window proc and then draw the theme border on top.
-	*/
-	if ((lParam & OS.PRF_NONCLIENT) != 0) {
-		if (OS.IsAppThemed ()) {
-			int bits = OS.GetWindowLong (hwnd, OS.GWL_EXSTYLE);
-			if ((bits & OS.WS_EX_CLIENTEDGE) != 0) {
-				long code = callWindowProc (hwnd, OS.WM_PRINT, wParam, lParam);
-				RECT rect = new RECT ();
-				OS.GetWindowRect (hwnd, rect);
-				rect.right -= rect.left;
-				rect.bottom -= rect.top;
-				rect.left = rect.top = 0;
-				int border = OS.GetSystemMetrics (OS.SM_CXEDGE);
-				OS.ExcludeClipRect (wParam, border, border, rect.right - border, rect.bottom - border);
-				OS.DrawThemeBackground (display.hEditTheme (), wParam, OS.EP_EDITTEXT, OS.ETS_NORMAL, rect, null);
-				return new LRESULT (code);
-			}
-		}
-	}
-	return null;
 }
 
 LRESULT wmRButtonDblClk (long hwnd, long wParam, long lParam) {

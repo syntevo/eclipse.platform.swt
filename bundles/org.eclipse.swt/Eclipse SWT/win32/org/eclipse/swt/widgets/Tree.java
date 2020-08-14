@@ -3830,11 +3830,6 @@ boolean isItemSelected (NMTVCUSTOMDRAW nmcd) {
 	return selected;
 }
 
-@Override
-boolean isUseWsBorder () {
-	return true;
-}
-
 void redrawSelection () {
 	if ((style & SWT.SINGLE) != 0) {
 		long hItem = OS.SendMessage (handle, OS.TVM_GETNEXTITEM, OS.TVGN_CARET, 0);
@@ -5817,16 +5812,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 				setResizeChildren (true);
 				updateScrollBar ();
 				return code;
-			}
-			case OS.WM_NCPAINT: {
-				LRESULT result = wmNCPaint (hwnd, wParam, lParam);
-				if (result != null) return result.value;
-				break;
-			}
-			case OS.WM_PRINT: {
-				LRESULT result = wmPrint (hwnd, wParam, lParam);
-				if (result != null) return result.value;
-				break;
 			}
 			case OS.WM_COMMAND:
 			case OS.WM_NOTIFY:

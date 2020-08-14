@@ -449,6 +449,12 @@ public int getYear () {
 }
 
 @Override
+boolean isUseWsBorder () {
+	/* DateTime with WS_BORDER has an ugly thick border */
+	return false;
+}
+
+@Override
 void releaseWidget () {
 	super.releaseWidget ();
 	lastSystemTime = null;

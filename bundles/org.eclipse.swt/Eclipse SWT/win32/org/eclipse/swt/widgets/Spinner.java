@@ -607,11 +607,6 @@ public int getTextLimit () {
 	return (int)OS.SendMessage (hwndText, OS.EM_GETLIMITTEXT, 0, 0) & 0x7FFFFFFF;
 }
 
-@Override
-boolean isUseWsBorder () {
-	return true;
-}
-
 /**
  * Pastes text from clipboard.
  * <p>
@@ -1172,7 +1167,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 
 			/* Paint messages */
 			case OS.WM_PAINT:			result = wmPaint (hwnd, wParam, lParam); break;
-			case OS.WM_PRINT:			result = wmPrint (hwnd, wParam, lParam); break;
 
 			/* Menu messages */
 			case OS.WM_CONTEXTMENU:		result = wmContextMenu (hwnd, wParam, lParam); break;

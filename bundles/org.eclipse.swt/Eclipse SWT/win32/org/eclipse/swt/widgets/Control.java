@@ -2021,11 +2021,11 @@ public boolean isVisible () {
 }
 
 /**
- * Custom theming: whether to use WS_BORDER instead of WS_EX_CLIENTEDGE for SWT.BORDER
+ * Whether to use WS_BORDER (default) instead of WS_EX_CLIENTEDGE for SWT.BORDER
  * Intended for override.
  */
 boolean isUseWsBorder () {
-	return (display != null) && display.useWsBorderAll;
+	return true;
 }
 
 @Override
@@ -4811,7 +4811,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		case OS.WM_NCCALCSIZE:			result = WM_NCCALCSIZE (wParam, lParam); break;
 		case OS.WM_NCHITTEST:			result = WM_NCHITTEST (wParam, lParam); break;
 		case OS.WM_NCLBUTTONDOWN:		result = WM_NCLBUTTONDOWN (wParam, lParam); break;
-		case OS.WM_NCPAINT:				result = WM_NCPAINT (wParam, lParam); break;
 		case OS.WM_NOTIFY:				result = WM_NOTIFY (wParam, lParam); break;
 		case OS.WM_PAINT:				result = WM_PAINT (wParam, lParam); break;
 		case OS.WM_ENTERMENULOOP:		result = WM_ENTERMENULOOP (wParam, lParam); break;
@@ -4820,7 +4819,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		case OS.WM_EXITSIZEMOVE:		result = WM_EXITSIZEMOVE (wParam, lParam); break;
 		case OS.WM_PARENTNOTIFY:		result = WM_PARENTNOTIFY (wParam, lParam); break;
 		case OS.WM_PASTE:				result = WM_PASTE (wParam, lParam); break;
-		case OS.WM_PRINT:				result = WM_PRINT (wParam, lParam); break;
 		case OS.WM_PRINTCLIENT:			result = WM_PRINTCLIENT (wParam, lParam); break;
 		case OS.WM_QUERYENDSESSION:		result = WM_QUERYENDSESSION (wParam, lParam); break;
 		case OS.WM_QUERYOPEN:			result = WM_QUERYOPEN (wParam, lParam); break;
@@ -5371,10 +5369,6 @@ LRESULT WM_NCLBUTTONDOWN (long wParam, long lParam) {
 	return null;
 }
 
-LRESULT WM_NCPAINT (long wParam, long lParam) {
-	return wmNCPaint (handle, wParam, lParam);
-}
-
 LRESULT WM_NOTIFY (long wParam, long lParam) {
 	NMHDR hdr = new NMHDR ();
 	OS.MoveMemory (hdr, lParam, NMHDR.sizeof);
@@ -5392,10 +5386,6 @@ LRESULT WM_PARENTNOTIFY (long wParam, long lParam) {
 
 LRESULT WM_PASTE (long wParam, long lParam) {
 	return null;
-}
-
-LRESULT WM_PRINT (long wParam, long lParam) {
-	return wmPrint (handle, wParam, lParam);
 }
 
 LRESULT WM_PRINTCLIENT (long wParam, long lParam) {

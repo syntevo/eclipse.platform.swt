@@ -433,6 +433,15 @@ boolean isAppThemed () {
 	return OS.IsAppThemed ();
 }
 
+@Override
+boolean isUseWsBorder () {
+	/*
+	 * WS_BORDER gives a nice thin border.
+	 * However, 'ExpandBar' had 3D border for ages.
+	 */
+	return false;
+}
+
 void layoutItems (int index, boolean setScrollbar) {
 	if (index < itemCount) {
 		int y = spacing - yCurrentScroll;
