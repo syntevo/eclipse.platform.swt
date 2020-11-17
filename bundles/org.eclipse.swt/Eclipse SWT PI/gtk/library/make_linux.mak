@@ -17,7 +17,7 @@
 # SWT debug flags for various SWT components.
 #SWT_WEBKIT_DEBUG = -DWEBKIT_DEBUG
 
-#SWT_LIB_DEBUG=1     # to debug glue code in /bundles/org.eclipse.swt/bin/library. E.g os_custom.c:swt_fixed_forall(..)
+SWT_LIB_DEBUG=1     # to debug glue code in /bundles/org.eclipse.swt/bin/library. E.g os_custom.c:swt_fixed_forall(..)
 # Can be set via environment like: export SWT_LIB_DEBUG=1
 ifdef SWT_LIB_DEBUG
 SWT_DEBUG = -O0 -g3 -ggdb3
