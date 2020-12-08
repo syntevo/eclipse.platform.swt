@@ -618,6 +618,7 @@ public enum Selector {
 	, sel_knobProportion("knobProportion")
 	, sel_knobThickness("knobThickness")
 	, sel_lastPathComponent("lastPathComponent")
+	, sel_layer("layer")
 	, sel_layoutManager("layoutManager")
 	, sel_leading("leading")
 	, sel_length("length")

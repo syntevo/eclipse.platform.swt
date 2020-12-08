@@ -3651,6 +3651,37 @@ void updateCursorRects (boolean enabled) {
 	updateCursorRects (enabled, headerView);
 }
 
+void updateHeaderVisibility() {
+	if (headerView == null) return;
+
+	/*
+	 * Bug in macOS: During 'Control.setParent()',
+	 * '-[NSView _recursiveLostHiddenAncestor]' is called before
+	 * 'NSView._superview' is updated. As a result,
+	 * '-[NSView _updateLayerHiddenFromView]' incorrectly makes layer
+	 * invisible if *old* parent is invisible, even if new parent is
+	 * visible. This causes Table's header to be invisible. The
+	 * workaround is to force layer to be visible.
+	 */
+
+	/*
+	 * Bug only occurs on macOS 10.14 and 10.15, no longer happens
+	 * on macOS 11.0.
+	 */
+	if (OS.VERSION < OS.VERSION(10, 14, 0)) return;
+	if (OS.VERSION > OS.VERSION(10, 16, 0)) return;
+
+	 /*
+	 * Workaround is only needed for visible Tables, because macOS
+	 * doesn't have a bug on 'Control.setVisible()' path.
+	 */
+	if (headerView.isHiddenOrHasHiddenAncestor()) return;
+
+	final long layer = OS.objc_msgSend(headerView.id, OS.sel_layer);
+	if (layer == 0) return;
+	OS.objc_msgSend(layer, OS.sel_setHidden_, false);
+}
+
 void updateRowCount() {
 	NSTableView widget = (NSTableView)view;
 	setRedraw(false);
@@ -3659,6 +3690,12 @@ void updateRowCount() {
 	ignoreSelect = false;
 	widget.tile();
 	setRedraw(true);
+}
+
+@Override
+void viewDidMoveToWindow(long id, long sel) {
+	if ((headerView != null) && (id == headerView.id))
+		updateHeaderVisibility();
 }
 
 }
