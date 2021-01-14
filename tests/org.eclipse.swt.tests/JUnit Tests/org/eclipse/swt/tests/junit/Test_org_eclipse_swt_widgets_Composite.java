@@ -93,28 +93,32 @@ public void test_setVisibility_and_sizing() {
 	// Note: This test needs it's own shell/composite because original bug is only
 	// reproduced if composite has style SWT.BORDER. (the setup() creates one without border).
 	Shell visibilityShell = new Shell();
-	visibilityShell.setSize(500, 500);
-	Composite visibilityComposite = new Composite(visibilityShell, SWT.BORDER);
+	try {
+		visibilityShell.setSize(500, 500);
+		Composite visibilityComposite = new Composite(visibilityShell, SWT.BORDER);
 
-	visibilityShell.setLayout(new FillLayout());
-	visibilityComposite.setLayout(new FillLayout());
+		visibilityShell.setLayout(new FillLayout());
+		visibilityComposite.setLayout(new FillLayout());
 
-	Button button = new Button(visibilityComposite, SWT.PUSH);
-	button.setText("Test Button");
+		Button button = new Button(visibilityComposite, SWT.PUSH);
+		button.setText("Test Button");
 
-	visibilityComposite.setVisible(false);
-	visibilityComposite.setVisible(true);
+		visibilityComposite.setVisible(false);
+		visibilityComposite.setVisible(true);
 
-	visibilityShell.layout();
+		visibilityShell.layout();
 
-// 	  // Useful for troubleshooting:											   // should be like:
-//    System.out.println("Shell size : " + visibilityShell.getSize().toString());  // >> 500,500
-//    System.out.println("SComp size : " + visibilityComposite.getSize().toString()); // >> 500, 463
-//    System.out.println("Button size: " + button.getSize().toString());			  // >> 500,463
+		// 	  // Useful for troubleshooting:											   // should be like:
+		//    System.out.println("Shell size : " + visibilityShell.getSize().toString());  // >> 500,500
+		//    System.out.println("SComp size : " + visibilityComposite.getSize().toString()); // >> 500, 463
+		//    System.out.println("Button size: " + button.getSize().toString());			  // >> 500,463
 
-	Point compSize = visibilityComposite.getSize();
-	assertTrue("Composite should be aprox 500 by 463 px, but instead it is: " + compSize.toString(),
+		Point compSize = visibilityComposite.getSize();
+		assertTrue("Composite should be aprox 500 by 463 px, but instead it is: " + compSize.toString(),
 			compSize.x > 100 && compSize.y > 100); // If this is 1x1 or 0x0 then there was some fault in layout.
+	} finally {
+		visibilityShell.dispose();
+	}
 }
 
 @Test
