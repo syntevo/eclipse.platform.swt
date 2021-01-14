@@ -4264,6 +4264,8 @@ long gtk_preedit_changed (long imcontext) {
 	return 0;
 }
 
+static int num_gtk_realize = 0;
+
 @Override
 long gtk_realize (long widget) {
 	if (!GTK.GTK4) {
@@ -4271,6 +4273,7 @@ long gtk_realize (long widget) {
 		if (imHandle != 0) {
 			long window = gtk_widget_get_window (paintHandle ());
 			GTK.gtk_im_context_set_client_window (imHandle, window);
+			System.out.println((num_gtk_realize++) + " = Control.gtk_realize");
 		}
 	}
 	if (backgroundImage != null) {
@@ -4384,11 +4387,16 @@ long gtk_style_updated (long widget) {
 	return 0;
 }
 
+static int num_gtk_unrealize = 0;
+
 @Override
 long gtk_unrealize (long widget) {
 	if (!GTK.GTK4) {
 		long imHandle = imHandle ();
-		if (imHandle != 0) GTK.gtk_im_context_set_client_window (imHandle, 0);
+		if (imHandle != 0) {
+			GTK.gtk_im_context_set_client_window (imHandle, 0);
+			System.out.println((num_gtk_unrealize++) + " = Control.gtk_unrealize");
+		}
 	}
 	return 0;
 }

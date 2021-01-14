@@ -313,6 +313,8 @@ int applyThemeBackground () {
 	return (backgroundAlpha == 0 || (style & (SWT.H_SCROLL | SWT.V_SCROLL)) == 0) ? 1 : 0;
 }
 
+static int num_createHandle = 0;
+
 void createHandle (int index, boolean fixed, boolean scrolled) {
 	if (scrolled) {
 		if (fixed) {
@@ -354,6 +356,7 @@ void createHandle (int index, boolean fixed, boolean scrolled) {
 			if (display.getData (NO_INPUT_METHOD) == null) {
 				imHandle = GTK.gtk_im_multicontext_new ();
 				if (imHandle == 0) error (SWT.ERROR_NO_HANDLES);
+				System.out.println((num_createHandle++) + " = Composite.createHandle");
 			}
 		}
 	}
@@ -1571,10 +1574,15 @@ void releaseHandle () {
 	socketHandle = embeddedHandle = 0;
 }
 
+static int num_releaseWidget = 0;
+
 @Override
 void releaseWidget () {
 	super.releaseWidget ();
-	if (imHandle != 0) OS.g_object_unref (imHandle);
+	if (imHandle != 0) {
+		OS.g_object_unref (imHandle);
+		System.out.println((num_releaseWidget++) + " = Composite.releaseWidget");
+	}
 	imHandle = 0;
 	layout = null;
 	tabList = null;
