@@ -38,8 +38,10 @@ public class Bug569647_GestureMemoryLeaks {
 		btnTest.setText("Create Shells");
 		btnTest.addListener(SWT.Selection, event -> {
 			System.out.format("Creating Shells...");
-			for (int i = 0; i < 3000; i++) {
+			for (int i = 0; i < 10; i++) {
 				Shell item = new Shell(display);
+				Text text = new Text(item, 0);
+				text.setText("Test");
 				item.dispose();
 			}
 			System.gc();
