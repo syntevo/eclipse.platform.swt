@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -108,6 +108,8 @@ typedef enum {
 	CGContextSetLineJoin_FUNC,
 	CGContextSetLineWidth_FUNC,
 	CGContextSetMiterLimit_FUNC,
+	CGContextSetTextMatrix_FUNC,
+	CGContextSetTextPosition_FUNC,
 	CGContextStrokePath_FUNC,
 	CGContextTranslateCTM_FUNC,
 	CGDataProviderCreateWithData_FUNC,
@@ -138,6 +140,8 @@ typedef enum {
 	CGSize_1sizeof_FUNC,
 	CPSSetProcessName_FUNC,
 	CTFontManagerRegisterFontsForURL_FUNC,
+	CTLineCreateWithAttributedString_FUNC,
+	CTLineDraw_FUNC,
 	CancelMenuTracking_FUNC,
 	CloseRgn_FUNC,
 	CopyRgn_FUNC,

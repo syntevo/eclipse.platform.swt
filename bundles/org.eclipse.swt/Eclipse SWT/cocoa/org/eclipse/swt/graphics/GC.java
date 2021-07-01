@@ -74,6 +74,10 @@ public final class GC extends Resource {
 	 */
 	public NSGraphicsContext handle;
 
+	static final boolean NO_REALLOC_LAYOUTMANAGER = true;
+	static final boolean NO_REALLOC_TEXTCONTAINER = true;
+	static final boolean NO_REALLOC_TEXTSTORAGE   = true;
+
 	Drawable drawable;
 	GCData data;
 	GCTextData.Cache textDataCache = new GCTextData.Cache(20);
@@ -833,22 +837,32 @@ static long createCGPathRef(NSBezierPath nsPath) {
 }
 
 void createLayout () {
-	NSSize size = new NSSize();
-	size.width = OS.MAX_TEXT_CONTAINER_SIZE;
-	size.height = OS.MAX_TEXT_CONTAINER_SIZE;
-	NSTextStorage textStorage = (NSTextStorage)new NSTextStorage().alloc().init();
-	NSLayoutManager layoutManager = (NSLayoutManager)new NSLayoutManager().alloc().init();
-	layoutManager.setBackgroundLayoutEnabled(NSThread.isMainThread());
-	NSTextContainer textContainer = (NSTextContainer)new NSTextContainer().alloc();
-	textContainer = textContainer.initWithContainerSize(size);
-	textContainer.setLineFragmentPadding(0);
-	textStorage.addLayoutManager(layoutManager);
-	layoutManager.addTextContainer(textContainer);
-	layoutManager.release();
-	textContainer.release();
-	data.textContainer = textContainer;
-	data.layoutManager = layoutManager;
-	data.textStorage = textStorage;
+	boolean newLayoutManager = (data.layoutManager == null);
+	boolean newTextContainer = (data.textContainer == null);
+	boolean newTextStorage   = (data.textStorage == null);
+
+	if (newLayoutManager) {
+		data.layoutManager = (NSLayoutManager) new NSLayoutManager ().alloc ().init ();
+		data.layoutManager.setBackgroundLayoutEnabled (NSThread.isMainThread ());
+	}
+
+	if (newTextContainer) {
+		data.textContainer = (NSTextContainer) new NSTextContainer ().alloc ();
+		NSSize size = new NSSize ();
+		size.width = OS.MAX_TEXT_CONTAINER_SIZE;
+		size.height = OS.MAX_TEXT_CONTAINER_SIZE;
+		data.textContainer = data.textContainer.initWithContainerSize (size);
+		data.textContainer.setLineFragmentPadding (0);
+	}
+
+	if (newTextStorage)
+		data.textStorage = (NSTextStorage) new NSTextStorage ().alloc ().init ();
+
+	if (newLayoutManager || newTextContainer)
+		data.layoutManager.addTextContainer(data.textContainer);
+
+	if (newTextStorage || newLayoutManager)
+		data.textStorage.addLayoutManager(data.layoutManager);
 }
 
 NSAttributedString createString(String string, int flags, boolean draw) {
@@ -986,10 +1000,28 @@ void destroy() {
 		image.memGC = null;
 		image.createAlpha();
 	}
-	if (data.textStorage != null) data.textStorage.release();
-	data.textStorage = null;
-	data.layoutManager = null;
-	data.textContainer = null;
+
+	if ((data.layoutManager != null) && (data.textContainer != null) && (NO_REALLOC_LAYOUTMANAGER ^ NO_REALLOC_TEXTCONTAINER))
+		data.layoutManager.removeTextContainerAtIndex (0);
+
+	if ((data.textStorage != null) && (data.layoutManager != null) && (NO_REALLOC_TEXTSTORAGE ^ NO_REALLOC_LAYOUTMANAGER))
+		data.textStorage.removeLayoutManager(data.layoutManager);
+
+	if ((data.textStorage != null) && !NO_REALLOC_TEXTSTORAGE) {
+		data.textStorage.release();
+		data.textStorage = null;
+	}
+
+	if ((data.layoutManager != null) && !NO_REALLOC_LAYOUTMANAGER) {
+		data.layoutManager.release();
+		data.layoutManager = null;
+	}
+
+	if ((data.textContainer != null) && !NO_REALLOC_TEXTCONTAINER) {
+		data.textContainer.release();
+		data.textContainer = null;
+	}
+
 	if (data.fg != null) data.fg.release();
 	if (data.bg != null) data.bg.release();
 	if (data.path != null) data.path.release();
@@ -1817,8 +1849,47 @@ private GCTextData getTextData(String string) {
 	return data;
 }
 
-private void doDrawText(String string, int x, int y, int flags) {
-	if (data.textStorage == null) createLayout();
+static NSMutableString textFieldString = NSMutableString.string();
+static NSTextFieldCell textFieldCell = new NSTextFieldCell();
+static {
+	textFieldCell.alloc();
+	textFieldCell.initTextCell(textFieldString);
+}
+
+private void doDrawText_TextFieldCell(String string, int x, int y) {
+	NSRect rect = new NSRect();
+	rect.x = x;
+	rect.y = y;
+	rect.height = 20; // @@@@ FIXME
+	rect.width = 120; // @@@@ FIXME
+
+	textFieldString.setString(NSString.stringWith(string));
+	// textFieldCell.drawInteriorWithFrame(rect, @@@@);
+}
+
+private void doDrawText_CTLineDraw(String string, int x, int y, int flags) {
+	long cgContext = handle.graphicsPort();
+
+	// FIXME: Handle flipped views, such as in Tooltip
+	//	OS.CGContextSetTextMatrix(cgContext, OS.CGAffineTransformIdentity());
+	//	OS.CGContextTranslateCTM(cgContext, 0, 20);	// @@@@ fix '20' to actual view height
+	//	OS.CGContextScaleCTM(cgContext, 1.0, -1.0);
+
+	// FIXME: Handle SWT.DRAW_TRANSPARENT
+
+	NSAttributedString attribStr = createString(string, flags, true);
+	long ctLineRef = OS.CTLineCreateWithAttributedString(attribStr.id);
+
+	// FIXME: Use matrix transform instead of hacking y coord
+	OS.CGContextSetTextPosition(cgContext, x, y + 17);
+	OS.CTLineDraw(ctLineRef, cgContext);
+
+	OS.CFRelease(ctLineRef);
+	attribStr.release();
+}
+
+private void doDrawText_orig(String string, int x, int y, int flags) {
+	createLayout();
 	NSAttributedString attribStr = createString(string, flags, true);
 	data.textStorage.setAttributedString(attribStr);
 	attribStr.release();
@@ -1838,7 +1909,7 @@ private void doDrawText(String string, int x, int y, int flags) {
 		} else {
 			NSColor bg = data.bg;
 			if (bg == null) {
-				double [] color = data.background;
+				double[] color = data.background;
 				bg = data.bg = NSColor.colorWithDeviceRed(color[0], color[1], color[2], data.alpha / 255f);
 				bg.retain();
 			}
@@ -1847,6 +1918,11 @@ private void doDrawText(String string, int x, int y, int flags) {
 		}
 	}
 	data.layoutManager.drawGlyphsForGlyphRange(range, pt);
+}
+
+private void doDrawText(String string, int x, int y, int flags) {
+	doDrawText_CTLineDraw(string, x, y, flags);
+	// doDrawText_orig(string, x, y, flags);
 }
 
 /**
@@ -2696,7 +2772,7 @@ public FontMetrics getFontMetrics() {
 	if (handle == null) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
 	NSAutoreleasePool pool = checkGC(FONT);
 	try {
-		if (data.textStorage == null) createLayout();
+		createLayout();
 
 		if (data.font.metrics == null) {
 			String s = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";  //$NON-NLS-1$
@@ -2707,12 +2783,11 @@ public FontMetrics getFontMetrics() {
 			data.textStorage.setAttributedString(attribStr);
 			attribStr.release();
 			dict.release();
-			NSLayoutManager layoutManager = data.layoutManager;
-			layoutManager.glyphRangeForTextContainer(data.textContainer);
-			NSRect rect = layoutManager.usedRectForTextContainer(data.textContainer);
+			data.layoutManager.glyphRangeForTextContainer(data.textContainer);
+			NSRect rect = data.layoutManager.usedRectForTextContainer(data.textContainer);
 			double avgWidth = Math.ceil(rect.width) / s.length();
-			int ascent = (int)layoutManager.defaultBaselineOffsetForFont(data.font.handle);
-			int height = (int)layoutManager.defaultLineHeightForFont(data.font.handle);
+			int ascent = (int)data.layoutManager.defaultBaselineOffsetForFont(data.font.handle);
+			int height = (int)data.layoutManager.defaultLineHeightForFont(data.font.handle);
 			data.font.metrics = FontMetrics.cocoa_new(ascent, height - ascent, avgWidth, 0, height);
 		}
 
@@ -4130,7 +4205,7 @@ public Point textExtent(String string, int flags) {
 	NSAutoreleasePool pool = checkGC(FONT);
 	try {
 		int length = string.length();
-		if (data.textStorage == null) createLayout();
+		createLayout();
 		NSAttributedString attribStr = createString(length == 0 ? " " : string, flags, false); //$NON-NLS-1$
 		data.textStorage.setAttributedString(attribStr);
 		attribStr.release();

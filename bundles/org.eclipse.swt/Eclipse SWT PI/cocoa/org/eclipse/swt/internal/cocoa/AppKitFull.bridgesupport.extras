@@ -626,6 +626,10 @@
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
+		<method selector="initTextCell:" swt_gen="true">
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
 		<method selector="isEnabled" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
@@ -1638,6 +1642,10 @@
 		</method>
 		<method selector="removeTemporaryAttribute:forCharacterRange:" swt_gen="true">
 			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="removeTextContainerAtIndex:" swt_gen="true">
 			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
@@ -3355,6 +3363,10 @@
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="paragraphs" swt_gen="true">
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="removeLayoutManager:" swt_gen="true">
+			<arg swt_gen="true"></arg>
 			<retval swt_gen="true"></retval>
 		</method>
 	</class>

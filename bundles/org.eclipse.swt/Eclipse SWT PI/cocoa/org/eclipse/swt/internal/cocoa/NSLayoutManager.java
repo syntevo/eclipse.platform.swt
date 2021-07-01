@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -121,6 +121,10 @@ public long rectArrayForGlyphRange(NSRange glyphRange, NSRange selGlyphRange, NS
 
 public void removeTemporaryAttribute(NSString attrName, NSRange charRange) {
 	OS.objc_msgSend(this.id, OS.sel_removeTemporaryAttribute_forCharacterRange_, attrName != null ? attrName.id : 0, charRange);
+}
+
+public void removeTextContainerAtIndex(long index) {
+	OS.objc_msgSend(this.id, OS.sel_removeTextContainerAtIndex_, index);
 }
 
 public void setBackgroundLayoutEnabled(boolean backgroundLayoutEnabled) {

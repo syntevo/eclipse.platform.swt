@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -34,6 +34,10 @@ public void addLayoutManager(NSLayoutManager aLayoutManager) {
 public NSArray paragraphs() {
 	long result = OS.objc_msgSend(this.id, OS.sel_paragraphs);
 	return result != 0 ? new NSArray(result) : null;
+}
+
+public void removeLayoutManager(NSLayoutManager aLayoutManager) {
+	OS.objc_msgSend(this.id, OS.sel_removeLayoutManager_, aLayoutManager != null ? aLayoutManager.id : 0);
 }
 
 }

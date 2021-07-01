@@ -1401,6 +1401,30 @@ JNIEXPORT void JNICALL OS_NATIVE(CGContextSetMiterLimit)
 }
 #endif
 
+#ifndef NO_CGContextSetTextMatrix
+JNIEXPORT void JNICALL OS_NATIVE(CGContextSetTextMatrix)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1)
+{
+	CGAffineTransform _arg1, *lparg1=NULL;
+	OS_NATIVE_ENTER(env, that, CGContextSetTextMatrix_FUNC);
+	if (arg1) if ((lparg1 = getCGAffineTransformFields(env, arg1, &_arg1)) == NULL) goto fail;
+	CGContextSetTextMatrix((CGContextRef)arg0, *lparg1);
+fail:
+	if (arg1 && lparg1) setCGAffineTransformFields(env, arg1, lparg1);
+	OS_NATIVE_EXIT(env, that, CGContextSetTextMatrix_FUNC);
+}
+#endif
+
+#ifndef NO_CGContextSetTextPosition
+JNIEXPORT void JNICALL OS_NATIVE(CGContextSetTextPosition)
+	(JNIEnv *env, jclass that, jlong arg0, jdouble arg1, jdouble arg2)
+{
+	OS_NATIVE_ENTER(env, that, CGContextSetTextPosition_FUNC);
+	CGContextSetTextPosition((CGContextRef)arg0, (CGFloat)arg1, (CGFloat)arg2);
+	OS_NATIVE_EXIT(env, that, CGContextSetTextPosition_FUNC);
+}
+#endif
+
 #ifndef NO_CGContextStrokePath
 JNIEXPORT void JNICALL OS_NATIVE(CGContextStrokePath)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -1736,6 +1760,28 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(CTFontManagerRegisterFontsForURL)
 	rc = (jboolean)CTFontManagerRegisterFontsForURL((CFURLRef)arg0, (CTFontManagerScope)arg1, (CFErrorRef*)arg2);
 	OS_NATIVE_EXIT(env, that, CTFontManagerRegisterFontsForURL_FUNC);
 	return rc;
+}
+#endif
+
+#ifndef NO_CTLineCreateWithAttributedString
+JNIEXPORT jlong JNICALL OS_NATIVE(CTLineCreateWithAttributedString)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, CTLineCreateWithAttributedString_FUNC);
+	rc = (jlong)CTLineCreateWithAttributedString((CFAttributedStringRef)arg0);
+	OS_NATIVE_EXIT(env, that, CTLineCreateWithAttributedString_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_CTLineDraw
+JNIEXPORT void JNICALL OS_NATIVE(CTLineDraw)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
+{
+	OS_NATIVE_ENTER(env, that, CTLineDraw_FUNC);
+	CTLineDraw((CTLineRef)arg0, (CGContextRef)arg1);
+	OS_NATIVE_EXIT(env, that, CTLineDraw_FUNC);
 }
 #endif
 

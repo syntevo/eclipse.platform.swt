@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -25,6 +25,10 @@ public NSAutoreleasePool(long id) {
 
 public NSAutoreleasePool(id id) {
 	super(id);
+}
+
+public static void showPools() {
+	OS.objc_msgSend(OS.class_NSAutoreleasePool, OS.sel_showPools);
 }
 
 }

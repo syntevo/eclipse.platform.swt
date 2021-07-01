@@ -51,9 +51,9 @@ public final class GCData {
 	public int fillRule = SWT.FILL_EVEN_ODD;
 	public Image image;
 
-	public NSTextStorage textStorage;
-	public NSLayoutManager layoutManager;
-	public NSTextContainer textContainer;
+	public static NSTextStorage textStorage;
+	public static NSLayoutManager layoutManager;
+	public static NSTextContainer textContainer;
 	public NSColor fg, bg;
 	public double drawXOffset, drawYOffset;
 	public NSRect paintRect;

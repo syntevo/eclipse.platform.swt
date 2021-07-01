@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -92,6 +92,11 @@ public NSRect imageRectForBounds(NSRect theRect) {
 	NSRect result = new NSRect();
 	OS.objc_msgSend_stret(result, this.id, OS.sel_imageRectForBounds_, theRect);
 	return result;
+}
+
+public NSCell initTextCell(NSString aString) {
+	long result = OS.objc_msgSend(this.id, OS.sel_initTextCell_, aString != null ? aString.id : 0);
+	return result == this.id ? this : (result != 0 ? new NSCell(result) : null);
 }
 
 public boolean isEnabled() {

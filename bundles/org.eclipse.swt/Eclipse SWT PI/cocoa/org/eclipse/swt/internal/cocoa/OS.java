@@ -1283,6 +1283,7 @@ public static final long sel_infoDictionary = Selector.sel_infoDictionary.value;
 public static final long sel_init = Selector.sel_init.value;
 public static final long sel_initByReferencingFile_ = Selector.sel_initByReferencingFile_.value;
 public static final long sel_initListDescriptor = Selector.sel_initListDescriptor.value;
+public static final long sel_initTextCell_ = Selector.sel_initTextCell_.value;
 public static final long sel_initWithAttributes_ = Selector.sel_initWithAttributes_.value;
 public static final long sel_initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bitmapFormat_bytesPerRow_bitsPerPixel_ = Selector.sel_initWithBitmapDataPlanes_pixelsWide_pixelsHigh_bitsPerSample_samplesPerPixel_hasAlpha_isPlanar_colorSpaceName_bitmapFormat_bytesPerRow_bitsPerPixel_.value;
 public static final long sel_initWithCapacity_ = Selector.sel_initWithCapacity_.value;
@@ -1582,6 +1583,7 @@ public static final long sel_removeFromSuperview = Selector.sel_removeFromSuperv
 public static final long sel_removeItem_ = Selector.sel_removeItem_.value;
 public static final long sel_removeItemAtIndex_ = Selector.sel_removeItemAtIndex_.value;
 public static final long sel_removeLastObject = Selector.sel_removeLastObject.value;
+public static final long sel_removeLayoutManager_ = Selector.sel_removeLayoutManager_.value;
 public static final long sel_removeObject_ = Selector.sel_removeObject_.value;
 public static final long sel_removeObjectAtIndex_ = Selector.sel_removeObjectAtIndex_.value;
 public static final long sel_removeObjectForKey_ = Selector.sel_removeObjectForKey_.value;
@@ -1592,6 +1594,7 @@ public static final long sel_removeStatusItem_ = Selector.sel_removeStatusItem_.
 public static final long sel_removeTabViewItem_ = Selector.sel_removeTabViewItem_.value;
 public static final long sel_removeTableColumn_ = Selector.sel_removeTableColumn_.value;
 public static final long sel_removeTemporaryAttribute_forCharacterRange_ = Selector.sel_removeTemporaryAttribute_forCharacterRange_.value;
+public static final long sel_removeTextContainerAtIndex_ = Selector.sel_removeTextContainerAtIndex_.value;
 public static final long sel_removeToolTip_ = Selector.sel_removeToolTip_.value;
 public static final long sel_removeTrackingArea_ = Selector.sel_removeTrackingArea_.value;
 public static final long sel_replaceCharactersInRange_withString_ = Selector.sel_replaceCharactersInRange_withString_.value;
@@ -1951,6 +1954,7 @@ public static final long sel_shouldAntialias = Selector.sel_shouldAntialias.valu
 public static final long sel_shouldChangeTextInRange_replacementString_ = Selector.sel_shouldChangeTextInRange_replacementString_.value;
 public static final long sel_shouldDelayWindowOrderingForEvent_ = Selector.sel_shouldDelayWindowOrderingForEvent_.value;
 public static final long sel_shouldDrawInsertionPoint = Selector.sel_shouldDrawInsertionPoint.value;
+public static final long sel_showPools = Selector.sel_showPools.value;
 public static final long sel_size = Selector.sel_size.value;
 public static final long sel_sizeOfLabel_ = Selector.sel_sizeOfLabel_.value;
 public static final long sel_sizeToFit = Selector.sel_sizeToFit.value;
@@ -2332,10 +2336,10 @@ public static final int NSTableViewNoColumnAutoresizing = 0;
 public static final int NSTableViewSolidVerticalGridLineMask = 1;
 public static final int NSTerminateCancel = 0;
 public static final int NSTerminateNow = 1;
-public static final int NSTextAlignmentCenter = IS_X86_64 ? 2 : 1;
+public static final int NSTextAlignmentCenter = 2;
 public static final int NSTextAlignmentJustified = 3;
 public static final int NSTextAlignmentLeft = 0;
-public static final int NSTextAlignmentRight = IS_X86_64 ? 1 : 2;
+public static final int NSTextAlignmentRight = 1;
 public static final int NSTextFieldAndStepperDatePickerStyle = 0;
 public static final int NSTextFieldDatePickerStyle = 2;
 public static final int NSTitledWindowMask = 1;
@@ -3103,6 +3107,17 @@ public static final native void CGContextSetLineWidth(long c, double width);
 public static final native void CGContextSetMiterLimit(long c, double limit);
 /**
  * @param c cast=(CGContextRef)
+ * @param t flags=struct
+ */
+public static final native void CGContextSetTextMatrix(long c, CGAffineTransform t);
+/**
+ * @param c cast=(CGContextRef)
+ * @param x cast=(CGFloat)
+ * @param y cast=(CGFloat)
+ */
+public static final native void CGContextSetTextPosition(long c, double x, double y);
+/**
+ * @param c cast=(CGContextRef)
  */
 public static final native void CGContextStrokePath(long c);
 /**
@@ -3239,6 +3254,15 @@ public static final native void CGPathRelease(long path);
  * @param error cast=(CFErrorRef*)
  */
 public static final native boolean CTFontManagerRegisterFontsForURL(long fontURL, int scope, long error);
+/**
+ * @param attrString cast=(CFAttributedStringRef)
+ */
+public static final native long CTLineCreateWithAttributedString(long attrString);
+/**
+ * @param line cast=(CTLineRef)
+ * @param context cast=(CGContextRef)
+ */
+public static final native void CTLineDraw(long line, long context);
 /**
  * @param aRect flags=struct
  * @param bRect flags=struct

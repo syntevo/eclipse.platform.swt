@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -98,6 +98,8 @@ char * OS_nativeFunctionNames[] = {
 	"CGContextSetLineJoin",
 	"CGContextSetLineWidth",
 	"CGContextSetMiterLimit",
+	"CGContextSetTextMatrix",
+	"CGContextSetTextPosition",
 	"CGContextStrokePath",
 	"CGContextTranslateCTM",
 	"CGDataProviderCreateWithData",
@@ -128,6 +130,8 @@ char * OS_nativeFunctionNames[] = {
 	"CGSize_1sizeof",
 	"CPSSetProcessName",
 	"CTFontManagerRegisterFontsForURL",
+	"CTLineCreateWithAttributedString",
+	"CTLineDraw",
 	"CancelMenuTracking",
 	"CloseRgn",
 	"CopyRgn",
