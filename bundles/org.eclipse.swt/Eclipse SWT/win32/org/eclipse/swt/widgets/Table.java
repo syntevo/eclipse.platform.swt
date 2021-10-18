@@ -887,7 +887,7 @@ LRESULT CDDS_PREPAINT (NMLVCUSTOMDRAW nmcd, long wParam, long lParam) {
 					if (OS.IsWindowEnabled (handle) || hasCustomBackground()) {
 						if (control == null) control = this;
 						fillBackground (nmcd.hdc, control.getBackgroundPixel (), rect);
-						if (OS.IsAppThemed ()) {
+						if (display.tableDrawSortColumnBackground && OS.IsAppThemed ()) {
 							if (sortColumn != null && sortDirection != SWT.NONE) {
 								int index = indexOf (sortColumn);
 								if (index != -1) {
