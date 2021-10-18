@@ -236,6 +236,12 @@ public class Display extends Device {
 	static final String TABLE_HEADER_LINE_COLOR_KEY  = "org.eclipse.swt.internal.win32.Table.headerLineColor"; //$NON-NLS-1$
 	int tableHeaderLinePixel = -1;
 	/**
+	 * By default, the sort column uses a slightly different background color as the other columns.
+	 * Set this option to false to disable this default behavior, e.g. if you use draw all the background in the EraseItem listener.
+	 */
+	static final String TABLE_SORT_COLUMN_BACKGROUND_KEY = "org.eclipse.swt.internal.win32.Table.drawSortColumnBackground"; //$NON-NLS-1$
+	boolean tableDrawSortColumnBackground = true;
+	/**
 	 * Disabled Label is drawn with specified foreground color.
 	 * Expects a <code>Color</code> value.
 	 */
@@ -4462,6 +4468,9 @@ public void setData (String key, Object value) {
 		case TABLE_HEADER_LINE_COLOR_KEY:
 			tableHeaderLinePixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
 			return;
+		case TABLE_SORT_COLUMN_BACKGROUND_KEY:
+		    tableDrawSortColumnBackground = !disableCustomThemeTweaks && _toBoolean(value);
+		    return;
 		case LABEL_DISABLED_FOREGROUND_COLOR_KEY:
 			disabledLabelForegroundPixel = disableCustomThemeTweaks ? -1 : _toColorPixel(value);
 			break;
