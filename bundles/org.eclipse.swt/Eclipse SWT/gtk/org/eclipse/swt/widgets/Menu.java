@@ -52,6 +52,7 @@ public class Menu extends Widget {
 	Decorations parent;
 	ImageList imageList;
 	int poppedUpCount;
+	long menuHandle;
 
 	/** GTK4 only fields */
 	long modelHandle, actionGroup, shortcutController, sectionModelHandle;
@@ -498,6 +499,8 @@ void createHandle (int index) {
 		} else {
 			handle = GTK3.gtk_menu_new();
 			if (handle == 0) error(SWT.ERROR_NO_HANDLES);
+			menuHandle = handle;
+			OS.g_object_ref_sink(menuHandle);
 		}
 	}
 }
@@ -1013,6 +1016,19 @@ void releaseWidget () {
 	cascade = null;
 	if (imageList != null) imageList.dispose ();
 	imageList = null;
+}
+
+/**
+ * Overridden to fix memory leak on GTK3, see bug 573983
+ * {@inheritDoc}
+ */
+@Override
+void destroyWidget () {
+	super.destroyWidget();
+	if (menuHandle != 0) {
+		OS.g_object_unref(menuHandle);
+		menuHandle = 0;
+	}
 }
 
 /**
