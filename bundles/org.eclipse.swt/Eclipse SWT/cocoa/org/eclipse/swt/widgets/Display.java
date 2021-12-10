@@ -6016,6 +6016,17 @@ static Widget LookupWidget (long id, long sel) {
 			}
 		}
 	}
+	if (widget == null) {
+		/*
+		 * Overriding selectors in SWT classes can introduce subtle errors
+		 * where these selectors are rejected by SWT (*without* super
+		 * selector being called) when selector is received before object
+		 * is bound to a widget.
+		 */
+		String objName = C.readUTF8 (OS.object_getClassName (id));
+		String selName = Selector.valueOf (sel).getSelectorName ();
+		System.out.println ("Warning: rejecting -[" + objName + " " + selName + "] because widget is not registered yet");
+	}
 	return widget;
 }
 

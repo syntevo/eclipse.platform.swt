@@ -1413,4 +1413,7 @@ public enum Selector {
 		return OS.getSelector(value);
 	}
 
+	public String getSelectorName() {
+		return name;
+	}
 }

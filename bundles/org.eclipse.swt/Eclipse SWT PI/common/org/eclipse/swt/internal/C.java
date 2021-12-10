@@ -13,6 +13,10 @@
  *******************************************************************************/
 package org.eclipse.swt.internal;
 
+import org.eclipse.swt.internal.cocoa.OS;
+
+import java.io.UnsupportedEncodingException;
+
 public class C extends Platform {
 
 	static {
@@ -141,4 +145,17 @@ public static final native long memset (long buffer, int c, long num);
 public static final native int PTR_sizeof ();
 /** @param s cast=(char *) */
 public static final native int strlen (long s);
+
+public static String readUTF8(long pointer) {
+	int length = C.strlen(pointer);
+	byte[] bytes = new byte[length];
+	C.memmove(bytes, pointer, length);
+
+	try {
+		return new String (bytes, "UTF-8");
+	} catch (UnsupportedEncodingException ex) {
+		// Should never happen with "UTF-8"
+		return "<UnsupportedEncodingException was thrown>";
+	}
+}
 }
