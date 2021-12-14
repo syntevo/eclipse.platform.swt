@@ -77,6 +77,10 @@ public Item (Widget parent, int style) {
 	text = "";
 }
 
+public Item() {
+
+}
+
 /**
  * Constructs a new instance of this class given its parent
  * and a style value describing its behavior and appearance,

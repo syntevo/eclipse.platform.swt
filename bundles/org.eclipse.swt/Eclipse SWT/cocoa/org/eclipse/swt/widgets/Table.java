@@ -18,6 +18,8 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.cocoa.*;
 
+import static org.eclipse.swt.tests.cocoa.snippets.Bug577767_macOS_TableScrollsPastContent.*;
+
 /**
  * Instances of this class implement a selectable user interface
  * object that displays a list of images and strings and issues
@@ -2663,6 +2665,9 @@ void setFont (NSFont font) {
 void setFrameSize (long id, long sel, NSSize size) {
 	super.setFrameSize(id, sel, size);
 
+	if (!isOption (Options.WITH_NSTableView_tile_after_resize))
+		return;
+
 	/*
 	 * Bug 577767: Since macOS 10.15, NSTableView has 'autoresizingMask'
 	 * set to follow resizes of its NSClipView. This sometimes causes
@@ -2885,6 +2890,8 @@ boolean setScrollWidth () {
 }
 
 boolean setScrollWidth (TableItem item) {
+	if (isOption(Options.NO_Table_setScrollWidth)) return false;
+
 	if (columnCount != 0) return false;
 	if (!getDrawing()) return false;
 	if (currentItem != null) {
@@ -2904,6 +2911,8 @@ boolean setScrollWidth (TableItem item) {
 }
 
 boolean setScrollWidth (TableItem [] items, boolean set) {
+	if (isOption(Options.NO_Table_setScrollWidth)) return false;
+
 	if (items == null) return false;
 	if (columnCount != 0) return false;
 	if (!getDrawing()) return false;
@@ -3730,4 +3739,30 @@ void updateRowCount() {
 	setRedraw(true);
 }
 
+public void callTile() {
+	((NSTableView)view).tile();
+}
+
+public int getBoundsH() {
+	NSRect rect = view.bounds ();
+	return (int)rect.height;
+}
+
+public void testCacheItemWidth() {
+	items[itemCount] = new TableItem (this);
+	items[itemCount].width = 90;
+	itemCount++;
+}
+
+public void doTest2() {
+	if (false) {
+		itemCount++;
+		items[0] = new TableItem (this);
+	}
+
+	if (false) {
+		firstColumn.setWidth (90);
+		redrawWidget (horizontalBar.view, false);
+	}
+}
 }

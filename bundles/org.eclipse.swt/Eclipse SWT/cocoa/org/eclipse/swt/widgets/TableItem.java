@@ -122,6 +122,12 @@ TableItem (Table parent, int style, int index, boolean create) {
 	if (create) parent.createItem (this, index);
 }
 
+public TableItem (Table parent) {
+	this.parent = parent;
+	this.display = parent.display;
+	this.text = "";
+}
+
 static Table checkNull (Table control) {
 	if (control == null) SWT.error (SWT.ERROR_NULL_ARGUMENT);
 	return control;
