@@ -164,6 +164,7 @@ public class OS extends C {
 	public static final int PANGO_ATTR_UNDERLINE_COLOR = 18;
 	public static final int PANGO_DIRECTION_LTR = 0;
 	public static final int PANGO_DIRECTION_RTL = 1;
+	public static final int PANGO_OVERLINE_SINGLE = 1;
 	public static final int PANGO_SCALE = 1024;
 	public static final int PANGO_STRETCH_ULTRA_CONDENSED = 0x0;
 	public static final int PANGO_STRETCH_EXTRA_CONDENSED = 0x1;
@@ -1335,6 +1336,13 @@ public static final native long g_utf16_to_utf8(char[] str, long len, long [] it
  * @param pos cast=(const gchar *)
  */
 public static final native long g_utf8_pointer_to_offset(long str, long pos);
+
+/**
+ * @param p cast=(const gchar *)
+ * @param end cast=(const gchar *)
+ */
+public static final native long g_utf8_find_next_char(long p, long end);
+
 /** @param str cast=(const gchar *) */
 public static final native long g_utf8_strlen(long str, long max);
 /**
@@ -1507,6 +1515,9 @@ public static final native long pango_attr_shape_new(PangoRectangle ink_rect, Pa
 public static final native void pango_attr_list_insert(long list, long attr);
 /** @param list cast=(PangoAttrList *) */
 public static final native long pango_attr_list_get_iterator(long list);
+
+
+public static final native long pango_attr_fallback_new(boolean enable_fallback);
 /** @param iterator cast=(PangoAttrIterator *) */
 public static final native boolean pango_attr_iterator_next(long iterator);
 /**
@@ -1522,9 +1533,15 @@ public static final native void pango_attr_iterator_range(long iterator, int[] s
 public static final native long pango_attr_iterator_get(long iterator, int type);
 /** @param iterator cast=(PangoAttrIterator *) */
 public static final native void pango_attr_iterator_destroy(long iterator);
+
+// Requires Pango 1.50+
+// public static final native long pango_attr_line_height_new_absolute(int height);
+
 public static final native long pango_attr_list_new();
 /** @param list cast=(PangoAttrList *) */
 public static final native void pango_attr_list_unref(long list);
+public static final native long pango_attr_overline_color_new(short red, short green, short blue);
+public static final native long pango_attr_overline_new(int overline);
 public static final native long pango_attr_strikethrough_color_new(short red, short green, short blue);
 public static final native long pango_attr_strikethrough_new(boolean strikethrough);
 public static final native long pango_attr_underline_color_new(short red, short green, short blue);

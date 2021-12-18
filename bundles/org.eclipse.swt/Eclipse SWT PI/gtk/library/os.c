@@ -12957,6 +12957,18 @@ fail:
 }
 #endif
 
+#ifndef NO_g_1utf8_1find_1next_1char
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1utf8_1find_1next_1char)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1utf8_1find_1next_1char_FUNC);
+	rc = (jlong)g_utf8_find_next_char((const gchar *)arg0, (const gchar *)arg1);
+	OS_NATIVE_EXIT(env, that, g_1utf8_1find_1next_1char_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1utf8_1offset_1to_1utf16_1offset
 JNIEXPORT jlong JNICALL OS_NATIVE(g_1utf8_1offset_1to_1utf16_1offset)
 	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
@@ -13868,6 +13880,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1background_1new)
 }
 #endif
 
+#ifndef NO_pango_1attr_1fallback_1new
+JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1fallback_1new)
+	(JNIEnv *env, jclass that, jboolean arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, pango_1attr_1fallback_1new_FUNC);
+	rc = (jlong)pango_attr_fallback_new(arg0);
+	OS_NATIVE_EXIT(env, that, pango_1attr_1fallback_1new_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_pango_1attr_1font_1desc_1new
 JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1font_1desc_1new)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -13984,6 +14008,30 @@ JNIEXPORT void JNICALL OS_NATIVE(pango_1attr_1list_1unref)
 	OS_NATIVE_ENTER(env, that, pango_1attr_1list_1unref_FUNC);
 	pango_attr_list_unref((PangoAttrList *)arg0);
 	OS_NATIVE_EXIT(env, that, pango_1attr_1list_1unref_FUNC);
+}
+#endif
+
+#ifndef NO_pango_1attr_1overline_1color_1new
+JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1overline_1color_1new)
+	(JNIEnv *env, jclass that, jshort arg0, jshort arg1, jshort arg2)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, pango_1attr_1overline_1color_1new_FUNC);
+	rc = (jlong)pango_attr_overline_color_new(arg0, arg1, arg2);
+	OS_NATIVE_EXIT(env, that, pango_1attr_1overline_1color_1new_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_pango_1attr_1overline_1new
+JNIEXPORT jlong JNICALL OS_NATIVE(pango_1attr_1overline_1new)
+	(JNIEnv *env, jclass that, jint arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, pango_1attr_1overline_1new_FUNC);
+	rc = (jlong)pango_attr_overline_new(arg0);
+	OS_NATIVE_EXIT(env, that, pango_1attr_1overline_1new_FUNC);
+	return rc;
 }
 #endif
 

@@ -65,6 +65,9 @@ public final class TextLayout extends Resource {
 	int verticalIndentInPoints;
 	static final char LTR_MARK = '\u200E', RTL_MARK = '\u200F', ZWS = '\u200B', ZWNBS = '\uFEFF';
 
+	// @@@@ Remove debugging code
+	int force_height = -1;
+
 /**
  * Constructs a new instance of this class on the given device.
  * <p>
@@ -118,6 +121,36 @@ void computeRuns () {
 	if (stylesCount == 2 && styles[0].style == null && ascentInPoints == -1 && descentInPoints == -1 && segments == null) return;
 	long ptr = OS.pango_layout_get_text(layout);
 	attrList = OS.pango_attr_list_new();
+
+	// @@@@ Remove debugging code
+	// Inserts tall boxes instead of fallback characters. Increases line height because boxes are tall.
+	if (false) {
+		OS.pango_attr_list_insert (attrList, OS.pango_attr_fallback_new (false));
+	}
+
+	// @@@@ Remove debugging code
+	// Requires libpango-1.0-0 v1.50
+	// OS.pango_attr_line_height_new_absolute(17 * OS.PANGO_SCALE);
+
+	// @@@@ Remove debugging code
+	// Causes glyphs to be invisible (see _pango_shape_shape() )
+	if (false) {
+		PangoRectangle rect = new PangoRectangle();
+		rect.y      = -14 * OS.PANGO_SCALE;
+		rect.height =  17 * OS.PANGO_SCALE;
+		rect.width  =  20 * OS.PANGO_SCALE;
+		OS.pango_attr_list_insert(attrList, OS.pango_attr_shape_new (rect, rect));
+	}
+
+	// @@@@ Remove debugging code
+	// Shows overlines/underlines, useful for debugging.
+	if (false) {
+		OS.pango_attr_list_insert (attrList, OS.pango_attr_overline_new (OS.PANGO_OVERLINE_SINGLE));
+		OS.pango_attr_list_insert (attrList, OS.pango_attr_overline_color_new ((short) 0x0000, (short) 0x0000, (short) 0xFFFF));
+		OS.pango_attr_list_insert (attrList, OS.pango_attr_underline_new (OS.PANGO_UNDERLINE_LOW));
+		OS.pango_attr_list_insert (attrList, OS.pango_attr_underline_color_new ((short) 0xFFFF, (short) 0x0000, (short) 0x0000));
+	}
+
 	selAttrList = OS.pango_attr_list_new();
 	PangoAttribute attribute = new PangoAttribute();
 	char[] chars = null;
@@ -334,6 +367,33 @@ void computeRuns () {
 			OS.pango_attr_list_insert(selAttrList, OS.pango_attribute_copy(attr));
 		}
 	}
+
+	// @@@@ Remove debugging code
+	// Causes glyphs to be invisible (see _pango_shape_shape() )
+	if (false) {
+		for (long charIndex = 0, currChar = ptr; currChar != 0; charIndex++) {
+			if (OS.strlen (currChar) == 0)
+				break;
+
+			long nextChar = OS.g_utf8_find_next_char (currChar, 0);
+
+			PangoRectangle rect = new PangoRectangle ();
+			rect.x      = (int) charIndex * 20 * OS.PANGO_SCALE;
+			rect.y      = -14 * OS.PANGO_SCALE;
+			rect.height =  17 * OS.PANGO_SCALE;
+			rect.width  =  20 * OS.PANGO_SCALE;
+
+			long attr = OS.pango_attr_shape_new (rect, rect);
+			OS.memmove (attribute, attr, PangoAttribute.sizeof);
+			attribute.start_index = (int) (currChar - ptr);
+			attribute.end_index   = (int) (nextChar - ptr);
+			OS.memmove (attr, attribute, PangoAttribute.sizeof);
+
+			OS.pango_attr_list_insert (attrList, attr);
+			currChar = nextChar;
+		}
+	}
+
 	OS.pango_layout_set_attributes(layout, attrList);
 }
 
@@ -757,6 +817,11 @@ Rectangle getBoundsInPixels(int spacingInPixels) {
 	if (ascentInPoints != -1 && descentInPoints != -1) {
 		height = Math.max (height, DPIUtil.autoScaleUp(getDevice(), ascentInPoints + descentInPoints));
 	}
+
+	// @@@@ Remove debugging code
+	if (-1 != force_height)
+		height = force_height;
+
 	height += spacingInPixels;
 	return new Rectangle(0, 0, width, height + getScaledVerticalIndent());
 }
@@ -992,6 +1057,12 @@ private Rectangle getLineBoundsInPixels(int lineIndex, long iter) {
 	if (ascentInPoints != -1 && descentInPoints != -1) {
 		height = Math.max (height, DPIUtil.autoScaleUp(getDevice(), ascentInPoints + descentInPoints));
 	}
+
+	// @@@@ Remove debugging code
+	// @@@@ Remove debugging code
+	if (-1 != force_height)
+		height = force_height;
+
 	x += Math.min (indent, wrapIndent);
 	return new Rectangle(x, y, width, height);
 }
