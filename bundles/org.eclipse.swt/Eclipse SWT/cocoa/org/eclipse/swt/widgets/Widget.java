@@ -732,6 +732,10 @@ NSRect drawTitleWithFrameInView (long id, long sel, long title, NSRect rect, lon
 	return result;
 }
 
+void drawBorderAndBackgroundWithFrame_inView (long id, long sel, NSRect cellFrame, long view) {
+	callSuper(id, sel, cellFrame, view);
+}
+
 void drawInteriorWithFrame_inView (long id, long sel, NSRect cellFrame, long view) {
 	callSuper(id, sel, cellFrame, view);
 }

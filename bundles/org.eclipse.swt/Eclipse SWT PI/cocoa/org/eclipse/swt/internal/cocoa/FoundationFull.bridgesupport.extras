@@ -1062,6 +1062,12 @@
 		<field name="tX" swt_gen="true"></field>
 		<field name="tY" swt_gen="true"></field>
 	</struct>
+	<struct name="NSEdgeInsets" swt_gen="true" swt_gen_memmove="true">
+		<field name="bottom" swt_gen="true"></field>
+		<field name="left" swt_gen="true"></field>
+		<field name="right" swt_gen="true"></field>
+		<field name="top" swt_gen="true"></field>
+	</struct>
 	<struct name="NSOperatingSystemVersion" swt_gen="true">
 		<field name="majorVersion" swt_gen="true"></field>
 		<field name="minorVersion" swt_gen="true"></field>

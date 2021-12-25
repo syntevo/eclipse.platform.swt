@@ -586,6 +586,8 @@ public static final native long CALLBACK_draggedImage_endedAt_operation_(long fu
 public static final native long CALLBACK_drawBackgroundInClipRect_(long func);
 /** @method callback_types=void;id;SEL;NSRect;NSView*;,callback_flags=none;none;none;struct;none; */
 public static final native long CALLBACK_drawBezelWithFrame_inView_(long func);
+/** @method callback_types=void;id;SEL;NSRect;NSView*;,callback_flags=none;none;none;struct;none; */
+public static final native long CALLBACK_drawBorderAndBackgroundWithFrame_inView_(long func);
 /** @method callback_types=void;id;SEL;NSImage*;NSRect;NSView*;,callback_flags=none;none;none;none;struct;none; */
 public static final native long CALLBACK_drawImage_withFrame_inView_(long func);
 /** @method callback_types=void;id;SEL;NSRect;NSView*;,callback_flags=none;none;none;struct;none; */
@@ -708,6 +710,7 @@ public static final long class_NSLayoutManager = objc_getClass("NSLayoutManager"
 public static final long class_NSLocale = objc_getClass("NSLocale");
 public static final long class_NSMenu = objc_getClass("NSMenu");
 public static final long class_NSMenuItem = objc_getClass("NSMenuItem");
+public static final long class_NSMenuItemCell = objc_getClass("NSMenuItemCell");
 public static final long class_NSMutableArray = objc_getClass("NSMutableArray");
 public static final long class_NSMutableAttributedString = objc_getClass("NSMutableAttributedString");
 public static final long class_NSMutableDictionary = objc_getClass("NSMutableDictionary");
@@ -895,6 +898,7 @@ public static final long sel_addTimer_forMode_ = Selector.sel_addTimer_forMode_.
 public static final long sel_addToolTipRect_owner_userData_ = Selector.sel_addToolTipRect_owner_userData_.value;
 public static final long sel_addTypes_owner_ = Selector.sel_addTypes_owner_.value;
 public static final long sel_alignment = Selector.sel_alignment.value;
+public static final long sel_alignmentRectInsets = Selector.sel_alignmentRectInsets.value;
 public static final long sel_allKeys = Selector.sel_allKeys.value;
 public static final long sel_allObjects = Selector.sel_allObjects.value;
 public static final long sel_alloc = Selector.sel_alloc.value;
@@ -1165,6 +1169,7 @@ public static final long sel_draggingUpdated_ = Selector.sel_draggingUpdated_.va
 public static final long sel_drawBackgroundForGlyphRange_atPoint_ = Selector.sel_drawBackgroundForGlyphRange_atPoint_.value;
 public static final long sel_drawBackgroundInClipRect_ = Selector.sel_drawBackgroundInClipRect_.value;
 public static final long sel_drawBezelWithFrame_inView_ = Selector.sel_drawBezelWithFrame_inView_.value;
+public static final long sel_drawBorderAndBackgroundWithFrame_inView_ = Selector.sel_drawBorderAndBackgroundWithFrame_inView_.value;
 public static final long sel_drawFromPoint_toPoint_options_ = Selector.sel_drawFromPoint_toPoint_options_.value;
 public static final long sel_drawGlyphsForGlyphRange_atPoint_ = Selector.sel_drawGlyphsForGlyphRange_atPoint_.value;
 public static final long sel_drawImage_withFrame_inView_ = Selector.sel_drawImage_withFrame_inView_.value;
@@ -2332,10 +2337,10 @@ public static final int NSTableViewNoColumnAutoresizing = 0;
 public static final int NSTableViewSolidVerticalGridLineMask = 1;
 public static final int NSTerminateCancel = 0;
 public static final int NSTerminateNow = 1;
-public static final int NSTextAlignmentCenter = IS_X86_64 ? 2 : 1;
+public static final int NSTextAlignmentCenter = 2;
 public static final int NSTextAlignmentJustified = 3;
 public static final int NSTextAlignmentLeft = 0;
-public static final int NSTextAlignmentRight = IS_X86_64 ? 1 : 2;
+public static final int NSTextAlignmentRight = 1;
 public static final int NSTextFieldAndStepperDatePickerStyle = 0;
 public static final int NSTextFieldDatePickerStyle = 2;
 public static final int NSTitledWindowMask = 1;
@@ -3656,6 +3661,8 @@ public static final native long objc_msgSend(long id, long sel, long[] arg0, lon
 /** @method flags=cast */
 public static final native void objc_msgSend_stret(NSAffineTransformStruct result, long id, long sel);
 /** @method flags=cast */
+public static final native void objc_msgSend_stret(NSEdgeInsets result, long id, long sel);
+/** @method flags=cast */
 public static final native void objc_msgSend_stret(NSOperatingSystemVersion result, long id, long sel);
 /** @method flags=cast */
 public static final native void objc_msgSend_stret(NSPoint result, long id, long sel);
@@ -3745,6 +3752,7 @@ public static final native int CGPoint_sizeof();
 public static final native int CGRect_sizeof();
 public static final native int CGSize_sizeof();
 public static final native int NSAffineTransformStruct_sizeof();
+public static final native int NSEdgeInsets_sizeof();
 public static final native int NSOperatingSystemVersion_sizeof();
 public static final native int NSPoint_sizeof();
 public static final native int NSRange_sizeof();
@@ -3763,6 +3771,16 @@ public static final native void memmove(long dest, CGPathElement src, long size)
  * @param src cast=(void *)
  */
 public static final native void memmove(CGPathElement dest, long src, long size);
+/**
+ * @param dest cast=(void *)
+ * @param src flags=no_out
+ */
+public static final native void memmove(long dest, NSEdgeInsets src, long size);
+/**
+ * @param dest flags=no_in
+ * @param src cast=(void *)
+ */
+public static final native void memmove(NSEdgeInsets dest, long src, long size);
 /**
  * @param dest cast=(void *)
  * @param src flags=no_out

@@ -1845,6 +1845,13 @@
 			<retval swt_gen="true"></retval>
 		</method>
 	</class>
+	<class name="NSMenuItemCell" swt_gen="mixed">
+		<method selector="drawBorderAndBackgroundWithFrame:inView:" swt_gen="true" swt_gen_custom_callback="true">
+			<arg swt_gen="true"></arg>
+			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+	</class>
 	<class name="NSMutableParagraphStyle" swt_gen="mixed" swt_superclass="NSParagraphStyle">
 		<method selector="addTabStop:" swt_gen="true">
 			<arg swt_gen="true"></arg>
@@ -3586,6 +3593,9 @@
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
 			<arg swt_gen="true"></arg>
+			<retval swt_gen="true"></retval>
+		</method>
+		<method selector="alignmentRectInsets" swt_gen="true">
 			<retval swt_gen="true"></retval>
 		</method>
 		<method selector="beginDocument" swt_gen="true">

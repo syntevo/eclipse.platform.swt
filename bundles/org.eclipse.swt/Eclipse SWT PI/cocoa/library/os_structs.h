@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -87,6 +87,18 @@ void setNSAffineTransformStructFields(JNIEnv *env, jobject lpObject, NSAffineTra
 #define getNSAffineTransformStructFields(a,b,c) NULL
 #define setNSAffineTransformStructFields(a,b,c)
 #define NSAffineTransformStruct_sizeof() 0
+#endif
+
+#ifndef NO_NSEdgeInsets
+void cacheNSEdgeInsetsFields(JNIEnv *env, jobject lpObject);
+NSEdgeInsets *getNSEdgeInsetsFields(JNIEnv *env, jobject lpObject, NSEdgeInsets *lpStruct);
+void setNSEdgeInsetsFields(JNIEnv *env, jobject lpObject, NSEdgeInsets *lpStruct);
+#define NSEdgeInsets_sizeof() sizeof(NSEdgeInsets)
+#else
+#define cacheNSEdgeInsetsFields(a,b)
+#define getNSEdgeInsetsFields(a,b,c) NULL
+#define setNSEdgeInsetsFields(a,b,c)
+#define NSEdgeInsets_sizeof() 0
 #endif
 
 #ifndef NO_NSOperatingSystemVersion

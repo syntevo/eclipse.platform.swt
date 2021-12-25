@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -41,6 +41,12 @@ public void addSubview(NSView aView, long place, NSView otherView) {
 
 public long addToolTipRect(NSRect aRect, id anObject, long data) {
 	return OS.objc_msgSend(this.id, OS.sel_addToolTipRect_owner_userData_, aRect, anObject != null ? anObject.id : 0, data);
+}
+
+public NSEdgeInsets alignmentRectInsets() {
+	NSEdgeInsets result = new NSEdgeInsets();
+	OS.objc_msgSend_stret(result, this.id, OS.sel_alignmentRectInsets);
+	return result;
 }
 
 public void beginDocument() {

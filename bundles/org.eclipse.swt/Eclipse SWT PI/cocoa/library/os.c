@@ -363,6 +363,26 @@ JNIEXPORT jlong JNICALL OS_NATIVE(CALLBACK_1drawBezelWithFrame_1inView_1)
 }
 #endif
 
+#ifndef NO_CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1
+static jlong CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1;
+static void proc_CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1(id arg0, SEL arg1, NSRect arg2, NSView* arg3) {
+	((void (*)(id, SEL, NSRect*, NSView*))CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1)(arg0, arg1, &arg2, arg3);
+}
+static jlong CALLBACK_drawBorderAndBackgroundWithFrame_inView_(jlong func) {
+	CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1 = func;
+	return (jlong)proc_CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1;
+}
+JNIEXPORT jlong JNICALL OS_NATIVE(CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1_FUNC);
+	rc = (jlong)CALLBACK_drawBorderAndBackgroundWithFrame_inView_(arg0);
+	OS_NATIVE_EXIT(env, that, CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_CALLBACK_1drawImage_1withFrame_1inView_1
 static jlong CALLBACK_1drawImage_1withFrame_1inView_1;
 static void proc_CALLBACK_1drawImage_1withFrame_1inView_1(id arg0, SEL arg1, NSImage* arg2, NSRect arg3, NSView* arg4) {
@@ -3621,6 +3641,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(NSDragPboard)
 }
 #endif
 
+#ifndef NO_NSEdgeInsets_1sizeof
+JNIEXPORT jint JNICALL OS_NATIVE(NSEdgeInsets_1sizeof)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	OS_NATIVE_ENTER(env, that, NSEdgeInsets_1sizeof_FUNC);
+	rc = (jint)NSEdgeInsets_sizeof();
+	OS_NATIVE_EXIT(env, that, NSEdgeInsets_1sizeof_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_NSEqualRects
 JNIEXPORT jboolean JNICALL OS_NATIVE(NSEqualRects)
 	(JNIEnv *env, jclass that, jobject arg0, jobject arg1)
@@ -5035,6 +5067,19 @@ fail:
 }
 #endif
 
+#ifndef NO_memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J
+JNIEXPORT void JNICALL OS_NATIVE(memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J)
+	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jlong arg2)
+{
+	NSEdgeInsets _arg1, *lparg1=NULL;
+	OS_NATIVE_ENTER(env, that, memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J_FUNC);
+	if (arg1) if ((lparg1 = getNSEdgeInsetsFields(env, arg1, &_arg1)) == NULL) goto fail;
+	memmove((void *)arg0, lparg1, arg2);
+fail:
+	OS_NATIVE_EXIT(env, that, memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J_FUNC);
+}
+#endif
+
 #ifndef NO_memmove__JLorg_eclipse_swt_internal_cocoa_NSPoint_2J
 JNIEXPORT void JNICALL OS_NATIVE(memmove__JLorg_eclipse_swt_internal_cocoa_NSPoint_2J)
 	(JNIEnv *env, jclass that, jlong arg0, jobject arg1, jlong arg2)
@@ -5098,6 +5143,20 @@ JNIEXPORT void JNICALL OS_NATIVE(memmove__Lorg_eclipse_swt_internal_cocoa_CGPath
 fail:
 	if (arg0 && lparg0) setCGPathElementFields(env, arg0, lparg0);
 	OS_NATIVE_EXIT(env, that, memmove__Lorg_eclipse_swt_internal_cocoa_CGPathElement_2JJ_FUNC);
+}
+#endif
+
+#ifndef NO_memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ
+JNIEXPORT void JNICALL OS_NATIVE(memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ)
+	(JNIEnv *env, jclass that, jobject arg0, jlong arg1, jlong arg2)
+{
+	NSEdgeInsets _arg0, *lparg0=NULL;
+	OS_NATIVE_ENTER(env, that, memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC);
+	if (arg0) if ((lparg0 = &_arg0) == NULL) goto fail;
+	memmove(lparg0, (void *)arg1, arg2);
+fail:
+	if (arg0 && lparg0) setNSEdgeInsetsFields(env, arg0, lparg0);
+	OS_NATIVE_EXIT(env, that, memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC);
 }
 #endif
 
@@ -6997,6 +7056,26 @@ JNIEXPORT void JNICALL OS_NATIVE(objc_1msgSend_1stret__Lorg_eclipse_swt_internal
 fail:
 	if (arg0 && lparg0) setNSAffineTransformStructFields(env, arg0, lparg0);
 	OS_NATIVE_EXIT(env, that, objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSAffineTransformStruct_2JJ_FUNC);
+}
+#endif
+
+#ifndef NO_objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ
+JNIEXPORT void JNICALL OS_NATIVE(objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ)
+	(JNIEnv *env, jclass that, jobject arg0, jlong arg1, jlong arg2)
+{
+	NSEdgeInsets _arg0, *lparg0=NULL;
+	OS_NATIVE_ENTER(env, that, objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC);
+	if (arg0) if ((lparg0 = getNSEdgeInsetsFields(env, arg0, &_arg0)) == NULL) goto fail;
+	if (STRUCT_SIZE_LIMIT == 0) {
+		((void (*)(NSEdgeInsets *, jlong, jlong))objc_msgSend_stret)(lparg0, arg1, arg2);
+	} else if (sizeof(_arg0) > STRUCT_SIZE_LIMIT) {
+		*lparg0 = (*(NSEdgeInsets (*)(jlong, jlong))objc_msgSend_stret)(arg1, arg2);
+	} else {
+		*lparg0 = (*(NSEdgeInsets (*)(jlong, jlong))objc_msgSend)(arg1, arg2);
+	}
+fail:
+	if (arg0 && lparg0) setNSEdgeInsetsFields(env, arg0, lparg0);
+	OS_NATIVE_EXIT(env, that, objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC);
 }
 #endif
 

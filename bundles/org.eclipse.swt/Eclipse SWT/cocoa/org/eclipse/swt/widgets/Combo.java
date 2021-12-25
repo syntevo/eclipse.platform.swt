@@ -696,6 +696,42 @@ boolean dragDetect(int x, int y, boolean filter, boolean[] consume) {
 }
 
 @Override
+void drawBorderAndBackgroundWithFrame_inView (long id, long sel, NSRect cellFrame, long view) {
+	super.drawBorderAndBackgroundWithFrame_inView (id, sel, cellFrame, view);
+
+	// Nothing to do if background is not set
+	if (background == null) return;
+
+	// Anything else is unexpected here. The tests are just in case.
+	if ((style & SWT.READ_ONLY) == 0) return;
+	if (this.view.id != view) return;
+
+	NSButtonCell cell = new NSButtonCell (((NSPopUpButton) this.view).cell ());
+	NSRect fillRect = cell.drawingRectForBounds (cellFrame);
+
+	// 'drawingRectForBounds' has too big 'x' offset because it's
+	// intended to be text's start position. For background
+	// purposes a smaller offset is needed. Two offsets are
+	// hardcoded in theme:
+	// `assetutil -I /System/Library/CoreServices/SystemAppearance.bundle/Contents/Resources/Aqua.car`
+	//    "Name" : "PopUpButton_PopUpButton_Regular.psd",
+	//    "AlignmentEdgeInsets" : "top:1 left:3 bottom:4 right:4",
+	//    "ContentInsets" : "top:2 left:28 bottom:5 right:11",
+	// Here, 'right:11' is offset to text and 'right:4' is offset
+	// to bezel. For best visuals, bezel should not be overpainted.
+	// The workaround is to take a percentage of insets difference.
+	NSEdgeInsets alignInsets = this.view.alignmentRectInsets ();
+	double xAdjust = 0.60 * (fillRect.x - alignInsets.left);
+	fillRect.x -= xAdjust;
+	fillRect.width += xAdjust;
+
+	// macOS does not provide any reasonable API to set color of "bezel".
+	// The workaround it to call default painting and partially overpaint
+	// it afterwards.
+	fillBackground (this.view, NSGraphicsContext.currentContext (), fillRect, -1);
+}
+
+@Override
 Cursor findCursor () {
 	Cursor cursor = super.findCursor ();
 	if (cursor == null && (style & SWT.READ_ONLY) == 0 && OS.VERSION < OS.VERSION(10, 14, 0)) {
@@ -1514,7 +1550,7 @@ boolean sendTrackingKeyEvent (NSEvent nsEvent, int type) {
 @Override
 void setBackgroundColor(NSColor nsColor) {
 	if ((style & SWT.READ_ONLY) != 0) {
-		//TODO
+		// Handled in 'drawBorderAndBackgroundWithFrame:inView:' override
 	} else {
 		((NSTextField)view).setBackgroundColor(nsColor);
 	}

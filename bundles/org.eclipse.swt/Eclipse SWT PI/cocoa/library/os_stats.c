@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -36,6 +36,7 @@ char * OS_nativeFunctionNames[] = {
 	"CALLBACK_1draggedImage_1endedAt_1operation_1",
 	"CALLBACK_1drawBackgroundInClipRect_1",
 	"CALLBACK_1drawBezelWithFrame_1inView_1",
+	"CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1",
 	"CALLBACK_1drawImage_1withFrame_1inView_1",
 	"CALLBACK_1drawInteriorWithFrame_1inView_1",
 	"CALLBACK_1drawLabel_1inRect_1",
@@ -275,6 +276,7 @@ char * OS_nativeFunctionNames[] = {
 	"NSDeviceRGBColorSpace",
 	"NSDeviceResolution",
 	"NSDragPboard",
+	"NSEdgeInsets_1sizeof",
 	"NSEqualRects",
 	"NSEventTrackingRunLoopMode",
 	"NSFilenamesPboardType",
@@ -377,11 +379,13 @@ char * OS_nativeFunctionNames[] = {
 	"kUTTypeFileURL",
 	"kUTTypeURL",
 	"memmove__JLorg_eclipse_swt_internal_cocoa_CGPathElement_2J",
+	"memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J",
 	"memmove__JLorg_eclipse_swt_internal_cocoa_NSPoint_2J",
 	"memmove__JLorg_eclipse_swt_internal_cocoa_NSRange_2J",
 	"memmove__JLorg_eclipse_swt_internal_cocoa_NSRect_2J",
 	"memmove__JLorg_eclipse_swt_internal_cocoa_NSSize_2J",
 	"memmove__Lorg_eclipse_swt_internal_cocoa_CGPathElement_2JJ",
+	"memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ",
 	"memmove__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJ",
 	"memmove__Lorg_eclipse_swt_internal_cocoa_NSRange_2JJ",
 	"memmove__Lorg_eclipse_swt_internal_cocoa_NSRect_2JJ",
@@ -501,6 +505,7 @@ char * OS_nativeFunctionNames[] = {
 	"objc_1msgSend_1fpret__JJJ",
 	"objc_1msgSend_1fpret__JJJJ",
 	"objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSAffineTransformStruct_2JJ",
+	"objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ",
 	"objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSOperatingSystemVersion_2JJ",
 	"objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJ",
 	"objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJJ",

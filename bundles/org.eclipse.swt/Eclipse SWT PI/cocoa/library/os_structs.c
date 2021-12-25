@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -255,6 +255,46 @@ void setNSAffineTransformStructFields(JNIEnv *env, jobject lpObject, NSAffineTra
 	(*env)->SetDoubleField(env, lpObject, NSAffineTransformStructFc.m22, (jdouble)lpStruct->m22);
 	(*env)->SetDoubleField(env, lpObject, NSAffineTransformStructFc.tX, (jdouble)lpStruct->tX);
 	(*env)->SetDoubleField(env, lpObject, NSAffineTransformStructFc.tY, (jdouble)lpStruct->tY);
+}
+#endif
+
+#ifndef NO_NSEdgeInsets
+typedef struct NSEdgeInsets_FID_CACHE {
+	int cached;
+	jclass clazz;
+	jfieldID top, left, bottom, right;
+} NSEdgeInsets_FID_CACHE;
+
+NSEdgeInsets_FID_CACHE NSEdgeInsetsFc;
+
+void cacheNSEdgeInsetsFields(JNIEnv *env, jobject lpObject)
+{
+	if (NSEdgeInsetsFc.cached) return;
+	NSEdgeInsetsFc.clazz = (*env)->GetObjectClass(env, lpObject);
+	NSEdgeInsetsFc.top = (*env)->GetFieldID(env, NSEdgeInsetsFc.clazz, "top", "D");
+	NSEdgeInsetsFc.left = (*env)->GetFieldID(env, NSEdgeInsetsFc.clazz, "left", "D");
+	NSEdgeInsetsFc.bottom = (*env)->GetFieldID(env, NSEdgeInsetsFc.clazz, "bottom", "D");
+	NSEdgeInsetsFc.right = (*env)->GetFieldID(env, NSEdgeInsetsFc.clazz, "right", "D");
+	NSEdgeInsetsFc.cached = 1;
+}
+
+NSEdgeInsets *getNSEdgeInsetsFields(JNIEnv *env, jobject lpObject, NSEdgeInsets *lpStruct)
+{
+	if (!NSEdgeInsetsFc.cached) cacheNSEdgeInsetsFields(env, lpObject);
+	lpStruct->top = (CGFloat)(*env)->GetDoubleField(env, lpObject, NSEdgeInsetsFc.top);
+	lpStruct->left = (CGFloat)(*env)->GetDoubleField(env, lpObject, NSEdgeInsetsFc.left);
+	lpStruct->bottom = (CGFloat)(*env)->GetDoubleField(env, lpObject, NSEdgeInsetsFc.bottom);
+	lpStruct->right = (CGFloat)(*env)->GetDoubleField(env, lpObject, NSEdgeInsetsFc.right);
+	return lpStruct;
+}
+
+void setNSEdgeInsetsFields(JNIEnv *env, jobject lpObject, NSEdgeInsets *lpStruct)
+{
+	if (!NSEdgeInsetsFc.cached) cacheNSEdgeInsetsFields(env, lpObject);
+	(*env)->SetDoubleField(env, lpObject, NSEdgeInsetsFc.top, (jdouble)lpStruct->top);
+	(*env)->SetDoubleField(env, lpObject, NSEdgeInsetsFc.left, (jdouble)lpStruct->left);
+	(*env)->SetDoubleField(env, lpObject, NSEdgeInsetsFc.bottom, (jdouble)lpStruct->bottom);
+	(*env)->SetDoubleField(env, lpObject, NSEdgeInsetsFc.right, (jdouble)lpStruct->right);
 }
 #endif
 

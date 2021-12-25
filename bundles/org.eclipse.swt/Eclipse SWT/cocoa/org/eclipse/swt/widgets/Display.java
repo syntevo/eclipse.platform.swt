@@ -2691,6 +2691,7 @@ void initClasses () {
 	long drawRectProc = OS.CALLBACK_drawRect_(proc3);
 	long drawInteriorWithFrameInViewProc = OS.CALLBACK_drawInteriorWithFrame_inView_ (proc4);
 	long drawBezelWithFrameInViewProc = OS.CALLBACK_drawBezelWithFrame_inView_ (proc4);
+	long drawBorderAndBackgroundWithFrameInViewProc = OS.CALLBACK_drawBorderAndBackgroundWithFrame_inView_ (proc4);
 	long drawWithExpansionFrameProc = OS.CALLBACK_drawWithExpansionFrame_inView_ (proc4);
 	long imageRectForBoundsProc = OS.CALLBACK_imageRectForBounds_ (proc3);
 	long titleRectForBoundsProc = OS.CALLBACK_titleRectForBounds_ (proc3);
@@ -2943,6 +2944,7 @@ void initClasses () {
 	// NSPopUpButtonCell
 	cls = registerCellSubclass(NSPopUpButton.cellClass(), size, align, types);
 	addAccessibilityMethods(cls, proc2, proc3, proc4, accessibilityHitTestProc);
+	OS.class_addMethod(cls, OS.sel_drawBorderAndBackgroundWithFrame_inView_, drawBorderAndBackgroundWithFrameInViewProc, "@:{NSRect}@");
 	OS.class_addMethod(cls, OS.sel_focusRingMaskBoundsForFrame_inView_, focusRingMaskBoundsForFrameProc, "@:{NSRect}@");
 
 	className = "SWTProgressIndicator";
@@ -6699,6 +6701,12 @@ static long windowProc(long id, long sel, long arg0, long arg1) {
 			NSRect rect = new NSRect ();
 			OS.memmove (rect, arg0, NSRect.sizeof);
 			widget.cacheDisplayInRect_toBitmapImageRep(id, sel, rect, arg1);
+			return 0;
+		}
+		case sel_drawBorderAndBackgroundWithFrame_inView_: {
+			NSRect rect = new NSRect ();
+			OS.memmove (rect, arg0, NSRect.sizeof);
+			widget.drawBorderAndBackgroundWithFrame_inView (id, sel, rect, arg1);
 			return 0;
 		}
 		case sel_drawInteriorWithFrame_inView_: {

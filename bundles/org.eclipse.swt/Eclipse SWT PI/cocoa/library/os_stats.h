@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -46,6 +46,7 @@ typedef enum {
 	CALLBACK_1draggedImage_1endedAt_1operation_1_FUNC,
 	CALLBACK_1drawBackgroundInClipRect_1_FUNC,
 	CALLBACK_1drawBezelWithFrame_1inView_1_FUNC,
+	CALLBACK_1drawBorderAndBackgroundWithFrame_1inView_1_FUNC,
 	CALLBACK_1drawImage_1withFrame_1inView_1_FUNC,
 	CALLBACK_1drawInteriorWithFrame_1inView_1_FUNC,
 	CALLBACK_1drawLabel_1inRect_1_FUNC,
@@ -285,6 +286,7 @@ typedef enum {
 	NSDeviceRGBColorSpace_FUNC,
 	NSDeviceResolution_FUNC,
 	NSDragPboard_FUNC,
+	NSEdgeInsets_1sizeof_FUNC,
 	NSEqualRects_FUNC,
 	NSEventTrackingRunLoopMode_FUNC,
 	NSFilenamesPboardType_FUNC,
@@ -387,11 +389,13 @@ typedef enum {
 	kUTTypeFileURL_FUNC,
 	kUTTypeURL_FUNC,
 	memmove__JLorg_eclipse_swt_internal_cocoa_CGPathElement_2J_FUNC,
+	memmove__JLorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2J_FUNC,
 	memmove__JLorg_eclipse_swt_internal_cocoa_NSPoint_2J_FUNC,
 	memmove__JLorg_eclipse_swt_internal_cocoa_NSRange_2J_FUNC,
 	memmove__JLorg_eclipse_swt_internal_cocoa_NSRect_2J_FUNC,
 	memmove__JLorg_eclipse_swt_internal_cocoa_NSSize_2J_FUNC,
 	memmove__Lorg_eclipse_swt_internal_cocoa_CGPathElement_2JJ_FUNC,
+	memmove__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC,
 	memmove__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJ_FUNC,
 	memmove__Lorg_eclipse_swt_internal_cocoa_NSRange_2JJ_FUNC,
 	memmove__Lorg_eclipse_swt_internal_cocoa_NSRect_2JJ_FUNC,
@@ -511,6 +515,7 @@ typedef enum {
 	objc_1msgSend_1fpret__JJJ_FUNC,
 	objc_1msgSend_1fpret__JJJJ_FUNC,
 	objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSAffineTransformStruct_2JJ_FUNC,
+	objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSEdgeInsets_2JJ_FUNC,
 	objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSOperatingSystemVersion_2JJ_FUNC,
 	objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJ_FUNC,
 	objc_1msgSend_1stret__Lorg_eclipse_swt_internal_cocoa_NSPoint_2JJJ_FUNC,
