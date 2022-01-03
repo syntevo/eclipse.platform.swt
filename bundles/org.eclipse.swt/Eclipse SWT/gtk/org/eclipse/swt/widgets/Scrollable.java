@@ -42,6 +42,9 @@ public abstract class Scrollable extends Control {
 	long scrolledHandle;
 	ScrollBar horizontalBar, verticalBar;
 
+	private double mouseWheelSumX;
+	private double mouseWheelSumY;
+
 	/** See bug 484682 */
 	static final boolean RESIZE_ON_GETCLIENTAREA = !OS.isX11() || Boolean.getBoolean("org.eclipse.swt.resizeOnGetClientArea");
 
@@ -367,19 +370,87 @@ long gtk_draw (long widget, long cairo) {
 
 @Override
 long gtk_scroll_event (long widget, long eventPtr) {
-	long result = super.gtk_scroll_event (widget, eventPtr);
+	long result = 0;
+
+	double [] eventX = new double [1];
+	double [] eventY = new double [1];
+	GDK.gdk_event_get_coords(eventPtr, eventX, eventY);
+
+	int [] state = new int [1];
+	GDK.gdk_event_get_state(eventPtr, state);
+
+	double [] eventRX = new double[1];
+	double [] eventRY = new double[1];
+	GDK.gdk_event_get_root_coords(eventPtr, eventRX, eventRY);
+
+	int time = GDK.gdk_event_get_time(eventPtr);
+
+	int [] direction = new int[1];
+	boolean fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
+
+	lastInput.x = (int) eventX[0];
+	lastInput.y = (int) eventY[0];
+
+	if (containedInRegion(lastInput.x, lastInput.y)) return 0;
+
+	if (fetched) {
+		switch (direction[0]) {
+			case GDK.GDK_SCROLL_UP:
+				return sendMouseEvent (SWT.MouseWheel, 0, 3, SWT.SCROLL_LINE, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1;
+			case GDK.GDK_SCROLL_DOWN:
+				return sendMouseEvent (SWT.MouseWheel, 0, -3, SWT.SCROLL_LINE, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1;
+			case GDK.GDK_SCROLL_LEFT:
+				return sendMouseEvent (SWT.MouseHorizontalWheel, 0, 3, 0, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1;
+			case GDK.GDK_SCROLL_RIGHT:
+				return sendMouseEvent (SWT.MouseHorizontalWheel, 0, -3, 0, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1;
+		}
+	} else {
+		double[] delta_x = new double[1], delta_y = new double [1];
+		boolean deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
+
+		if (deltasAvailable) {
+			mouseWheelSumX += delta_x[0];
+			mouseWheelSumY += delta_y[0];
+			int count = (int)mouseWheelSumX;
+			if (count != 0) {
+				mouseWheelSumX -= count;
+				result = (sendMouseEvent (SWT.MouseHorizontalWheel, 0, -count, 0, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1);
+			}
+			count = (int)mouseWheelSumY;
+			if (count != 0) {
+				mouseWheelSumY -= count;
+				result = (sendMouseEvent (SWT.MouseWheel, 0, -count, SWT.SCROLL_LINE, true, time, eventRX[0], eventRY[0], false, state[0]) ? 0 : 1);
+			}
+		}
+	}
 
 	/*
 	* Feature in GTK.  Scrolled windows do not scroll if the scrollbars
 	* are hidden.  This is not a bug, but is inconsistent with other platforms.
 	* The fix is to set the adjustment values directly.
 	*/
-	if ((state & CANVAS) != 0) {
+	if ((this.state & CANVAS) != 0) {
 		ScrollBar scrollBar;
-		int [] direction = new int[1];
-		boolean fetched = GDK.gdk_event_get_scroll_direction(eventPtr, direction);
 
-		if (!fetched) {
+		if (fetched) {
+			if (direction[0] == GDK.GDK_SCROLL_UP || direction[0] == GDK.GDK_SCROLL_DOWN) {
+				scrollBar = verticalBar;
+			} else {
+				scrollBar = horizontalBar;
+			}
+			if (scrollBar != null && !GTK.gtk_widget_get_visible (scrollBar.handle) && scrollBar.getEnabled()) {
+				GtkAdjustment adjustment = new GtkAdjustment ();
+				gtk_adjustment_get (scrollBar.adjustmentHandle, adjustment);
+				/* Calculate wheel delta to match GTK+ 2.4 and higher */
+				int wheel_delta = (int) Math.pow(adjustment.page_size, 2.0 / 3.0);
+				if (direction[0] == GDK.GDK_SCROLL_UP || direction[0] == GDK.GDK_SCROLL_LEFT)
+					wheel_delta = -wheel_delta;
+				int value = (int) Math.max(adjustment.lower,
+						Math.min(adjustment.upper - adjustment.page_size, adjustment.value + wheel_delta));
+				GTK.gtk_adjustment_set_value (scrollBar.adjustmentHandle, value);
+				return 1;
+			}
+		} else {
 			double[] delta_x = new double[1], delta_y = new double [1];
 			boolean deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
 
@@ -408,24 +479,6 @@ long gtk_scroll_event (long widget, long eventPtr) {
 						result = 1;
 					}
 				}
-			}
-		} else {
-			if (direction[0] == GDK.GDK_SCROLL_UP || direction[0] == GDK.GDK_SCROLL_DOWN) {
-				scrollBar = verticalBar;
-			} else {
-				scrollBar = horizontalBar;
-			}
-			if (scrollBar != null && !GTK.gtk_widget_get_visible (scrollBar.handle) && scrollBar.getEnabled()) {
-				GtkAdjustment adjustment = new GtkAdjustment ();
-				gtk_adjustment_get (scrollBar.adjustmentHandle, adjustment);
-				/* Calculate wheel delta to match GTK+ 2.4 and higher */
-				int wheel_delta = (int) Math.pow(adjustment.page_size, 2.0 / 3.0);
-				if (direction[0] == GDK.GDK_SCROLL_UP || direction[0] == GDK.GDK_SCROLL_LEFT)
-					wheel_delta = -wheel_delta;
-				int value = (int) Math.max(adjustment.lower,
-						Math.min(adjustment.upper - adjustment.page_size, adjustment.value + wheel_delta));
-				GTK.gtk_adjustment_set_value (scrollBar.adjustmentHandle, value);
-				return 1;
 			}
 		}
 	}
