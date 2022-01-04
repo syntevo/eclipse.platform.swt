@@ -4968,7 +4968,7 @@ static {
 	* to stop the compiler from inlining.
 	*/
 	String platform = getPlatform ();
-	if ("cocoa".equals (platform)) { //$NON-NLS-1$
+	if ("cocoa".equals (platform) && "true".equals(System.getProperty("swt.modifiers.macOS", "true"))) { //$NON-NLS-1$
 		MOD1 = COMMAND;
 		MOD2 = SHIFT;
 		MOD3 = ALT;
