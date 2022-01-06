@@ -1455,7 +1455,7 @@ boolean sendKeyEvent (NSEvent nsEvent, int type) {
 	if ((modifierFlags & OS.NSCommandKeyMask) != 0) stateMask |= SWT.COMMAND;
 	if (type != SWT.KeyDown)  return result;
 	short keyCode = nsEvent.keyCode ();
-	if (stateMask == SWT.COMMAND) {
+	if (stateMask == SWT.MOD1) {
 		switch (keyCode) {
 			case 7: /* X */
 				cut ();
