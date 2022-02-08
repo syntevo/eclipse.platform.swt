@@ -4318,6 +4318,9 @@ boolean gtk4_scroll_event(long controller, double dx, double dy, long event) {
 	return false;
 }
 
+double sumDeltaY = 0;
+long lastMillis = 0;
+
 @Override
 long gtk_scroll_event (long widget, long eventPtr) {
 	long result = 0;
@@ -4357,6 +4360,22 @@ long gtk_scroll_event (long widget, long eventPtr) {
 	} else {
 		double[] delta_x = new double[1], delta_y = new double [1];
 		boolean deltasAvailable = GDK.gdk_event_get_scroll_deltas (eventPtr, delta_x, delta_y);
+
+		if (System.currentTimeMillis() > lastMillis + 5000) {
+			sumDeltaY = 0;
+		}
+
+		lastMillis = System.currentTimeMillis();
+		sumDeltaY += delta_y[0];
+
+		System.out.format(
+			"%d Smooth %08X: %.2f,%.2f sum=%.2f%n",
+			System.currentTimeMillis(),
+			this.hashCode(),
+			delta_x[0],
+			delta_y[0],
+			sumDeltaY
+		);
 
 		if (deltasAvailable) {
 			if (delta_x [0] != 0) {
