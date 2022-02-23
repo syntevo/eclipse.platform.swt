@@ -2912,7 +2912,7 @@ public boolean forceFocus () {
 	if (display.focusEvent == SWT.FocusOut) return false;
 	Shell shell = getShell ();
 	shell.setSavedFocus (this);
-	if (!isEnabled () || !isVisible ()) return false;
+	if (!isEnabled () || !isVisible () || display.getActiveShell() != getShell()) return false;
 	shell.bringToTop (false);
 	return forceFocus (focusHandle ());
 }
