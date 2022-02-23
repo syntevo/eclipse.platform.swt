@@ -1550,6 +1550,16 @@ void error (int code) {
 	SWT.error (code);
 }
 
+long x11timeOffset = 0;
+long getX11Time() {
+	return System.currentTimeMillis() - x11timeOffset;
+}
+void initX11Time(int x11time) {
+	if (x11timeOffset == 0) {
+		x11timeOffset = System.currentTimeMillis() - x11time;
+	}
+}
+
 long eventProc (long event, long data) {
 	/*
 	* Use gdk_event_get_time() rather than event.time or
@@ -1560,13 +1570,17 @@ long eventProc (long event, long data) {
 	* return zero.
 	*/
 	int time = GDK.gdk_event_get_time (event);
-	if (time != 0) lastEventTime = time;
+	if (time != 0) {
+		lastEventTime = time;
+		initX11Time(time);
+	}
 
 	int eventType = GTK.GTK4 ? GDK.gdk_event_get_event_type(event) : GDK.GDK_EVENT_TYPE (event);
 	Control.fixGdkEventTypeValues(eventType);
 	switch (eventType) {
 		case GDK.GDK_BUTTON_PRESS:
 		case GDK.GDK_KEY_PRESS:
+			System.out.println("Display.eventProc: updating 'lastEventTime' on event type " + eventType);
 			lastUserEventTime = time;
 	}
 	boolean dispatch = true;

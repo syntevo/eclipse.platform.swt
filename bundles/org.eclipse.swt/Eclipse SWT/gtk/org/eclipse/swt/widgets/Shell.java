@@ -632,6 +632,7 @@ void bringToTop (boolean force) {
 		if (GTK.GTK4) {
 			GTK4.gdk_toplevel_focus (gdkResource, display.lastUserEventTime);
 		} else {
+			System.out.println("Shell.bringToTop: " + (display.getX11Time() - display.lastUserEventTime) + "ms late");
 			GDK.gdk_window_focus (gdkResource, display.lastUserEventTime);
 		}
 	}
