@@ -117,6 +117,18 @@ public class Display extends Device implements Executor {
 	/* System property to be set for SWT application to use the system's theme */
 	static final String USE_SYSTEM_THEME = "org.eclipse.swt.display.useSystemTheme";
 
+	/**
+	 * This constant is used for configuring whether control.forceFocus() activates the parent shell.
+	 * Expects a <code>boolean</code> value.
+	 * To prevent control.forceFocus() to activate the shell, invoke
+	 * <pre>
+	 *   display.setData(Display.ACTIVATE_SHELL_ON_FORCE_FOCUS, false);
+	 * </pre>
+	 * after having created the display.
+	 */
+	public static final String ACTIVATE_SHELL_ON_FORCE_FOCUS = "org.eclipse.swt.activateShellOnForceFocus"; //$NON-NLS-1$
+	boolean activateShellOnForceFocus = true;
+
 	/* Windows and Events */
 	Event [] eventQueue;
 	EventTable eventTable, filterTable;
@@ -4932,6 +4944,10 @@ public void setData (String key, Object value) {
 		if (value != null) {
 			value = runAWTInvokeLater();
 		}
+	}
+
+	if (key.equals(ACTIVATE_SHELL_ON_FORCE_FOCUS)) {
+		activateShellOnForceFocus = ((Boolean)value).booleanValue ();
 	}
 
 	/* Remove the key/value pair */
