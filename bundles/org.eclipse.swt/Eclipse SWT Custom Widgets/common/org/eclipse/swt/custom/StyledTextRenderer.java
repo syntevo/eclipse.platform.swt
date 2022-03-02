@@ -1265,7 +1265,7 @@ TextLayout getTextLayout(int lineIndex, int orientation, int width, int lineSpac
 		}
 	}
 
-	if (styledText != null && styledText.isFixedLineHeight()) {
+	if (styledText != null && styledText.isFixedLineHeight() && false) { // prevent resizing of lines
 		int index = -1;
 		int lineCount = layout.getLineCount();
 		int height = getLineHeight();
