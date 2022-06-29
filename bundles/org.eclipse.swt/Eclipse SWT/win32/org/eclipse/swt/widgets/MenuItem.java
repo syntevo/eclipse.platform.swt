@@ -712,7 +712,15 @@ public void setEnabled (boolean enabled) {
 	boolean success = OS.GetMenuItemInfo (hMenu, id, false, info);
 	if (!success) {
 		int error = OS.GetLastError();
-		SWT.error (SWT.ERROR_CANNOT_SET_ENABLED, null, " [GetLastError=0x" + Integer.toHexString(error) + "]");//$NON-NLS-1$ $NON-NLS-2$
+		String debugInfo = " [" +
+			"GetLastError=0x" + Integer.toHexString(error) +
+			" hMenu=0x" + Long.toHexString(hMenu) +
+			" id=0x" + Integer.toHexString(id) +
+			" disposed=" + isDisposed() +
+			" count=" + OS.GetMenuItemCount(hMenu) +
+			"]";
+
+		SWT.error (SWT.ERROR_CANNOT_SET_ENABLED, null, debugInfo);
 	}
 	int bits = OS.MFS_DISABLED | OS.MFS_GRAYED;
 	if (enabled) {
