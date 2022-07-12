@@ -1775,14 +1775,6 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
 	if (display.lastVirtual) {
 		display.lastKey = (int)wParam;
-		/*
-		* Feature in Windows.  The virtual key VK_DELETE is not
-		* treated as both a virtual key and an ASCII key by Windows.
-		* Therefore, we will not receive a WM_CHAR for this key.
-		* The fix is to treat VK_DELETE as a special case and map
-		* the ASCII value explicitly (Delete is 0x7F).
-		*/
-		if (display.lastKey == OS.VK_DELETE) display.lastAscii = 0x7F;
 
 		/*
 		* It is possible to get a WM_CHAR for a virtual key when
@@ -2422,14 +2414,6 @@ LRESULT wmSysKeyDown (long hwnd, long wParam, long lParam) {
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
 	if (display.lastVirtual) {
 		display.lastKey = (int)wParam;
-		/*
-		* Feature in Windows.  The virtual key VK_DELETE is not
-		* treated as both a virtual key and an ASCII key by Windows.
-		* Therefore, we will not receive a WM_SYSCHAR for this key.
-		* The fix is to treat VK_DELETE as a special case and map
-		* the ASCII value explicitly (Delete is 0x7F).
-		*/
-		if (display.lastKey == OS.VK_DELETE) display.lastAscii = 0x7F;
 
 		if (OS.VK_NUMPAD0 <= display.lastKey && display.lastKey <= OS.VK_DIVIDE) {
 			display.lastAscii = display.numpadKey (display.lastKey);
