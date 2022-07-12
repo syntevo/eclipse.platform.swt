@@ -1444,9 +1444,74 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 			break;
 	}
 
-	setLocationMask(event, type, wParam, lParam);
+	switch (display.lastKeyVK) {
+		case OS.VK_SHIFT:
+			if (OS.GetKeyState(OS.VK_LSHIFT) < 0) event.keyLocation = SWT.LEFT;
+			if (OS.GetKeyState(OS.VK_RSHIFT) < 0) event.keyLocation = SWT.RIGHT;
+			break;
+		case OS.VK_CONTROL:
+		case OS.VK_MENU:
+			event.keyLocation = (lParam & 0x1000000) == 0 ? SWT.LEFT : SWT.RIGHT;
+			break;
+		case OS.VK_INSERT:
+		case OS.VK_DELETE:
+		case OS.VK_HOME:
+		case OS.VK_END:
+		case OS.VK_PRIOR:
+		case OS.VK_NEXT:
+		case OS.VK_UP:
+		case OS.VK_DOWN:
+		case OS.VK_LEFT:
+		case OS.VK_RIGHT:
+			if ((lParam & 0x1000000) == 0) {
+				event.keyLocation = SWT.KEYPAD;
+			}
+			break;
+		case OS.VK_NUMLOCK:
+			event.keyLocation = SWT.KEYPAD;
+			break;
+		case OS.VK_NUMPAD0:
+		case OS.VK_NUMPAD1:
+		case OS.VK_NUMPAD2:
+		case OS.VK_NUMPAD3:
+		case OS.VK_NUMPAD4:
+		case OS.VK_NUMPAD5:
+		case OS.VK_NUMPAD6:
+		case OS.VK_NUMPAD7:
+		case OS.VK_NUMPAD8:
+		case OS.VK_NUMPAD9:
+		case OS.VK_MULTIPLY:
+		case OS.VK_ADD:
+		case OS.VK_SEPARATOR:
+		case OS.VK_SUBTRACT:
+		case OS.VK_DECIMAL:
+		case OS.VK_DIVIDE:
+			event.keyLocation = SWT.KEYPAD;
+			display.lastAscii = display.numpadKey (display.lastKeyVK);
+			break;
+	}
 
-	if (display.lastKeyVK == OS.VK_RETURN && display.lastAscii == SWT.CR) {
+	/*
+	 * Feature in Windows.  The virtual key VK_DELETE is not
+	 * treated as both a virtual key and an ASCII key by Windows.
+	 * Therefore, we will not receive a WM_CHAR for this key.
+	 * The fix is to treat VK_DELETE as a special case and map
+	 * the ASCII value explicitly (Delete is 0x7F).
+	 */
+	if (display.lastKeyVK == OS.VK_DELETE) display.lastAscii = 0x7F;
+
+	if (display.lastKeyVK == OS.VK_CANCEL) {
+		/*
+		 * Feature in Windows.  When the user presses Ctrl+Pause, the
+		 * VK_CANCEL key is generated and a WM_CHAR is sent with 0x03,
+		 * possibly to allow an application to look for Ctrl+C and the
+		 * the Break key at the same time.  This is unexpected and
+		 * unwanted.  The fix is to detect the case and set the character
+		 * to zero.
+		 */
+		display.lastAscii = 0x0;
+		event.keyCode = SWT.BREAK;
+	} else if (display.lastKeyVK == OS.VK_RETURN && display.lastAscii == SWT.CR) {
 		/*
 		 * Feature in Windows.  When the user presses either the Enter
 		 * key or the numeric keypad Enter key, Windows sends a WM_KEYDOWN
@@ -1461,25 +1526,6 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 			event.keyCode = SWT.CR;
 		}
 	} else if (display.lastVirtual) {
-		/*
-		* Feature in Windows.  The virtual key VK_DELETE is not
-		* treated as both a virtual key and an ASCII key by Windows.
-		* Therefore, we will not receive a WM_CHAR for this key.
-		* The fix is to treat VK_DELETE as a special case and map
-		* the ASCII value explicitly (Delete is 0x7F).
-		*/
-		if (display.lastKeyVK == OS.VK_DELETE) display.lastAscii = 0x7F;
-
-		/*
-		* Feature in Windows.  When the user presses Ctrl+Pause, the
-		* VK_CANCEL key is generated and a WM_CHAR is sent with 0x03,
-		* possibly to allow an application to look for Ctrl+C and the
-		* the Break key at the same time.  This is unexpected and
-		* unwanted.  The fix is to detect the case and set the character
-		* to zero.
-		*/
-		if (display.lastKeyVK == OS.VK_CANCEL) display.lastAscii = 0x0;
-
 		event.keyCode = Display.translateKey (display.lastKeyVK);
 	} else {
 		/*
@@ -1495,44 +1541,6 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 		return false;
 	}
 	return setInputState (event, type);
-}
-
-int setLocationMask (Event event, int type, long wParam, long lParam) {
-	int location = SWT.NONE;
-	if (display.lastVirtual) {
-		switch (display.lastKeyVK) {
-			case OS.VK_SHIFT:
-				if (OS.GetKeyState(OS.VK_LSHIFT) < 0) location = SWT.LEFT;
-				if (OS.GetKeyState(OS.VK_RSHIFT) < 0) location = SWT.RIGHT;
-				break;
-			case OS.VK_NUMLOCK:
-				location = SWT.KEYPAD;
-				break;
-			case OS.VK_CONTROL:
-			case OS.VK_MENU:
-				location = (lParam & 0x1000000) == 0 ? SWT.LEFT : SWT.RIGHT;
-				break;
-			case OS.VK_INSERT:
-			case OS.VK_DELETE:
-			case OS.VK_HOME:
-			case OS.VK_END:
-			case OS.VK_PRIOR:
-			case OS.VK_NEXT:
-			case OS.VK_UP:
-			case OS.VK_DOWN:
-			case OS.VK_LEFT:
-			case OS.VK_RIGHT:
-				if ((lParam & 0x1000000) == 0) {
-					location = SWT.KEYPAD;
-				}
-				break;
-		}
-		if (display.numpadKey(display.lastKeyVK) != 0) {
-			location = SWT.KEYPAD;
-		}
-	}
-	event.keyLocation = location;
-	return location;
 }
 
 boolean setTabGroupFocus () {
@@ -1779,29 +1787,7 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	* may be down when the user has not entered a control character.
 	*/
 	display.lastVirtual = mapKey == 0 || display.numpadKey (display.lastKeyVK) != 0;
-	if (display.lastVirtual) {
-		/*
-		* It is possible to get a WM_CHAR for a virtual key when
-		* Num Lock is on.  If the user types Home while Num Lock
-		* is down, a WM_CHAR is issued with WPARM=55 (for the
-		* character 7).  If we are going to get a WM_CHAR we need
-		* to ensure that the last key has the correct value.  Note
-		* that Ctrl+Home does not issue a WM_CHAR when Num Lock is
-		* down.
-		*/
-		if (OS.VK_NUMPAD0 <= display.lastKeyVK && display.lastKeyVK <= OS.VK_DIVIDE) {
-			display.lastAscii = display.numpadKey (display.lastKeyVK);
-		}
-	} else {
-		/*
-		* Feature in Windows. The virtual key VK_CANCEL is treated
-		* as both a virtual key and ASCII key by Windows.  This
-		* means that a WM_CHAR with WPARAM=3 will be issued for
-		* this key.  In order to distinguish between this key and
-		* Ctrl+C, mark the key as virtual.
-		*/
-		if (wParam == OS.VK_CANCEL) display.lastVirtual = true;
-
+	if (!display.lastVirtual) {
 		if (OS.GetKeyState (OS.VK_CONTROL) < 0) {
 			/*
 			 * Get the shifted state or convert to lower case if necessary.
@@ -1860,14 +1846,6 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 	if (display.lastVirtual) {
 		display.lastKeyVK = (int)wParam;
 	} else {
-		/*
-		* Feature in Windows. The virtual key VK_CANCEL is treated
-		* as both a virtual key and ASCII key by Windows.  This
-		* means that a WM_CHAR with WPARAM=3 will be issued for
-		* this key.  In order to distinguish between this key and
-		* Ctrl+C, mark the key as virtual.
-		*/
-		if (wParam == OS.VK_CANCEL) display.lastVirtual = true;
 		if (display.lastKeyVK == 0) {
 			display.lastAscii = 0;
 			display.lastDead = false;
@@ -2408,11 +2386,6 @@ LRESULT wmSysKeyDown (long hwnd, long wParam, long lParam) {
 	if (isDisposed ()) return LRESULT.ONE;
 
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
-	if (display.lastVirtual) {
-		if (OS.VK_NUMPAD0 <= display.lastKeyVK && display.lastKeyVK <= OS.VK_DIVIDE) {
-			display.lastAscii = display.numpadKey (display.lastKeyVK);
-		}
-	}
 
 	if (isCharPending) {
 		return null;
