@@ -1426,6 +1426,7 @@ boolean setInputState (Event event, int type) {
  * </ul>
  */
 boolean setKeyState (Event event, int type, long wParam, long lParam) {
+	int mapKey = mapVirtualKey(display.lastKeyVK);
 
 	/*
 	* Feature in Windows.  When the user presses Ctrl+Backspace
@@ -1436,27 +1437,30 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 	*/
 	switch (display.lastAscii) {
 		case SWT.DEL:
-			if (display.lastKey == SWT.BS) display.lastAscii = SWT.BS;
+			if (display.lastKeyVK == OS.VK_BACK) display.lastAscii = SWT.BS;
 			break;
 		case SWT.LF:
-			if (display.lastKey == SWT.CR) display.lastAscii = SWT.CR;
+			if (display.lastKeyVK == OS.VK_RETURN) display.lastAscii = SWT.CR;
 			break;
-	}
-
-	/*
-	* Feature in Windows.  When the user presses either the Enter
-	* key or the numeric keypad Enter key, Windows sends a WM_KEYDOWN
-	* with wParam=VK_RETURN in both cases.  In order to distinguish
-	* between the keys, the extended key bit is tested. If the bit
-	* is set, assume that the numeric keypad Enter was pressed.
-	*/
-	if (display.lastKey == SWT.CR && display.lastAscii == SWT.CR) {
-		if ((lParam & 0x1000000) != 0) display.lastKey = SWT.KEYPAD_CR;
 	}
 
 	setLocationMask(event, type, wParam, lParam);
 
-	if (display.lastVirtual) {
+	if (display.lastKeyVK == OS.VK_RETURN && display.lastAscii == SWT.CR) {
+		/*
+		 * Feature in Windows.  When the user presses either the Enter
+		 * key or the numeric keypad Enter key, Windows sends a WM_KEYDOWN
+		 * with wParam=VK_RETURN in both cases.  In order to distinguish
+		 * between the keys, the extended key bit is tested. If the bit
+		 * is set, assume that the numeric keypad Enter was pressed.
+		 */
+		if ((lParam & 0x1000000) != 0) {
+			event.keyCode = SWT.KEYPAD_CR;
+			event.keyLocation = SWT.KEYPAD;
+		} else {
+			event.keyCode = SWT.CR;
+		}
+	} else if (display.lastVirtual) {
 		/*
 		* Feature in Windows.  The virtual key VK_DELETE is not
 		* treated as both a virtual key and an ASCII key by Windows.
@@ -1464,7 +1468,7 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 		* The fix is to treat VK_DELETE as a special case and map
 		* the ASCII value explicitly (Delete is 0x7F).
 		*/
-		if (display.lastKey == OS.VK_DELETE) display.lastAscii = 0x7F;
+		if (display.lastKeyVK == OS.VK_DELETE) display.lastAscii = 0x7F;
 
 		/*
 		* Feature in Windows.  When the user presses Ctrl+Pause, the
@@ -1474,11 +1478,17 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 		* unwanted.  The fix is to detect the case and set the character
 		* to zero.
 		*/
-		if (display.lastKey == OS.VK_CANCEL) display.lastAscii = 0x0;
+		if (display.lastKeyVK == OS.VK_CANCEL) display.lastAscii = 0x0;
 
-		event.keyCode = Display.translateKey (display.lastKey);
+		event.keyCode = Display.translateKey (display.lastKeyVK);
 	} else {
-		event.keyCode = display.lastKey;
+		/*
+		 * Convert LastKey to lower case because Windows non-virtual
+		 * keys that are also ASCII keys, such as like VK_A, are have
+		 * upper case values in WM_KEYDOWN despite the fact that the
+		 * Shift was not pressed.
+		 */
+		event.keyCode = (int)OS.CharLower (OS.LOWORD (mapKey));
 	}
 	event.character = (char) display.lastAscii;
 	if (event.keyCode == 0 && event.character == 0) {
@@ -1490,7 +1500,7 @@ boolean setKeyState (Event event, int type, long wParam, long lParam) {
 int setLocationMask (Event event, int type, long wParam, long lParam) {
 	int location = SWT.NONE;
 	if (display.lastVirtual) {
-		switch (display.lastKey) {
+		switch (display.lastKeyVK) {
 			case OS.VK_SHIFT:
 				if (OS.GetKeyState(OS.VK_LSHIFT) < 0) location = SWT.LEFT;
 				if (OS.GetKeyState(OS.VK_RSHIFT) < 0) location = SWT.RIGHT;
@@ -1517,11 +1527,7 @@ int setLocationMask (Event event, int type, long wParam, long lParam) {
 				}
 				break;
 		}
-		if (display.numpadKey(display.lastKey) != 0) {
-			location = SWT.KEYPAD;
-		}
-	} else {
-		if (display.lastKey == SWT.KEYPAD_CR) {
+		if (display.numpadKey(display.lastKeyVK) != 0) {
 			location = SWT.KEYPAD;
 		}
 	}
@@ -1636,7 +1642,7 @@ LRESULT wmContextMenu (long hwnd, long wParam, long lParam) {
 
 LRESULT wmIMEChar (long hwnd, long wParam, long lParam) {
 	Display display = this.display;
-	display.lastKey = 0;
+	display.lastKeyVK = 0;
 	display.lastAscii = (int)wParam;
 	display.lastVirtual = display.lastDead = false;
 	if (!sendKeyEvent (SWT.KeyDown, OS.WM_IME_CHAR, wParam, lParam)) {
@@ -1644,7 +1650,7 @@ LRESULT wmIMEChar (long hwnd, long wParam, long lParam) {
 	}
 	sendKeyEvent (SWT.KeyUp, OS.WM_IME_CHAR, wParam, lParam);
 	// widget could be disposed at this point
-	display.lastKey = display.lastAscii = 0;
+	display.lastKeyVK = display.lastAscii = 0;
 	return LRESULT.ONE;
 }
 
@@ -1686,11 +1692,12 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 			if ((lParam & 0x40000000) != 0) return null;
 	}
 
-	/* Clear last key and last ascii because a new key has been typed */
-	display.lastAscii = display.lastKey = 0;
+	/* A new key has been typed */
+	display.lastKeyVK = (int)wParam;
+	display.lastAscii = 0;
 	display.lastVirtual = display.lastDead = false;
 
-	int mapKey = mapVirtualKey ((int)wParam);
+	int mapKey = mapVirtualKey (display.lastKeyVK);
 
 	/*
 	* Dead keys are special keys that modify next keys pressed. For
@@ -1707,7 +1714,6 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	if (OS.PeekMessage (msg, hwnd, OS.WM_DEADCHAR, OS.WM_DEADCHAR, flags)) {
 		display.lastDead = true;
 		display.lastVirtual = mapKey == 0;
-		display.lastKey = display.lastVirtual ? (int)wParam : mapKey;
 		return null;
 	}
 
@@ -1772,10 +1778,8 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	* value.  Also, on international keyboards, the control key
 	* may be down when the user has not entered a control character.
 	*/
-	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
+	display.lastVirtual = mapKey == 0 || display.numpadKey (display.lastKeyVK) != 0;
 	if (display.lastVirtual) {
-		display.lastKey = (int)wParam;
-
 		/*
 		* It is possible to get a WM_CHAR for a virtual key when
 		* Num Lock is on.  If the user types Home while Num Lock
@@ -1785,18 +1789,10 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 		* that Ctrl+Home does not issue a WM_CHAR when Num Lock is
 		* down.
 		*/
-		if (OS.VK_NUMPAD0 <= display.lastKey && display.lastKey <= OS.VK_DIVIDE) {
-			display.lastAscii = display.numpadKey (display.lastKey);
+		if (OS.VK_NUMPAD0 <= display.lastKeyVK && display.lastKeyVK <= OS.VK_DIVIDE) {
+			display.lastAscii = display.numpadKey (display.lastKeyVK);
 		}
 	} else {
-		/*
-		* Convert LastKey to lower case because Windows non-virtual
-		* keys that are also ASCII keys, such as like VK_A, are have
-		* upper case values in WM_KEYDOWN despite the fact that the
-		* Shift was not pressed.
-		*/
-		display.lastKey = (int)OS.CharLower (OS.LOWORD (mapKey));
-
 		/*
 		* Feature in Windows. The virtual key VK_CANCEL is treated
 		* as both a virtual key and ASCII key by Windows.  This
@@ -1814,8 +1810,8 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 			 * If the user types Ctrl+Shift+6, the value of LastAscii will
 			 * depend on the international keyboard.
 			 */
-			if (OS.GetKeyState (OS.VK_SHIFT) < 0) {
-				display.lastAscii = display.shiftedKey ((int)wParam);
+			if (OS.GetKeyState(OS.VK_SHIFT) < 0) {
+				display.lastAscii = display.shiftedKey (display.lastKeyVK);
 				if (display.lastAscii == 0) display.lastAscii = mapKey;
 			} else {
 				display.lastAscii = (int)OS.CharLower (OS.LOWORD (mapKey));
@@ -1844,7 +1840,7 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 	* and last ascii in case the key down is hooked.
 	*/
 	if (!hooks (SWT.KeyUp) && !display.filters (SWT.KeyUp)) {
-		display.lastKey = display.lastAscii = 0;
+		display.lastKeyVK = display.lastAscii = 0;
 		display.lastVirtual = display.lastDead = false;
 		return null;
 	}
@@ -1862,7 +1858,7 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 	*/
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
 	if (display.lastVirtual) {
-		display.lastKey = (int)wParam;
+		display.lastKeyVK = (int)wParam;
 	} else {
 		/*
 		* Feature in Windows. The virtual key VK_CANCEL is treated
@@ -1872,7 +1868,7 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 		* Ctrl+C, mark the key as virtual.
 		*/
 		if (wParam == OS.VK_CANCEL) display.lastVirtual = true;
-		if (display.lastKey == 0) {
+		if (display.lastKeyVK == 0) {
 			display.lastAscii = 0;
 			display.lastDead = false;
 			return null;
@@ -1883,7 +1879,7 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 		result = LRESULT.ONE;
 	}
 	// widget could be disposed at this point
-	display.lastKey = display.lastAscii = 0;
+	display.lastKeyVK = display.lastAscii = 0;
 	display.lastVirtual = display.lastDead = false;
 	return result;
 }
@@ -2387,10 +2383,11 @@ LRESULT wmSysKeyDown (long hwnd, long wParam, long lParam) {
 	}
 
 	/* Clear last key and last ascii because a new key has been typed */
-	display.lastAscii = display.lastKey = 0;
+	display.lastKeyVK = (int)wParam;
+	display.lastAscii = 0;
 	display.lastVirtual = display.lastDead = false;
 
-	int mapKey = mapVirtualKey ((int)wParam);
+	int mapKey = mapVirtualKey (display.lastKeyVK);
 
 	// See corresponding code block in 'WM_KEYDOWN' for an explanation.
 	MSG msg = new MSG ();
@@ -2398,7 +2395,6 @@ LRESULT wmSysKeyDown (long hwnd, long wParam, long lParam) {
 	if (OS.PeekMessage (msg, hwnd, OS.WM_SYSDEADCHAR, OS.WM_SYSDEADCHAR, flags)) {
 		display.lastDead = true;
 		display.lastVirtual = mapKey == 0;
-		display.lastKey = display.lastVirtual ? (int)wParam : mapKey;
 		return null;
 	}
 
@@ -2413,19 +2409,9 @@ LRESULT wmSysKeyDown (long hwnd, long wParam, long lParam) {
 
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
 	if (display.lastVirtual) {
-		display.lastKey = (int)wParam;
-
-		if (OS.VK_NUMPAD0 <= display.lastKey && display.lastKey <= OS.VK_DIVIDE) {
-			display.lastAscii = display.numpadKey (display.lastKey);
+		if (OS.VK_NUMPAD0 <= display.lastKeyVK && display.lastKeyVK <= OS.VK_DIVIDE) {
+			display.lastAscii = display.numpadKey (display.lastKeyVK);
 		}
-	} else {
-		/*
-		* Convert LastKey to lower case because Windows non-virtual
-		* keys that are also ASCII keys, such as like VK_A, are have
-		* upper case values in WM_SYSKEYDOWN despite the fact that the
-		* Shift was not pressed.
-		*/
-		display.lastKey = (int)OS.CharLower (OS.LOWORD (mapKey));
 	}
 
 	if (isCharPending) {

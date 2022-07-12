@@ -378,7 +378,7 @@ LRESULT WM_IME_COMPOSITION (long wParam, long lParam) {
 				commitCount = 0;
 				if (event.doit) {
 					Display display = this.display;
-					display.lastKey = 0;
+					display.lastKeyVK = 0;
 					display.lastVirtual = display.lastDead = false;
 					length = chars.length ();
 					for (int i = 0; i < length; i++) {

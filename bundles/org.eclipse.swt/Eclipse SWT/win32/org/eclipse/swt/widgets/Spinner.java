@@ -1252,7 +1252,7 @@ LRESULT wmIMEChar(long hwnd, long wParam, long lParam) {
 
 	/* Process a DBCS character */
 	Display display = this.display;
-	display.lastKey = 0;
+	display.lastKeyVK = 0;
 	display.lastAscii = (int)wParam;
 	display.lastVirtual = display.lastDead = false;
 	if (!sendKeyEvent (SWT.KeyDown, OS.WM_IME_CHAR, wParam, lParam)) {
@@ -1278,7 +1278,7 @@ LRESULT wmIMEChar(long hwnd, long wParam, long lParam) {
 
 	sendKeyEvent (SWT.KeyUp, OS.WM_IME_CHAR, wParam, lParam);
 	// widget could be disposed at this point
-	display.lastKey = display.lastAscii = 0;
+	display.lastKeyVK = display.lastAscii = 0;
 	return new LRESULT (result);
 }
 

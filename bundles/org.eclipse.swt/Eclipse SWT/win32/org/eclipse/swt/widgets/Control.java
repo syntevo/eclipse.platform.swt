@@ -4228,7 +4228,7 @@ boolean translateTraversal (MSG msg) {
 	Event event = new Event ();
 	event.doit = doit;
 	event.detail = detail;
-	display.lastKey = lastKey;
+	display.lastKeyVK = lastKey;
 	display.lastAscii = lastAscii;
 	display.lastVirtual = lastVirtual;
 	display.lastDead = false;
