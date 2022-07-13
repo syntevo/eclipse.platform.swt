@@ -1845,12 +1845,6 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
 	if (display.lastVirtual) {
 		display.lastKeyVK = (int)wParam;
-	} else {
-		if (display.lastKeyVK == 0) {
-			display.lastAscii = 0;
-			display.lastDead = false;
-			return null;
-		}
 	}
 	LRESULT result = null;
 	if (!sendKeyEvent (SWT.KeyUp, OS.WM_KEYUP, wParam, lParam)) {
