@@ -1836,6 +1836,8 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 
 	if (display.lastDead) return null;
 
+	display.lastKeyVK = (int)wParam;
+
 	/*
 	* NOTE: On Windows 98, keypad keys are virtual despite the
 	* fact that a WM_CHAR is issued.  On Windows 2000 and XP,
@@ -1843,9 +1845,6 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 	* numeric keypad keys to be virtual.
 	*/
 	display.lastVirtual = mapKey == 0 || display.numpadKey ((int)wParam) != 0;
-	if (display.lastVirtual) {
-		display.lastKeyVK = (int)wParam;
-	}
 	LRESULT result = null;
 	if (!sendKeyEvent (SWT.KeyUp, OS.WM_KEYUP, wParam, lParam)) {
 		result = LRESULT.ONE;
