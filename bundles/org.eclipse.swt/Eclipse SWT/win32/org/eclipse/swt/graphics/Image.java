@@ -1834,7 +1834,17 @@ static long createDIB(int width, int height, int depth) {
 	byte[] bmi = new byte[BITMAPINFOHEADER.sizeof];
 	OS.MoveMemory(bmi, bmiHeader, BITMAPINFOHEADER.sizeof);
 	long[] pBits = new long[1];
-	return OS.CreateDIBSection(0, bmi, OS.DIB_RGB_COLORS, pBits, 0, 0);
+	long result = OS.CreateDIBSection(0, bmi, OS.DIB_RGB_COLORS, pBits, 0, 0);
+	if (result != 0)
+		return result;
+
+	int lastError = OS.GetLastError();
+	String detail = String.format(
+		" [GetLastError=0x%X width=%d height=%d depth=%d]", // $NON-NLS-1$
+		lastError, width, height, depth
+	);
+	SWT.error(SWT.ERROR_NO_HANDLES, null, detail);
+	return 0;
 }
 
 static ImageData indexToIndex(ImageData src, int newDepth) {
