@@ -110,7 +110,7 @@ public class Issue0351_EventKeyCode {
 		shell.open();
 
 		while (!shell.isDisposed()) {
-			if (display.readAndDispatch()) {
+			if (!display.readAndDispatch()) {
 				display.sleep();
 			}
 		}
