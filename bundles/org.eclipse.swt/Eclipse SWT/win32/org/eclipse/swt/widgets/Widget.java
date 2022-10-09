@@ -1880,11 +1880,6 @@ LRESULT wmKeyUp (long hwnd, long wParam, long lParam) {
 		* Ctrl+C, mark the key as virtual.
 		*/
 		if (wParam == OS.VK_CANCEL) display.lastVirtual = true;
-		if (display.lastKey == 0) {
-			display.lastAscii = 0;
-			display.lastDead = false;
-			return null;
-		}
 	}
 	LRESULT result = null;
 	if (!sendKeyEvent (SWT.KeyUp, OS.WM_KEYUP, wParam, lParam)) {
