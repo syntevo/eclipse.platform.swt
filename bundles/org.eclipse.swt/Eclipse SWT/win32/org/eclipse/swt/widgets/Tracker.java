@@ -593,7 +593,6 @@ public boolean open () {
 				case OS.WM_MOUSEMOVE:
 					wmMouse (msg.message, msg.wParam, msg.lParam);
 					break;
-				case OS.WM_IME_CHAR: wmIMEChar (msg.hwnd, msg.wParam, msg.lParam); break;
 				case OS.WM_CHAR: wmChar (msg.hwnd, msg.wParam, msg.lParam); break;
 				case OS.WM_KEYDOWN: wmKeyDown (msg.hwnd, msg.wParam, msg.lParam); break;
 				case OS.WM_KEYUP: wmKeyUp (msg.hwnd, msg.wParam, msg.lParam); break;

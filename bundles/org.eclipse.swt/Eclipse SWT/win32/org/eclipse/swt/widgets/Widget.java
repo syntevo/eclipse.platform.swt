@@ -1634,20 +1634,6 @@ LRESULT wmContextMenu (long hwnd, long wParam, long lParam) {
 	return showMenu (x, y, detail) ? LRESULT.ZERO : null;
 }
 
-LRESULT wmIMEChar (long hwnd, long wParam, long lParam) {
-	Display display = this.display;
-	display.lastKey = 0;
-	display.lastAscii = (int)wParam;
-	display.lastVirtual = display.lastDead = false;
-	if (!sendKeyEvent (SWT.KeyDown, OS.WM_IME_CHAR, wParam, lParam)) {
-		return LRESULT.ONE;
-	}
-	sendKeyEvent (SWT.KeyUp, OS.WM_IME_CHAR, wParam, lParam);
-	// widget could be disposed at this point
-	display.lastKey = display.lastAscii = 0;
-	return LRESULT.ONE;
-}
-
 int mapVirtualKey (int virtualKey) {
 	if (('0' <= virtualKey) && (virtualKey <= '9')) {
 		// Some keyboard layouts have non-latin digits. For example,

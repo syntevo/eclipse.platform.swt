@@ -46,7 +46,7 @@ import org.eclipse.swt.internal.win32.*;
  */
 public class Spinner extends Composite {
 	long hwndText, hwndUpDown;
-	boolean ignoreModify, ignoreCharacter;
+	boolean ignoreModify;
 	int pageIncrement, digits;
 	static final long EditProc;
 	static final TCHAR EditClass = new TCHAR (0, "EDIT", true);
@@ -723,7 +723,7 @@ boolean sendKeyEvent (int type, int msg, long wParam, long lParam, Event event) 
 	}
 	if ((style & SWT.READ_ONLY) != 0) return true;
 	if (type != SWT.KeyDown) return true;
-	if (msg != OS.WM_CHAR && msg != OS.WM_KEYDOWN && msg != OS.WM_IME_CHAR) {
+	if (msg != OS.WM_CHAR && msg != OS.WM_KEYDOWN) {
 		return true;
 	}
 	if (event.character == 0) return true;
@@ -1140,7 +1140,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		switch (msg) {
 			/* Keyboard messages */
 			case OS.WM_CHAR:		result = wmChar (hwnd, wParam, lParam); break;
-			case OS.WM_IME_CHAR:	result = wmIMEChar (hwnd, wParam, lParam); break;
 			case OS.WM_KEYDOWN:		result = wmKeyDown (hwnd, wParam, lParam); break;
 			case OS.WM_KEYUP:		result = wmKeyUp (hwnd, wParam, lParam); break;
 			case OS.WM_SYSCHAR:		result = wmSysChar (hwnd, wParam, lParam); break;
@@ -1248,43 +1247,7 @@ LRESULT WM_SIZE (long wParam, long lParam) {
 }
 
 @Override
-LRESULT wmIMEChar(long hwnd, long wParam, long lParam) {
-
-	/* Process a DBCS character */
-	Display display = this.display;
-	display.lastKey = 0;
-	display.lastAscii = (int)wParam;
-	display.lastVirtual = display.lastDead = false;
-	if (!sendKeyEvent (SWT.KeyDown, OS.WM_IME_CHAR, wParam, lParam)) {
-		return LRESULT.ZERO;
-	}
-
-	/*
-	* Feature in Windows.  The Windows text widget uses
-	* two 2 WM_CHAR's to process a DBCS key instead of
-	* using WM_IME_CHAR.  The fix is to allow the text
-	* widget to get the WM_CHAR's but ignore sending
-	* them to the application.
-	*/
-	ignoreCharacter = true;
-	long result = callWindowProc (hwnd, OS.WM_IME_CHAR, wParam, lParam);
-	MSG msg = new MSG ();
-	int flags = OS.PM_REMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT | OS.PM_QS_POSTMESSAGE;
-	while (OS.PeekMessage (msg, hwnd, OS.WM_CHAR, OS.WM_CHAR, flags)) {
-		OS.TranslateMessage (msg);
-		OS.DispatchMessage (msg);
-	}
-	ignoreCharacter = false;
-
-	sendKeyEvent (SWT.KeyUp, OS.WM_IME_CHAR, wParam, lParam);
-	// widget could be disposed at this point
-	display.lastKey = display.lastAscii = 0;
-	return new LRESULT (result);
-}
-
-@Override
 LRESULT wmChar (long hwnd, long wParam, long lParam) {
-	if (ignoreCharacter) return null;
 	LRESULT result = super.wmChar (hwnd, wParam, lParam);
 	if (result != null) return result;
 	/*
@@ -1391,7 +1354,6 @@ LRESULT wmCommandChild (long wParam, long lParam) {
 
 @Override
 LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
-	if (ignoreCharacter) return null;
 	LRESULT result = super.wmKeyDown (hwnd, wParam, lParam);
 	if (result != null) return result;
 

@@ -5061,7 +5061,9 @@ LRESULT WM_HSCROLL (long wParam, long lParam) {
 }
 
 LRESULT WM_IME_CHAR (long wParam, long lParam) {
-	return wmIMEChar (handle, wParam, lParam);
+	display.lastKey = 0;
+	display.lastVirtual = false;
+	return null;
 }
 
 LRESULT WM_IME_COMPOSITION (long wParam, long lParam) {

@@ -1488,7 +1488,6 @@ long callWindowProc (long hwnd, int msg, long wParam, long lParam) {
 			if (wParam == OS.VK_CONTROL || wParam == OS.VK_SHIFT) break;
 			//FALL THROUGH
 		case OS.WM_CHAR:
-		case OS.WM_IME_CHAR:
 		case OS.WM_KEYUP:
 		case OS.WM_SYSCHAR:
 		case OS.WM_SYSKEYDOWN:
@@ -1542,7 +1541,6 @@ long callWindowProc (long hwnd, int msg, long wParam, long lParam) {
 			if (wParam == OS.VK_CONTROL || wParam == OS.VK_SHIFT) break;
 			//FALL THROUGH
 		case OS.WM_CHAR:
-		case OS.WM_IME_CHAR:
 		case OS.WM_KEYUP:
 		case OS.WM_SYSCHAR:
 		case OS.WM_SYSKEYDOWN:
