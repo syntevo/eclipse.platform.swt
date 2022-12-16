@@ -1388,12 +1388,13 @@ void setFont(Font font, int tabs) {
 		if (boldItalicFont != null) boldItalicFont.dispose();
 		boldFont = italicFont = boldItalicFont = null;
 		regularFont = font;
-		layout.setText("    ");
+		layout.setText("    \u8FB6");
 		layout.setFont(font);
 		layout.setStyle(new TextStyle(getFont(SWT.NORMAL), null, null), 0, 0);
 		layout.setStyle(new TextStyle(getFont(SWT.BOLD), null, null), 1, 1);
 		layout.setStyle(new TextStyle(getFont(SWT.ITALIC), null, null), 2, 2);
 		layout.setStyle(new TextStyle(getFont(SWT.BOLD | SWT.ITALIC), null, null), 3, 3);
+		layout.setStyle(new TextStyle(getFont(SWT.NORMAL), null, null), 4, 4);
 		FontMetrics metrics = layout.getLineMetrics(0);
 		ascent = metrics.getAscent() + metrics.getLeading();
 		descent = metrics.getDescent();
