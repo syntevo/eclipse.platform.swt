@@ -274,6 +274,19 @@ public class Display extends Device implements Executor {
 	 */
 	static final String USE_DARKTHEME_TEXT_ICONS = "org.eclipse.swt.internal.win32.Text.useDarkThemeIcons"; //$NON-NLS-1$
 	boolean textUseDarkthemeIcons = false;
+	/**
+	 * This constant is used for configuring whether <code>control.forceFocus()</code> activates the parent shell.
+	 * Expects a <code>boolean</code> value.
+	 * By default, <code>control.forceFocus()</code> activates the parent shell.
+	 * To prevent <code>control.forceFocus()</code> from activating the parent shell, invoke
+	 * <pre>
+	 *   display.setData(Display.ACTIVATE_SHELL_ON_FORCE_FOCUS, false);
+	 * </pre>
+	 * after having created the display.
+	 * @since 3.123
+	 */
+	public static final String ACTIVATE_SHELL_ON_FORCE_FOCUS = "org.eclipse.swt.activateShellOnForceFocus"; //$NON-NLS-1$
+	boolean activateShellOnForceFocus = true;
 
 	/* Custom icons */
 	long hIconSearch;
@@ -4481,6 +4494,10 @@ public void setData (String key, Object value) {
 			break;
 		case USE_DARKTHEME_TEXT_ICONS:
 			textUseDarkthemeIcons = !disableCustomThemeTweaks && _toBoolean(value);
+			break;
+		case ACTIVATE_SHELL_ON_FORCE_FOCUS:
+			// not using _toBoolean(value) to stay compatible with other platforms
+			activateShellOnForceFocus = ((Boolean)value).booleanValue ();
 			break;
 	}
 

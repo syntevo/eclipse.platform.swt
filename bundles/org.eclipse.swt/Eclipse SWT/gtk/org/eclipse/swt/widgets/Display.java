@@ -187,6 +187,20 @@ public class Display extends Device implements Executor {
 	boolean activePending;
 	boolean ignoreActivate, ignoreFocus;
 
+	/**
+	 * This constant is used for configuring whether <code>control.forceFocus()</code> activates the parent shell.
+	 * Expects a <code>boolean</code> value.
+	 * By default, <code>control.forceFocus()</code> activates the parent shell.
+	 * To prevent <code>control.forceFocus()</code> from activating the parent shell, invoke
+	 * <pre>
+	 *   display.setData(Display.ACTIVATE_SHELL_ON_FORCE_FOCUS, false);
+	 * </pre>
+	 * after having created the display.
+	 * @since 3.123
+	 */
+	public static final String ACTIVATE_SHELL_ON_FORCE_FOCUS = "org.eclipse.swt.activateShellOnForceFocus"; //$NON-NLS-1$
+	boolean activateShellOnForceFocus = true;
+
 	Tracker tracker;
 
 	/* Input method resources */
@@ -5337,6 +5351,9 @@ public void setData (String key, Object value) {
 		Boolean data = (Boolean) value;
 		externalEventLoop = data != null && data.booleanValue ();
 		return;
+	}
+	if (key.equals(ACTIVATE_SHELL_ON_FORCE_FOCUS)) {
+		activateShellOnForceFocus = ((Boolean)value).booleanValue ();
 	}
 
 	/* Remove the key/value pair */

@@ -2914,6 +2914,7 @@ public boolean forceFocus () {
 	Shell shell = getShell ();
 	shell.setSavedFocus (this);
 	if (!isEnabled () || !isVisible ()) return false;
+	if (display.getActiveShell() != getShell() && !display.activateShellOnForceFocus) return false;
 	shell.bringToTop (false);
 	return forceFocus (focusHandle ());
 }
