@@ -6077,13 +6077,19 @@ static long windowProc(long id, long sel) {
 	Widget widget = LookupWidget(id, sel);
 	if (widget == null) return 0;
 
+	if (sel == OS.sel_dealloc) {
+		widget.dealloc(id, sel);
+		return 0;
+	}
+
+	// might happen rarely and causes assertions later, e.g. https://bugs.eclipse.org/bugs/show_bug.cgi?id=436228
+	if (widget.display == null) {
+		return 0;
+	}
+
 	switch (Selector.valueOf(sel)) {
 		case sel_sendSelection: {
 			widget.sendSelection();
-			return 0;
-		}
-		case sel_dealloc: {
-			widget.dealloc(id, sel);
 			return 0;
 		}
 		case sel_sendDoubleSelection: {
