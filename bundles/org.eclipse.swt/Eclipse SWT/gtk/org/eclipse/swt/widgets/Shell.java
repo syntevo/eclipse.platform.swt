@@ -2030,6 +2030,10 @@ long notifyState (long object, long arg0) {
 public void open () {
 	checkWidget ();
 	setVisible (true);
+
+	final Shell[] shells = display.getShells();
+	boolean forceBringToTop = shells.length == 1;
+	bringToTop (forceBringToTop);
 	if (isDisposed ()) return;
 	/*
 	 * When no widget has been given focus, or another push button has focus,
