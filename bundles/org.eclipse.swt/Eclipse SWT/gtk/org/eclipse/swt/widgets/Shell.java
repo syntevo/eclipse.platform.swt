@@ -1604,6 +1604,7 @@ long gtk_focus_in_event (long widget, long event) {
 	} else {
 		ignoreFocusIn = false;
 	}
+	restoreFocus();
 	return 0;
 }
 
@@ -2030,6 +2031,7 @@ long notifyState (long object, long arg0) {
 public void open () {
 	checkWidget ();
 	setVisible (true);
+	bringToTop (true);
 	if (isDisposed ()) return;
 	/*
 	 * When no widget has been given focus, or another push button has focus,
