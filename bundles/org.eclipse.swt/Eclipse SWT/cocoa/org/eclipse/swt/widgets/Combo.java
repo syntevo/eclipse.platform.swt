@@ -1149,6 +1149,7 @@ void mouseDown(long id, long sel, long theEvent) {
 	// popup window. Fix is to retain the view before letting Cocoa track
 	// the mouse events.
 
+	final Display display = this.display;
 	display.sendPreExternalEventDispatchEvent();
 	// 'view' will be cleared if disposed during the mouseDown so cache it.
 	NSView viewCopy = view;
