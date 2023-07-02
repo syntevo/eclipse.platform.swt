@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 public class Test_org_eclipse_swt_widgets_Control_focus {
 
 	private static final int TIMEOUT = 1000;
+	private static final boolean LOGGING = false;
 
 	@Test
 	public void testSetFocusDoesNotActivateShell() {
@@ -48,7 +49,7 @@ public class Test_org_eclipse_swt_widgets_Control_focus {
 					assertSame("expecting the 2nd shell to be activated", display.getActiveShell(), window2.shell);
 					assertTrue("expecting the 1st text field in 2nd shell to be focused", window2.text1.isFocusControl());
 
-					System.out.println("setting focus to 2nd text field in 1st (unactivated) shell");
+					log("setting focus to 2nd text field in 1st (unactivated) shell");
 					window1.text2.setFocus();
 
 					assertSame("expecting the 2nd shell to remain activated", display.getActiveShell(), window2.shell);
@@ -65,26 +66,26 @@ public class Test_org_eclipse_swt_widgets_Control_focus {
 								assertSame("expecting the 2nd shell to remain activated", display.getActiveShell(), window2.shell);
 								assertTrue("expecting the 2nd text field to have received the focus", window2.text2.isFocusControl());
 
-								System.out.println("disposing the 2nd shell, too");
+								log("disposing the 2nd shell, too");
 								window2.shell.dispose();
 							});
-							System.out.println("setting the focus to the 2nd text field");
+							log("setting the focus to the 2nd text field");
 							window2.text2.setFocus();
 						});
 
-						System.out.println("disposing 1st shell");
+						log("disposing 1st shell");
 						window1.shell.dispose();
 					});
 
-					System.out.println("activating 1st shell");
+					log("activating 1st shell");
 					window1.shell.setActive();
 				});
 
-				System.out.println("open 2nd shell");
+				log("open 2nd shell");
 				window2.shell.open();
 			});
 
-			System.out.println("open 1st shell");
+			log("open 1st shell");
 			window1.shell.open();
 
 			while (!display.isDisposed() && !exit[0]) {
@@ -100,7 +101,11 @@ public class Test_org_eclipse_swt_widgets_Control_focus {
 		}
 	}
 
-	// Utils ==================================================================
+	private static void log(String s) {
+		if (LOGGING) {
+			System.out.println(s);
+		}
+	}
 
 	private static void onEventExecute(int eventType, Control control, Runnable runnable) {
 		final Display display = control.getDisplay();
@@ -111,7 +116,7 @@ public class Test_org_eclipse_swt_widgets_Control_focus {
 			public void handleEvent(Event event) {
 				eventReceived = true;
 
-				System.out.println("Received event " + eventType + " on " + control);
+				log("Received event " + eventType + " on " + control);
 				control.removeListener(eventType, this);
 
 				display.asyncExec(() -> {
@@ -126,7 +131,7 @@ public class Test_org_eclipse_swt_widgets_Control_focus {
 			@Override
 			public void run() {
 				if (!eventReceived) {
-					System.out.println("timeout, disposing display");
+					log("timeout, disposing display");
 					display.dispose();
 				}
 			}
