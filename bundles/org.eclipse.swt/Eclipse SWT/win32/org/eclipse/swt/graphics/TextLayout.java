@@ -3580,7 +3580,7 @@ long createMetafileWithChars(long hdc, long hFont, char[] chars, int charCount) 
 	long ssa = OS.HeapAlloc(hHeap, OS.HEAP_ZERO_MEMORY, OS.SCRIPT_STRING_ANALYSIS_sizeof());
 	long metaFileDc = OS.CreateEnhMetaFile(hdc, null, null, null);
 	long oldMetaFont = OS.SelectObject(metaFileDc, hFont);
-	int flags = OS.SSA_METAFILE | OS.SSA_FALLBACK | OS.SSA_GLYPHS | OS.SSA_LINK;
+	int flags = OS.SSA_METAFILE | /*OS.SSA_FALLBACK |*/ OS.SSA_GLYPHS | OS.SSA_LINK;
 	if (OS.ScriptStringAnalyse(metaFileDc, nativeString, charCount, 0, -1, flags, 0, null, null, 0, 0, 0, ssa) == OS.S_OK) {
 		OS.ScriptStringOut(ssa, 0, 0, 0, null, 0, 0, false);
 		OS.ScriptStringFree(ssa);
