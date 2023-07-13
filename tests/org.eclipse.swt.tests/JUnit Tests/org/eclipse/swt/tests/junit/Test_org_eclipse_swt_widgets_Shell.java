@@ -974,7 +974,7 @@ public void test_Issue450_NoShellActivateOnSetFocus() {
 				// on macOS, disposing a Shell sometimes doesn't activate the other Shell.
 				// Not reproducible on my machine. Not reproducible on GitHub builder.
 				// Only seems to occur on Eclipse builder, not sure what's different there.
-				// Anyways, this is out of scope of this test, so just ask to activate.
+				// Anyway, this is out of scope of this test, so just ask to activate.
 				if (SwtTestUtil.isCocoa) shell2.forceActive();
 			},
 			shell2
