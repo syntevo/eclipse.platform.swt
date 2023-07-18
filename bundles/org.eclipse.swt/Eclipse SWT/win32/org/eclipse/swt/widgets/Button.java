@@ -821,7 +821,7 @@ void setDefault (boolean value) {
 }
 
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget ();
 	/*
 	* Feature in Windows.  When a radio button gets focus,
@@ -829,7 +829,7 @@ public boolean setFocus () {
 	* not assign focus to an unselected radio button.
 	*/
 	if ((style & SWT.RADIO) != 0 && !isChecked ()) return false;
-	return super.setFocus ();
+	return super.setFocus (activateShell);
 }
 
 /**

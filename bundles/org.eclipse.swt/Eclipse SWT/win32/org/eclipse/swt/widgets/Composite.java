@@ -1069,16 +1069,16 @@ void setBoundsInPixels (int x, int y, int width, int height, int flags, boolean 
 }
 
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget ();
 	Control [] children = _getChildren ();
 	for (Control child : children) {
 		if (child.getVisible() && child.setRadioFocus (false)) return true;
 	}
 	for (Control child : children) {
-		if (child.getVisible() && child.setFocus ()) return true;
+		if (child.getVisible() && child.setFocus (activateShell)) return true;
 	}
-	return super.setFocus ();
+	return super.setFocus (activateShell);
 }
 
 /**

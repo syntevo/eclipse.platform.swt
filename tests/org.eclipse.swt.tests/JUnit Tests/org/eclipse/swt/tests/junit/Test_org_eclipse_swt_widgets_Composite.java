@@ -155,9 +155,9 @@ public void test_setFocus_withInvisibleChild() {
 	final AtomicReference<Boolean> wasSetFocusCalledOnInvisibleChildWidget = new AtomicReference<>(false);
 	Composite invisibleChildWidget = new Composite(composite, SWT.NONE) {
 		@Override
-		public boolean setFocus() {
+		public boolean setFocus(boolean activateShell) {
 			wasSetFocusCalledOnInvisibleChildWidget.set(true);
-			return super.setFocus();
+			return super.setFocus(activateShell);
 		}
 	};
 	invisibleChildWidget.setVisible(false);
@@ -172,9 +172,9 @@ public void test_setFocus_withVisibleAndInvisibleChild() {
 	final AtomicReference<Boolean> wasSetFocusCalledOnInvisibleChildWidget = new AtomicReference<>(false);
 	Composite invisibleChildWidget = new Composite(composite, SWT.NONE) {
 		@Override
-		public boolean setFocus() {
+		public boolean setFocus(boolean activateShell) {
 			wasSetFocusCalledOnInvisibleChildWidget.set(true);
-			return super.setFocus();
+			return super.setFocus(activateShell);
 		}
 	};
 	invisibleChildWidget.setVisible(false);

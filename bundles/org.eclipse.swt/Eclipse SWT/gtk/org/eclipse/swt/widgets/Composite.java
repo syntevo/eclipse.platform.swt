@@ -1664,14 +1664,14 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 }
 
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget();
 	Control [] children = _getChildren ();
 	for (int i=0; i<children.length; i++) {
 		Control child = children [i];
-		if (child.getVisible () && child.setFocus ()) return true;
+		if (child.getVisible () && child.setFocus (activateShell)) return true;
 	}
-	return super.setFocus ();
+	return super.setFocus (activateShell);
 }
 
 /**

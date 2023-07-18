@@ -8738,8 +8738,8 @@ public void setEnabled(boolean enabled) {
 }
 
 @Override
-public boolean setFocus() {
-	boolean focusGained = super.setFocus();
+public boolean setFocus(boolean activateShell) {
+	boolean focusGained = super.setFocus(activateShell);
 	if (focusGained && hasMultipleCarets()) {
 		// Multiple carets need to update their drawing. See bug 579179
 		setCaretLocations();

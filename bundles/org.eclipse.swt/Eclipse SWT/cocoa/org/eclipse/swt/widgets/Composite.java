@@ -1120,13 +1120,13 @@ public void setBackgroundMode (int mode) {
 }
 
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget ();
 	Control [] children = _getChildren ();
 	for (int i= 0; i < children.length; i++) {
-		if (children [i].getVisible() && children [i].setFocus ()) return true;
+		if (children [i].getVisible() && children [i].setFocus (activateShell)) return true;
 	}
-	return super.setFocus ();
+	return super.setFocus (activateShell);
 }
 
 @Override

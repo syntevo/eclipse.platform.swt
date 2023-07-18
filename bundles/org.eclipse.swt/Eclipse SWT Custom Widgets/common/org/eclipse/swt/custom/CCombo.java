@@ -1579,11 +1579,11 @@ public void setEnabled (boolean enabled) {
 	if (arrow != null) arrow.setEnabled(enabled);
 }
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget();
 	if (!isEnabled () || !getVisible ()) return false;
 	if (isFocusControl ()) return true;
-	return text.setFocus ();
+	return text.setFocus (activateShell);
 }
 @Override
 public void setFont (Font font) {

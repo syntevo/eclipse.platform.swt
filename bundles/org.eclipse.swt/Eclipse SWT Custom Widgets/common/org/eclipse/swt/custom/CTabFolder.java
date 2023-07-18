@@ -2668,7 +2668,7 @@ private void updateChevronImage(boolean styleChange) {
 	chevronCount = newCount;
 }
 @Override
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget ();
 
 	/*
@@ -2688,7 +2688,7 @@ public boolean setFocus () {
 			if (item.setFocus ()) return true;
 		}
 	}
-	return super.setFocus ();
+	return super.setFocus (activateShell);
 }
 /* Copy of isFocusAncestor from Control. */
 boolean isAncestor (Control control) {

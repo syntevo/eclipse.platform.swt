@@ -1446,6 +1446,31 @@ NSView focusView () {
  * Forces the receiver to have the <em>keyboard focus</em>, causing
  * all keyboard events to be delivered to it.
  *
+ * If the system property "org.eclipse.swt.internal.activateShellOnForceFocus" is set to <code>true</code>,
+ * the shell will be activated, too. If set to <code>false</code>, it won't.
+ *
+ * @return <code>true</code> if the control got focus, and <code>false</code> if it was unable to.
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @see #setFocus
+ *
+ * @deprecated use <code>forceFocus(boolean)</code> instead and decide whether the shell should be enabled or not
+ */
+@Deprecated
+public final boolean forceFocus () {
+	return forceFocus(Display.isActivateShellOnForceFocus());
+}
+
+/**
+ * Forces the receiver to have the <em>keyboard focus</em>, causing
+ * all keyboard events to be delivered to it.
+ *
+ * @param activateShell if set to <code>true</code>, the surrounding shell will be activated, too
+ *
  * @return <code>true</code> if the control got focus, and <code>false</code> if it was unable to.
  *
  * @exception SWTException <ul>
@@ -1455,13 +1480,13 @@ NSView focusView () {
  *
  * @see #setFocus
  */
-public boolean forceFocus () {
+public boolean forceFocus (boolean activateShell) {
 	checkWidget();
 	if (display.focusEvent == SWT.FocusOut) return false;
 	Decorations shell = menuShell ();
 	shell.setSavedFocus (this);
 	if (!isEnabled () || !isVisible () || !isActive ()) return false;
-	if (display.getActiveShell() != shell && !Display.isActivateShellOnForceFocus()) return false;
+	if (display.getActiveShell() != shell && !activateShell) return false;
 	if (isFocusControl ()) return true;
 	shell.setSavedFocus (null);
 	NSView focusView = focusView ();
@@ -3882,6 +3907,32 @@ public void setEnabled (boolean enabled) {
  * such that all keyboard events will be delivered to it.  Focus
  * reassignment will respect applicable platform constraints.
  *
+ * If the system property "org.eclipse.swt.internal.activateShellOnForceFocus" is set to <code>true</code>,
+ * the shell will be activated, too. If set to <code>false</code>, it won't.
+ *
+ * @return <code>true</code> if the control got focus, and <code>false</code> if it was unable to.
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @see #forceFocus
+ *
+ * @deprecated use <code>setFocus(boolean)</code> instead and decide whether the shell should be enabled or not
+ */
+@Deprecated
+public final boolean setFocus () {
+	return setFocus(Display.isActivateShellOnForceFocus());
+}
+
+/**
+ * Causes the receiver to have the <em>keyboard focus</em>,
+ * such that all keyboard events will be delivered to it.  Focus
+ * reassignment will respect applicable platform constraints.
+ *
+ * @param activateShell if set <code>true</code>, the surrounding shell will be activated, too
+ *
  * @return <code>true</code> if the control got focus, and <code>false</code> if it was unable to.
  *
  * @exception SWTException <ul>
@@ -3891,10 +3942,10 @@ public void setEnabled (boolean enabled) {
  *
  * @see #forceFocus
  */
-public boolean setFocus () {
+public boolean setFocus (boolean activateShell) {
 	checkWidget();
 	if ((style & SWT.NO_FOCUS) != 0) return false;
-	return forceFocus ();
+	return forceFocus (activateShell);
 }
 
 /**
