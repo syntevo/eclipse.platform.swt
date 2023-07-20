@@ -547,27 +547,29 @@ public class Display extends Device implements Executor {
 		trimWidths [TRIM_TITLE_RESIZE] = 6; trimHeights [TRIM_TITLE_RESIZE] = 29;
 		trimWidths [TRIM_TITLE] = 0; trimHeights [TRIM_TITLE] = 23;
 
-		String path = System.getProperty ("user.home"); //$NON-NLS-1$
-		if (path != null) {
-			File file = new File (path, ".swt/trims.prefs");
-			if (file.exists () && file.isFile ()) {
-				Properties props = new Properties ();
-				try (FileInputStream fis = new FileInputStream (file)) {
-					props.load (fis);
-					String trimWidthsString = props.getProperty ("trimWidths");
-					String trimHeightsString = props.getProperty ("trimHeights");
-					if (trimWidthsString != null && trimHeightsString != null) {
-						StringTokenizer tok = new StringTokenizer (trimWidthsString);
-						for (int i = 0; i < trimWidths.length && tok.hasMoreTokens (); i++) {
-							trimWidths [i] = Integer.parseInt (tok.nextToken ());
+		if (isReadWriteTrimsDotPrefs()) {
+			String path = System.getProperty ("user.home"); //$NON-NLS-1$
+			if (path != null) {
+				File file = new File (path, ".swt/trims.prefs");
+				if (file.exists () && file.isFile ()) {
+					Properties props = new Properties ();
+					try (FileInputStream fis = new FileInputStream (file)) {
+						props.load (fis);
+						String trimWidthsString = props.getProperty ("trimWidths");
+						String trimHeightsString = props.getProperty ("trimHeights");
+						if (trimWidthsString != null && trimHeightsString != null) {
+							StringTokenizer tok = new StringTokenizer (trimWidthsString);
+							for (int i = 0; i < trimWidths.length && tok.hasMoreTokens (); i++) {
+								trimWidths [i] = Integer.parseInt (tok.nextToken ());
+							}
+							tok = new StringTokenizer (trimHeightsString);
+							for (int i = 0; i < trimHeights.length && tok.hasMoreTokens (); i++) {
+								trimHeights [i] = Integer.parseInt (tok.nextToken ());
+							}
 						}
-						tok = new StringTokenizer (trimHeightsString);
-						for (int i = 0; i < trimHeights.length && tok.hasMoreTokens (); i++) {
-							trimHeights [i] = Integer.parseInt (tok.nextToken ());
-						}
+					} catch (IOException | NumberFormatException e) {
+						// use default values
 					}
-				} catch (IOException | NumberFormatException e) {
-					// use default values
 				}
 			}
 		}
@@ -4851,23 +4853,25 @@ void releaseDisplay () {
 	exposeEvent = null;
 	idleLock = null;
 
-	/* Save window trim caches */
-	String userHome = System.getProperty ("user.home"); //$NON-NLS-1$
-	if (userHome != null) {
-		File dir = new File (userHome, ".swt");
-		if ((dir.exists () && dir.isDirectory ()) || dir.mkdirs ()) {
-			File file = new File (dir, "trims.prefs");
-			Properties props = new Properties ();
-			StringBuilder buf = new StringBuilder ();
-			for (int w : trimWidths) buf.append (w).append (' ');
-			props.put ("trimWidths", buf.toString ());
-			buf = new StringBuilder();
-			for (int h : trimHeights) buf.append (h).append (' ');
-			props.put ("trimHeights", buf.toString ());
-			try (FileOutputStream fos = new FileOutputStream (file)){
-				props.store (fos, null);
-			} catch (IOException e) {
-				// skip saving trim caches
+	if (isReadWriteTrimsDotPrefs()) {
+		/* Save window trim caches */
+		String userHome = System.getProperty ("user.home"); //$NON-NLS-1$
+		if (userHome != null) {
+			File dir = new File (userHome, ".swt");
+			if ((dir.exists () && dir.isDirectory ()) || dir.mkdirs ()) {
+				File file = new File (dir, "trims.prefs");
+				Properties props = new Properties ();
+				StringBuilder buf = new StringBuilder ();
+				for (int w : trimWidths) buf.append (w).append (' ');
+				props.put ("trimWidths", buf.toString ());
+				buf = new StringBuilder();
+				for (int h : trimHeights) buf.append (h).append (' ');
+				props.put ("trimHeights", buf.toString ());
+				try (FileOutputStream fos = new FileOutputStream (file)){
+					props.store (fos, null);
+				} catch (IOException e) {
+					// skip saving trim caches
+				}
 			}
 		}
 	}
@@ -6246,5 +6250,9 @@ static int _getDeviceZoom (long monitor_num) {
 
 static boolean isActivateShellOnForceFocus() {
 	return "true".equals(System.getProperty("org.eclipse.swt.internal.activateShellOnForceFocus", "true")); //$NON-NLS-1$
+}
+
+private static boolean isReadWriteTrimsDotPrefs() {
+	return "true".equals(System.getProperty("org.eclipse.swt.internal.readWriteTrimsDotPrefs", "true")); //$NON-NLS-1$
 }
 }
