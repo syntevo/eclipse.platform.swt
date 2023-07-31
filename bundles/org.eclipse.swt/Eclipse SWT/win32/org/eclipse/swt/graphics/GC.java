@@ -3883,6 +3883,9 @@ long identity() {
 }
 
 void init(Drawable drawable, GCData data, long hDC) {
+	if (hDC == 0) {
+		throw new IllegalArgumentException("missing hDC");
+	}
 	int foreground = data.foreground;
 	if (foreground != -1) {
 		data.state &= ~(FOREGROUND | FOREGROUND_TEXT | PEN);
