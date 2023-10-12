@@ -357,6 +357,8 @@ int getImageFormat(long loader) {
 	}
 }
 
+private static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
+
 /**
  * Convert GdkPixbuf pointer to Java object ImageData
  * @return ImageData with pixbuf data
@@ -365,6 +367,11 @@ static ImageData pixbufToImageData(long pixbuf) {
 	boolean hasAlpha = GDK.gdk_pixbuf_get_has_alpha(pixbuf);
 	int width = GDK.gdk_pixbuf_get_width(pixbuf);
 	int height = GDK.gdk_pixbuf_get_height(pixbuf);
+
+	if (width > MAX_SIZE || height > MAX_SIZE) {
+		SWT.error(SWT.ERROR_INVALID_IMAGE);
+	}
+
 	int stride = GDK.gdk_pixbuf_get_rowstride(pixbuf);
 	int n_channels = GDK.gdk_pixbuf_get_n_channels(pixbuf); 			// only 3 or 4 samples per pixel are supported
 	int bits_per_sample = GDK.gdk_pixbuf_get_bits_per_sample(pixbuf); 	// only 8 bit per sample are supported
