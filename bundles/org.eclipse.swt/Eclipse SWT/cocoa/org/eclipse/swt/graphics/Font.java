@@ -356,6 +356,14 @@ private void initTraits(int style, NSFont systemFont) {
 	}
 }
 
+public Throwable disposeStackTrace;
+
+@Override
+public void dispose() {
+	disposeStackTrace = new Throwable();
+	super.dispose();
+}
+
 /**
  * Returns <code>true</code> if the font has been disposed,
  * and <code>false</code> otherwise.
