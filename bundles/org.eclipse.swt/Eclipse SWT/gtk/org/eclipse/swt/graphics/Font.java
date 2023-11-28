@@ -284,6 +284,14 @@ void init(String name, float height, int style, byte[] fontString) {
 	}
 }
 
+public Throwable disposeStackTrace;
+
+@Override
+public void dispose() {
+	disposeStackTrace = new Throwable();
+	super.dispose();
+}
+
 /**
  * Returns <code>true</code> if the font has been disposed,
  * and <code>false</code> otherwise.
