@@ -223,6 +223,14 @@ void init (FontData fd) {
 	if (handle == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 }
 
+public Throwable disposeStackTrace;
+
+@Override
+public void dispose() {
+	disposeStackTrace = new Throwable();
+	super.dispose();
+}
+
 /**
  * Returns <code>true</code> if the font has been disposed,
  * and <code>false</code> otherwise.
