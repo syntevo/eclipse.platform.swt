@@ -4757,6 +4757,14 @@ void release (boolean destroy) {
 }
 
 @Override
+void releaseChildren (boolean destroy) {
+	if (font != null && font.isDisposed()) {
+		SWT.error(SWT.ERROR_GRAPHIC_DISPOSED, font.disposeStackTrace);
+	}
+	super.releaseChildren(destroy);
+}
+
+@Override
 void releaseHandle () {
 	super.releaseHandle ();
 	fixedHandle = 0;
