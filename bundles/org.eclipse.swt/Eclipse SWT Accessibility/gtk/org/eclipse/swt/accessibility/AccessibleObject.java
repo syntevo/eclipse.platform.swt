@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.List;
 
 import org.eclipse.swt.*;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.accessibility.gtk.*;
@@ -4427,10 +4428,28 @@ class AccessibleObject {
 	 */
 	static AccessibleObject getAccessibleObject (long atkObject) {
 		AccessibleObject object = AccessibleObjects.get (new LONG (atkObject));
-		if (object == null) return null;
-		if (object.accessible == null) return null;
+		if (object == null) {
+			System.out.format("0x%X -> AccessibleObject#getAccessibleObject(): not in map%n", atkObject);
+			System.out.flush();
+			return null;
+		}
+		if (object.accessible == null) {
+			System.out.format("0x%X -> AccessibleObject#getAccessibleObject(): null object.accessible%n", atkObject);
+			System.out.flush();
+			return null;
+		}
 		Control control = object.accessible.control;
-		if (control == null || control.isDisposed()) return null;
+		if (control == null) {
+			System.out.format("0x%X -> AccessibleObject#getAccessibleObject(): null control%n", atkObject);
+			System.out.flush();
+			return null;
+		}
+
+		if (control.isDisposed()) {
+			System.out.format("0x%X -> AccessibleObject#getAccessibleObject(): disposed control%n", atkObject);
+			System.out.flush();
+			return null;
+		}
 		return object;
 	}
 
@@ -4618,7 +4637,6 @@ class AccessibleObject {
 	}
 
 	void release () {
-		accessible = null;
 		/*
 		 * GObject destruction is implemented in os_custom.c for GTK3:
 		 * only unref lightweight widgets and children.
@@ -4626,13 +4644,32 @@ class AccessibleObject {
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
 				AccessibleObject child = children [i];
-				if (child != null) OS.g_object_unref(child.atkHandle);
+				if (child != null) {
+					OS.g_object_unref(child.atkHandle);
+					System.out.format("0x%X -> AccessibleObject#release(): released child%n", child.atkHandle);
+					System.out.flush();
+				}
 			}
 			children = null;
 		}
 		if (isLightweight) {
 			OS.g_object_unref(atkHandle);
+			System.out.format("0x%X -> AccessibleObject#release(): released%n", atkHandle);
+			System.out.flush();
+		} else {
+			System.out.format("0x%X -> AccessibleObject#release(): non-lightweight%n", atkHandle);
+//			for (Control control = accessible.control; control != null; control = control.getParent()) {
+//				System.out.println("    " + control.toString());
+//			}
+
+			if (accessible.control instanceof StyledText) {
+				new Exception().printStackTrace();
+			}
+
+			System.out.flush();
 		}
+
+		accessible = null;
 	}
 
 	void removeRelation (int type, Accessible target) {
