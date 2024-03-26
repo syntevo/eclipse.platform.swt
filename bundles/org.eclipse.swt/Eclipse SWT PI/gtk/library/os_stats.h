@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2023 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2024 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -1206,6 +1206,7 @@ typedef enum {
 	swt_1debug_1on_1fatal_1warnings_FUNC,
 	swt_1fixed_1accessible_1get_1type_FUNC,
 	swt_1fixed_1accessible_1register_1accessible_FUNC,
+	swt_1fixed_1accessible_1unregister_1accessible_FUNC,
 	swt_1fixed_1add_FUNC,
 	swt_1fixed_1get_1type_FUNC,
 	swt_1fixed_1move_FUNC,

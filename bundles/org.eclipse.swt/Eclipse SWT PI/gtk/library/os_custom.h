@@ -180,6 +180,7 @@ GType swt_fixed_accessible_get_type (void) G_GNUC_CONST;
 #if !defined(GTK4)
 AtkObject *swt_fixed_accessible_new (GtkWidget *widget);
 void swt_fixed_accessible_register_accessible (AtkObject *obj, gboolean is_native, GtkWidget *to_map);
+void swt_fixed_accessible_unregister_accessible (AtkObject *obj, gboolean is_native);
 #endif
 jlong call_accessible_object_function (const char *method_name, const char *method_signature,...);
 

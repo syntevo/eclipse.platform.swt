@@ -495,6 +495,12 @@ public class OS extends C {
 	 */
 	public static final native void swt_fixed_accessible_register_accessible(long obj, boolean is_native, long to_map);
 	/**
+	 * @param obj cast=(AtkObject*)
+	 * @param is_native cast=(gboolean)
+	 * @category custom
+	 */
+	public static final native void swt_fixed_accessible_unregister_accessible(long obj, boolean is_native);
+	/**
 	 * @param fixed cast=(SwtFixed*)
 	 * @param widget cast=(GtkWidget*)
 	 * @param sibling cast=(GtkWidget*)

@@ -25,6 +25,7 @@ import org.eclipse.swt.internal.gtk3.*;
 import org.eclipse.swt.widgets.*;
 
 class AccessibleObject {
+	private final long type;
 	long atkHandle;
 	int index = -1, id = ACC.CHILDID_SELF;
 	Accessible accessible;
@@ -46,6 +47,7 @@ class AccessibleObject {
 	AccessibleObject (long type, long widget, Accessible accessible, boolean isLightweight) {
 		super ();
 
+		this.type = type;
 		if (GTK.GTK4) {
 			//TODO: Make use of Accessibility interface of GtkWidget rather than atk object which has been removed
 		} else {
@@ -4632,6 +4634,11 @@ class AccessibleObject {
 		}
 		if (isLightweight) {
 			OS.g_object_unref(atkHandle);
+		}
+		else {
+			if (type == OS.swt_fixed_get_type()) {
+				OS.swt_fixed_accessible_unregister_accessible(atkHandle, false);
+			}
 		}
 	}
 

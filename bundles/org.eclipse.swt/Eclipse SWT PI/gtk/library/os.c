@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2024 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -14996,6 +14996,16 @@ JNIEXPORT void JNICALL OS_NATIVE(swt_1fixed_1accessible_1register_1accessible)
 	OS_NATIVE_ENTER(env, that, swt_1fixed_1accessible_1register_1accessible_FUNC);
 	swt_fixed_accessible_register_accessible((AtkObject*)arg0, (gboolean)arg1, (GtkWidget *)arg2);
 	OS_NATIVE_EXIT(env, that, swt_1fixed_1accessible_1register_1accessible_FUNC);
+}
+#endif
+
+#ifndef NO_swt_1fixed_1accessible_1unregister_1accessible
+JNIEXPORT void JNICALL OS_NATIVE(swt_1fixed_1accessible_1unregister_1accessible)
+	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
+{
+	OS_NATIVE_ENTER(env, that, swt_1fixed_1accessible_1unregister_1accessible_FUNC);
+	swt_fixed_accessible_unregister_accessible((AtkObject*)arg0, (gboolean)arg1);
+	OS_NATIVE_EXIT(env, that, swt_1fixed_1accessible_1unregister_1accessible_FUNC);
 }
 #endif
 

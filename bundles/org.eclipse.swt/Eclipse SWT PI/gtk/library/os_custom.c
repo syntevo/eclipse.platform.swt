@@ -1115,6 +1115,23 @@ void swt_fixed_accessible_register_accessible (AtkObject *obj, gboolean is_nativ
 	return;
 }
 
+// This method is called from Java when an Accessible Java object that corresponds
+// to this SwtFixedAccessible instance has been released.
+void swt_fixed_accessible_unregister_accessible (AtkObject *obj, gboolean is_native) {
+	SwtFixedAccessible *fixed = SWT_FIXED_ACCESSIBLE (obj);
+	SwtFixedAccessiblePrivate *private = fixed->priv;
+	private->has_accessible = FALSE;
+
+	if (!is_native) {
+		gtk_accessible_set_widget (GTK_ACCESSIBLE (obj), NULL);
+		private->widget = NULL;
+	} else {
+		// TODO_a11y: implement support for native GTK widgets on the Java side,
+		// some work might need to be done here.
+	}
+	return;
+}
+
 static void swt_fixed_accessible_initialize (AtkObject *obj, gpointer data) {
 	// Call parent class initializer function
 	if (ATK_OBJECT_CLASS (swt_fixed_accessible_parent_class)->initialize != NULL) {
