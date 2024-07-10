@@ -2424,6 +2424,8 @@ void keyDown (long id, long sel, long theEvent) {
 			// Control is some kind of text field, so the key event will be sent from insertText: or doCommandBySelector:
 			super.keyDown (id, sel, theEvent);
 
+			if (isDisposed ()) return;
+
 			if (imeInComposition ()) return;
 			// If none of those methods triggered a key event send one now.
 			if (!s.keyInputHappened) {
