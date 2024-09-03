@@ -2832,6 +2832,13 @@ public boolean isDisposed () {
 	return device == null;
 }
 
+private static char replaceBelowSpaceCharacters(char chr) {
+	return chr >= ' '
+		? chr
+		//: (char)(0x2400 + chr);
+		: '?';
+}
+
 /*
  *  Itemize the receiver text
  */
@@ -2859,6 +2866,9 @@ StyleItem[] itemize () {
 	int[] pcItems = new int[1];
 	char[] chars = new char[length];
 	segmentsText.getChars(0, length, chars, 0);
+	for (int i = 0; i < length; i++) {
+		chars[i] = replaceBelowSpaceCharacters(chars[i]);
+	}
 	// enable font ligatures
 	scriptControl.fMergeNeutralItems = true;
 	/*
@@ -3735,6 +3745,9 @@ void shape (final long hdc, final StyleItem run) {
 	final int[] buffer = new int[1];
 	final char[] chars = new char[run.length];
 	segmentsText.getChars(run.start, run.start + run.length, chars, 0);
+	for (int i = 0; i < chars.length; i++) {
+		chars[i] = replaceBelowSpaceCharacters(chars[i]);
+	}
 
 	final int maxGlyphs = (chars.length * 3 / 2) + 16;
 	long hHeap = OS.GetProcessHeap();
