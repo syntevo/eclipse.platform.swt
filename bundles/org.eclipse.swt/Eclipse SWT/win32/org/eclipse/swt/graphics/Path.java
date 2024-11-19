@@ -725,6 +725,6 @@ private long getHandle() {
 }
 
 private float scaleUpXY(Drawable drawable, float xy) {
-	return DPIUtil.scaleUp(drawable, xy, initialZoom);
+	return DPIUtil.scaleUpXY(drawable, xy, initialZoom);
 }
 }
