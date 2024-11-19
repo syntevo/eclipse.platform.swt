@@ -43,11 +43,12 @@ import org.eclipse.swt.internal.win32.*;
  */
 public class Path extends Resource {
 
-	private int initialZoom;
+	private final int initialZoom;
 
-	private HashMap<Integer, Long> zoomLevelToHandle = new HashMap<>();
+	private final Map<Integer, Long> zoomLevelToHandle = new HashMap<>();
 
-	PointF currentPoint = new PointF(), startPoint = new PointF();
+	private final PointF currentPoint = new PointF();
+	private final PointF startPoint = new PointF();
 
 /**
  * Constructs a new empty Path.
