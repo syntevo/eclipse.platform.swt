@@ -227,7 +227,7 @@ void addArcInPixels(float x, float y, float width, float height, float startAngl
 		height = -height;
 	}
 	if (width == height) {
-		Gdip.GraphicsPath_AddArc(getHandle(initialZoom), x, y, width, height, -startAngle, -arcAngle);
+		Gdip.GraphicsPath_AddArc(getHandle(), x, y, width, height, -startAngle, -arcAngle);
 	} else {
 		long path = Gdip.GraphicsPath_new(Gdip.FillModeAlternate);
 		if (path == 0) SWT.error(SWT.ERROR_NO_HANDLES);
@@ -235,11 +235,11 @@ void addArcInPixels(float x, float y, float width, float height, float startAngl
 		if (matrix == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 		Gdip.GraphicsPath_AddArc(path, 0, 0, 1, 1, -startAngle, -arcAngle);
 		Gdip.GraphicsPath_Transform(path, matrix);
-		Gdip.GraphicsPath_AddPath(getHandle(initialZoom), path, true);
+		Gdip.GraphicsPath_AddPath(getHandle(), path, true);
 		Gdip.Matrix_delete(matrix);
 		Gdip.GraphicsPath_delete(path);
 	}
-	Gdip.GraphicsPath_GetLastPoint(getHandle(initialZoom), currentPoint);
+	Gdip.GraphicsPath_GetLastPoint(getHandle(), currentPoint);
 }
 
 /**
@@ -260,7 +260,7 @@ public void addPath(Path path) {
 	if (path == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	if (path.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 	//TODO - expose connect?
-	Gdip.GraphicsPath_AddPath(getHandle(initialZoom), path.getHandle(initialZoom), false);
+	Gdip.GraphicsPath_AddPath(getHandle(), path.getHandle(initialZoom), false);
 	currentPoint.X = path.currentPoint.X;
 	currentPoint.Y = path.currentPoint.Y;
 }
@@ -288,7 +288,7 @@ void addRectangleInPixels(float x, float y, float width, float height) {
 	rect.Y = y;
 	rect.Width = width;
 	rect.Height = height;
-	Gdip.GraphicsPath_AddRectangle(getHandle(initialZoom), rect);
+	Gdip.GraphicsPath_AddRectangle(getHandle(), rect);
 	currentPoint.X = x;
 	currentPoint.Y = y;
 }
@@ -330,8 +330,8 @@ void addStringInPixels(String string, float x, float y, Font font) {
 	point.Y = y;
 	int style = Gdip.Font_GetStyle(gdipFont);
 	float size = Gdip.Font_GetSize(gdipFont);
-	Gdip.GraphicsPath_AddString(getHandle(initialZoom), buffer, buffer.length, family[0], style, size, point, 0);
-	Gdip.GraphicsPath_GetLastPoint(getHandle(initialZoom), currentPoint);
+	Gdip.GraphicsPath_AddString(getHandle(), buffer, buffer.length, family[0], style, size, point, 0);
+	Gdip.GraphicsPath_GetLastPoint(getHandle(), currentPoint);
 	Gdip.FontFamily_delete(family[0]);
 	Gdip.Font_delete(gdipFont);
 	device.internal_dispose_GC(hDC, null);
@@ -348,7 +348,7 @@ void addStringInPixels(String string, float x, float y, Font font) {
  */
 public void close() {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	Gdip.GraphicsPath_CloseFigure(getHandle(initialZoom));
+	Gdip.GraphicsPath_CloseFigure(getHandle());
 	/*
 	* Feature in GDI+. CloseFigure() does affect the last
 	* point, so GetLastPoint() does not return the starting
@@ -398,11 +398,11 @@ boolean containsInPixels(float x, float y, GC gc, boolean outline) {
 	gc.initGdip();
 	gc.checkGC(GC.LINE_CAP | GC.LINE_JOIN | GC.LINE_STYLE | GC.LINE_WIDTH);
 	int mode = OS.GetPolyFillMode(gc.handle) == OS.WINDING ? Gdip.FillModeWinding : Gdip.FillModeAlternate;
-	Gdip.GraphicsPath_SetFillMode(getHandle(initialZoom), mode);
+	Gdip.GraphicsPath_SetFillMode(getHandle(), mode);
 	if (outline) {
-		return Gdip.GraphicsPath_IsOutlineVisible(getHandle(initialZoom), x, y, gc.data.gdipPen, gc.data.gdipGraphics);
+		return Gdip.GraphicsPath_IsOutlineVisible(getHandle(), x, y, gc.data.gdipPen, gc.data.gdipGraphics);
 	} else {
-		return Gdip.GraphicsPath_IsVisible(getHandle(initialZoom), x, y, gc.data.gdipGraphics);
+		return Gdip.GraphicsPath_IsVisible(getHandle(), x, y, gc.data.gdipGraphics);
 	}
 }
 
@@ -433,8 +433,8 @@ public void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y
 
 void cubicToInPixels(float cx1, float cy1, float cx2, float cy2, float x, float y) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	Gdip.GraphicsPath_AddBezier(getHandle(initialZoom), currentPoint.X, currentPoint.Y, cx1, cy1, cx2, cy2, x, y);
-	Gdip.GraphicsPath_GetLastPoint(getHandle(initialZoom), currentPoint);
+	Gdip.GraphicsPath_AddBezier(getHandle(), currentPoint.X, currentPoint.Y, cx1, cy1, cx2, cy2, x, y);
+	Gdip.GraphicsPath_GetLastPoint(getHandle(), currentPoint);
 }
 
 @Override
@@ -482,7 +482,7 @@ void getBoundsInPixels(float[] bounds) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
 	if (bounds.length < 4) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 	RectF rect = new RectF();
-	Gdip.GraphicsPath_GetBounds(getHandle(initialZoom), rect, 0, 0);
+	Gdip.GraphicsPath_GetBounds(getHandle(), rect, 0, 0);
 	bounds[0] = rect.X;
 	bounds[1] = rect.Y;
 	bounds[2] = rect.Width;
@@ -536,11 +536,11 @@ public PathData getPathData() {
 }
 
 PathData getPathDataInPixels() {
-	int count = Gdip.GraphicsPath_GetPointCount(getHandle(initialZoom));
+	int count = Gdip.GraphicsPath_GetPointCount(getHandle());
 	byte[] gdipTypes = new byte[count];
 	float[] points = new float[count * 2];
-	Gdip.GraphicsPath_GetPathTypes(getHandle(initialZoom), gdipTypes, count);
-	Gdip.GraphicsPath_GetPathPoints(getHandle(initialZoom), points, count);
+	Gdip.GraphicsPath_GetPathTypes(getHandle(), gdipTypes, count);
+	Gdip.GraphicsPath_GetPathPoints(getHandle(), points, count);
 	byte[] types = new byte[count * 2];
 	int index = 0, typesIndex = 0;
 	while (index < count) {
@@ -598,8 +598,8 @@ public void lineTo(float x, float y) {
 
 void lineToInPixels(float x, float y) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	Gdip.GraphicsPath_AddLine(getHandle(initialZoom), currentPoint.X, currentPoint.Y, x, y);
-	Gdip.GraphicsPath_GetLastPoint(getHandle(initialZoom), currentPoint);
+	Gdip.GraphicsPath_AddLine(getHandle(), currentPoint.X, currentPoint.Y, x, y);
+	Gdip.GraphicsPath_GetLastPoint(getHandle(), currentPoint);
 }
 
 void init(PathData data) {
@@ -663,7 +663,7 @@ public void moveTo(float x, float y) {
 
 void moveToInPixels(float x, float y) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
-	Gdip.GraphicsPath_StartFigure(getHandle(initialZoom));
+	Gdip.GraphicsPath_StartFigure(getHandle());
 	currentPoint.X = startPoint.X = x;
 	currentPoint.Y = startPoint.Y = y;
 }
@@ -695,8 +695,8 @@ void quadToInPixels(float cx, float cy, float x, float y) {
 	float cy1 = currentPoint.Y + 2 * (cy - currentPoint.Y) / 3;
 	float cx2 = cx1 + (x - currentPoint.X) / 3;
 	float cy2 = cy1 + (y - currentPoint.Y) / 3;
-	Gdip.GraphicsPath_AddBezier(getHandle(initialZoom), currentPoint.X, currentPoint.Y, cx1, cy1, cx2, cy2, x, y);
-	Gdip.GraphicsPath_GetLastPoint(getHandle(initialZoom), currentPoint);
+	Gdip.GraphicsPath_AddBezier(getHandle(), currentPoint.X, currentPoint.Y, cx1, cy1, cx2, cy2, x, y);
+	Gdip.GraphicsPath_GetLastPoint(getHandle(), currentPoint);
 }
 
 /**
@@ -718,5 +718,9 @@ long getHandle(int zoom) {
 		zoomLevelToHandle.put(zoom, scaledPath.getHandle(scaledPath.initialZoom));
 	}
 	return zoomLevelToHandle.get(zoom);
+}
+
+private long getHandle() {
+	return getHandle(initialZoom);
 }
 }
