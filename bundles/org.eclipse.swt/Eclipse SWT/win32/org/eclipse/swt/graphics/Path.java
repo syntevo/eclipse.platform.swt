@@ -167,7 +167,6 @@ public Path(Device device, Path path, float flatness) {
  */
 public Path(Device device, PathData data) {
 	this(device, data, DPIUtil.getDeviceZoom());
-
 }
 
 private Path(Device device, PathData data, int zoom) {
@@ -316,6 +315,7 @@ public void addString(String string, float x, float y, Font font) {
 	y = DPIUtil.scaleUp(drawable, y, initialZoom);
 	addStringInPixels(string, x, y, font);
 }
+
 void addStringInPixels(String string, float x, float y, Font font) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
 	if (font == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
@@ -388,6 +388,7 @@ public boolean contains(float x, float y, GC gc, boolean outline) {
 	y = DPIUtil.scaleUp(drawable, y, initialZoom);
 	return containsInPixels(x, y, gc, outline);
 }
+
 boolean containsInPixels(float x, float y, GC gc, boolean outline) {
 	if (isDisposed()) SWT.error(SWT.ERROR_GRAPHIC_DISPOSED);
 	if (gc == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
@@ -717,5 +718,4 @@ long getHandle(int zoom) {
 	}
 	return zoomLevelToHandle.get(zoom);
 }
-
 }
