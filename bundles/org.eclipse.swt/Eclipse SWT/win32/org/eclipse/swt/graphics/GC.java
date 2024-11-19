@@ -1644,11 +1644,15 @@ void drawBitmapColor(Image srcImage, int srcX, int srcY, int srcWidth, int srcHe
  */
 public void drawLine (int x1, int y1, int x2, int y2) {
 	int deviceZoom = getZoom();
-	x1 = DPIUtil.scaleUp (drawable, x1, deviceZoom);
-	x2 = DPIUtil.scaleUp (drawable, x2, deviceZoom);
-	y1 = DPIUtil.scaleUp (drawable, y1, deviceZoom);
-	y2 = DPIUtil.scaleUp (drawable, y2, deviceZoom);
+	x1 = scaleUpXY (x1, deviceZoom);
+	x2 = scaleUpXY (x2, deviceZoom);
+	y1 = scaleUpXY (y1, deviceZoom);
+	y2 = scaleUpXY (y2, deviceZoom);
 	drawLineInPixels(x1, y1, x2, y2);
+}
+
+private int scaleUpXY(int xy, int deviceZoom) {
+	return DPIUtil.scaleUp (drawable, xy, deviceZoom);
 }
 
 void drawLineInPixels (int x1, int y1, int x2, int y2) {
