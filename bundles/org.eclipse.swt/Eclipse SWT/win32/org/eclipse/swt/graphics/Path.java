@@ -74,7 +74,7 @@ public class Path extends Resource {
  *
  * @see #dispose()
  */
-public Path (Device device) {
+public Path(Device device) {
 	this(device, DPIUtil.getDeviceZoom());
 }
 
@@ -123,7 +123,7 @@ private Path(Device device, int zoom) {
  * @see #dispose()
  * @since 3.4
  */
-public Path (Device device, Path path, float flatness) {
+public Path(Device device, Path path, float flatness) {
 	super(device);
 	if (path == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	if (path.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
@@ -165,7 +165,7 @@ public Path (Device device, Path path, float flatness) {
  * @see #dispose()
  * @since 3.4
  */
-public Path (Device device, PathData data) {
+public Path(Device device, PathData data) {
 	this(device, data, DPIUtil.getDeviceZoom());
 
 }
@@ -206,7 +206,7 @@ private Path(Device device, PathData data, int zoom) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void addArc (float x, float y, float width, float height, float startAngle, float arcAngle) {
+public void addArc(float x, float y, float width, float height, float startAngle, float arcAngle) {
 	if (width == 0 || height == 0 || arcAngle == 0) return;
 	Drawable drawable = getDevice();
 	x = DPIUtil.scaleUp(drawable, x, initialZoom);
@@ -277,7 +277,7 @@ public void addPath(Path path) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void addRectangle (float x, float y, float width, float height) {
+public void addRectangle(float x, float y, float width, float height) {
 	addRectangleInPixels(x, y, width, height);
 }
 
@@ -310,7 +310,7 @@ void addRectangleInPixels(float x, float y, float width, float height) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void addString (String string, float x, float y, Font font) {
+public void addString(String string, float x, float y, Font font) {
 	Drawable drawable = getDevice();
 	x = DPIUtil.scaleUp(drawable, x, initialZoom);
 	y = DPIUtil.scaleUp(drawable, y, initialZoom);
@@ -382,7 +382,7 @@ public void close() {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public boolean contains (float x, float y, GC gc, boolean outline) {
+public boolean contains(float x, float y, GC gc, boolean outline) {
 	Drawable drawable = getDevice();
 	x = DPIUtil.scaleUp(drawable, x, initialZoom);
 	y = DPIUtil.scaleUp(drawable, y, initialZoom);
@@ -418,7 +418,7 @@ boolean containsInPixels(float x, float y, GC gc, boolean outline) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void cubicTo (float cx1, float cy1, float cx2, float cy2, float x, float y) {
+public void cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) {
 	Drawable drawable = getDevice();
 	cx1 = DPIUtil.scaleUp(drawable, cx1, initialZoom);
 	cy1 = DPIUtil.scaleUp(drawable, cy1, initialZoom);
@@ -469,7 +469,7 @@ void destroyHandlesExcept(Set<Integer> zoomLevels) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void getBounds (float[] bounds) {
+public void getBounds(float[] bounds) {
 	if (bounds == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	getBoundsInPixels(bounds);
 	float[] scaledbounds= DPIUtil.scaleDown(getDevice(), bounds, initialZoom);
@@ -501,7 +501,7 @@ void getBoundsInPixels(float[] bounds) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void getCurrentPoint (float[] point) {
+public void getCurrentPoint(float[] point) {
 	if (point == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	getCurrentPointInPixels(point);
 	float[] scaledpoint= DPIUtil.scaleDown(getDevice(), point, initialZoom);
@@ -589,7 +589,7 @@ PathData getPathDataInPixels() {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void lineTo (float x, float y) {
+public void lineTo(float x, float y) {
 	Drawable drawable = getDevice();
 	lineToInPixels(DPIUtil.scaleUp(drawable, x, initialZoom), DPIUtil.scaleUp(drawable, y, initialZoom));
 }
@@ -654,7 +654,7 @@ public boolean isDisposed() {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void moveTo (float x, float y) {
+public void moveTo(float x, float y) {
 	Drawable drawable = getDevice();
 	moveToInPixels(DPIUtil.scaleUp(drawable, x, initialZoom), DPIUtil.scaleUp(drawable, y, initialZoom));
 }
@@ -678,7 +678,7 @@ void moveToInPixels(float x, float y) {
  *    <li>ERROR_GRAPHIC_DISPOSED - if the receiver has been disposed</li>
  * </ul>
  */
-public void quadTo (float cx, float cy, float x, float y) {
+public void quadTo(float cx, float cy, float x, float y) {
 	Drawable drawable = getDevice();
 	cx = DPIUtil.scaleUp(drawable, cx, initialZoom);
 	cy = DPIUtil.scaleUp(drawable, cy, initialZoom);
