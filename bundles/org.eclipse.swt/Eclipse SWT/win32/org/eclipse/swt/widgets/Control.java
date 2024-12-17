@@ -20,7 +20,7 @@ import java.util.stream.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.accessibility.*;
-import org.eclipse.swt.browser.*;
+//import org.eclipse.swt.browser.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
@@ -3686,10 +3686,10 @@ public void setRedraw (boolean redraw) {
 }
 
 private boolean embedsWin32Control () {
-	if (this instanceof Browser browser) {
-		// The Edge browser embeds webView2
-		return "edge".equals(browser.getBrowserType());
-	}
+//	if (this instanceof Browser browser) {
+//		// The Edge browser embeds webView2
+//		return "edge".equals(browser.getBrowserType());
+//	}
 
 	if (this instanceof OleClientSite) {
 		// OLE objects are always embedded by windows
