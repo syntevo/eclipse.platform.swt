@@ -30,7 +30,7 @@ class ScaleRenderer implements IScaleRenderer {
 	public void render(GC nativeGc, Rectangle bounds) {
 		initBackground(nativeGc, bounds);
 
-		IGraphicsContext sgc = initSkijaGc(nativeGc, bounds);
+		SkijaGC sgc = initSkijaGc(nativeGc, bounds);
 
 		renderScale(sgc, 0, 0, bounds.width - 1, bounds.height - 1);
 
@@ -56,8 +56,8 @@ class ScaleRenderer implements IScaleRenderer {
 		background = SWT.convertPixelToColor(pixel);
 	}
 
-	public IGraphicsContext initSkijaGc(GC originalGC, Rectangle bounds) {
-		IGraphicsContext gc = new SkijaGC(originalGC, background);
+	public SkijaGC initSkijaGc(GC originalGC, Rectangle bounds) {
+		SkijaGC gc = new SkijaGC(originalGC, background);
 
 		originalGC.setClipping(bounds.x, bounds.y, bounds.width, bounds.height);
 

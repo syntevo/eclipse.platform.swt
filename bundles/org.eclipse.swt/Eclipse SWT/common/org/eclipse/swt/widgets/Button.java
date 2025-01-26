@@ -562,7 +562,9 @@ public class Button extends Control implements ICustomWidget {
 			gc.setBackground(bg2);
 		}
 
-		gc.commit();
+		if (gc instanceof SkijaGC sgc) {
+			sgc.commit();
+		}
 		gc.dispose();
 		if (doubleBufferingImage != null) {
 			originalGC.drawImage(doubleBufferingImage, 0, 0);

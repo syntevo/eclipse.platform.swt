@@ -138,7 +138,6 @@ public class SkijaGC implements IGraphicsContext {
 		return lines;
 	}
 
-	@Override
 	public void commit() {
 		io.github.humbleui.skija.Image im = surface.makeImageSnapshot();
 		byte[] imageBytes = EncoderPNG.encode(im).getBytes();

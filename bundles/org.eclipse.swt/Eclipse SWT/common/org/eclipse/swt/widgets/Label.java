@@ -741,7 +741,9 @@ public class Label extends Control implements ICustomWidget {
 			}
 		}
 
-		gc.commit();
+		if (gc instanceof SkijaGC sgc) {
+			sgc.commit();
+		}
 	}
 
 	@Override
