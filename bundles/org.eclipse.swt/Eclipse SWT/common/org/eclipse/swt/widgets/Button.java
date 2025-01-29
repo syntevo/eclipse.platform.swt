@@ -93,6 +93,8 @@ public class Button extends Control implements ICustomWidget {
 	private boolean spaceDown;
 	private boolean defaultButton;
 
+	private final LWControl lwControl;
+
 	/**
 	 * Constructs a new instance of this class given its parent and a style
 	 * value describing its behavior and appearance.
@@ -170,6 +172,14 @@ public class Button extends Control implements ICustomWidget {
 		addListener(SWT.Selection, listener);
 		addListener(SWT.MouseEnter, listener);
 		addListener(SWT.MouseExit, listener);
+
+		if ((getStyle() & SWT.RADIO) != 0) {
+			lwControl = new LWRadioButton();
+			lwControl.addListener(() -> redraw());
+		}
+		else {
+			lwControl = null;
+		}
 
 		initializeAccessible();
 	}
@@ -328,6 +338,10 @@ public class Button extends Control implements ICustomWidget {
 	}
 
 	private void onResize() {
+		if (lwControl != null) {
+			final Point size = getSize();
+			lwControl.setSize(size.x, size.y);
+		}
 		redraw();
 	}
 
@@ -425,141 +439,152 @@ public class Button extends Control implements ICustomWidget {
 			}
 		}
 
-		boolean isRightAligned = (style & SWT.RIGHT) != 0;
-		boolean isCentered = (style & SWT.CENTER) != 0;
-		boolean isPushOrToggleButton = (style & (SWT.PUSH | SWT.TOGGLE)) != 0;
-		int initialAntiAlias = gc.getAntialias();
+		if ((style & SWT.RADIO) != 0) {
+			lwControl.paint(gc);
+		}
+		else {
+			boolean isRightAligned = (style & SWT.RIGHT) != 0;
+			boolean isCentered = (style & SWT.CENTER) != 0;
+			boolean isPushOrToggleButton = (style & (SWT.PUSH | SWT.TOGGLE)) != 0;
+			int initialAntiAlias = gc.getAntialias();
 
-		int boxSpace = 0;
-		// Draw check box / radio box / push button border
-		if (isPushOrToggleButton) {
-			drawPushButton(gc, 0, 0, r.width - 1, r.height - 1);
-		} else {
-			boxSpace = BOX_SIZE + SPACING;
-			int boxLeftOffset = LEFT_MARGIN;
-			int boxTopOffset = (r.height - 1 - BOX_SIZE) / 2;
-			if ((style & SWT.CHECK) == SWT.CHECK) {
-				drawCheckbox(gc, boxLeftOffset, boxTopOffset);
-			} else if ((style & SWT.RADIO) == SWT.RADIO) {
-				drawRadioButton(gc, boxLeftOffset, boxTopOffset);
+			int boxSpace = 0;
+			// Draw check box / radio box / push button border
+			if (isPushOrToggleButton) {
+				drawPushButton(gc, 0, 0, r.width - 1, r.height - 1);
 			}
-		}
-
-		gc.setAntialias(initialAntiAlias);
-		gc.setAdvanced(false);
-
-		// Calculate area for button content (image + text)
-		int horizontalSpaceForContent = r.width - RIGHT_MARGIN - LEFT_MARGIN
-				- boxSpace;
-		int textWidth = 0;
-		int textHeight = 0;
-		if (text != null && !text.isEmpty()) {
-			gc.setFont(getFont());
-			Point textExtent = gc.textExtent(text, DRAW_FLAGS);
-			textWidth = textExtent.x;
-			textHeight = textExtent.y;
-		}
-		int imageSpace = 0;
-		int imageWidth = 0;
-		int imageHeight = 0;
-		if (image != null) {
-			Rectangle imgB = image.getBounds();
-			imageWidth = imgB.width;
-			imageHeight = imgB.height;
-			imageSpace = imageWidth;
-			if (text != null && !text.isEmpty()) {
-				imageSpace += SPACING;
-			}
-		}
-		Rectangle contentArea = new Rectangle(LEFT_MARGIN + boxSpace,
-				TOP_MARGIN, imageSpace + textWidth,
-				r.height - TOP_MARGIN - BOTTOM_MARGIN);
-		if (isRightAligned) {
-			contentArea.x += horizontalSpaceForContent - contentArea.width;
-		} else if (isCentered) {
-			contentArea.x += (horizontalSpaceForContent - contentArea.width)
-					/ 2;
-		}
-
-		// Draw image
-		if (image != null) {
-			int imageTopOffset = (r.height - imageHeight) / 2;
-			int imageLeftOffset = contentArea.x;
-			if (!isEnabled()) {
-				if (disabledImage == null) {
-					disabledImage = new Image(getDisplay(), image,
-							SWT.IMAGE_GRAY);
+			else {
+				boxSpace = BOX_SIZE + SPACING;
+				int boxLeftOffset = LEFT_MARGIN;
+				int boxTopOffset = (r.height - 1 - BOX_SIZE) / 2;
+				if ((style & SWT.CHECK) == SWT.CHECK) {
+					drawCheckbox(gc, boxLeftOffset, boxTopOffset);
 				}
-				gc.drawImage(disabledImage, imageLeftOffset, imageTopOffset);
-			} else {
-				gc.drawImage(image, imageLeftOffset, imageTopOffset);
+				else if ((style & SWT.RADIO) == SWT.RADIO) {
+					drawRadioButton(gc, boxLeftOffset, boxTopOffset);
+				}
 			}
-		}
 
-		// Draw text
-		if (text != null && !text.isEmpty()) {
-			if (isEnabled()) {
-				gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
-			} else {
-				gc.setForeground(getDisplay()
-						.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
+			gc.setAntialias(initialAntiAlias);
+			gc.setAdvanced(false);
+
+			// Calculate area for button content (image + text)
+			int horizontalSpaceForContent = r.width - RIGHT_MARGIN - LEFT_MARGIN
+			                                - boxSpace;
+			int textWidth = 0;
+			int textHeight = 0;
+			if (text != null && !text.isEmpty()) {
+				gc.setFont(getFont());
+				Point textExtent = gc.textExtent(text, DRAW_FLAGS);
+				textWidth = textExtent.x;
+				textHeight = textExtent.y;
 			}
-			int textTopOffset = (r.height - 1 - textHeight) / 2;
-			int textLeftOffset = contentArea.x + imageSpace;
-			gc.drawText(text, textLeftOffset, textTopOffset, DRAW_FLAGS);
-		}
-		if (hasFocus()) {
-			if (((style & SWT.RADIO) | (style & SWT.CHECK)) != 0) {
+			int imageSpace = 0;
+			int imageWidth = 0;
+			int imageHeight = 0;
+			if (image != null) {
+				Rectangle imgB = image.getBounds();
+				imageWidth = imgB.width;
+				imageHeight = imgB.height;
+				imageSpace = imageWidth;
+				if (text != null && !text.isEmpty()) {
+					imageSpace += SPACING;
+				}
+			}
+			Rectangle contentArea = new Rectangle(LEFT_MARGIN + boxSpace,
+			                                      TOP_MARGIN, imageSpace + textWidth,
+			                                      r.height - TOP_MARGIN - BOTTOM_MARGIN);
+			if (isRightAligned) {
+				contentArea.x += horizontalSpaceForContent - contentArea.width;
+			}
+			else if (isCentered) {
+				contentArea.x += (horizontalSpaceForContent - contentArea.width)
+				                 / 2;
+			}
+
+			// Draw image
+			if (image != null) {
+				int imageTopOffset = (r.height - imageHeight) / 2;
+				int imageLeftOffset = contentArea.x;
+				if (!isEnabled()) {
+					if (disabledImage == null) {
+						disabledImage = new Image(getDisplay(), image,
+						                          SWT.IMAGE_GRAY);
+					}
+					gc.drawImage(disabledImage, imageLeftOffset, imageTopOffset);
+				}
+				else {
+					gc.drawImage(image, imageLeftOffset, imageTopOffset);
+				}
+			}
+
+			// Draw text
+			if (text != null && !text.isEmpty()) {
+				if (isEnabled()) {
+					gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
+				}
+				else {
+					gc.setForeground(getDisplay()
+							                 .getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
+				}
 				int textTopOffset = (r.height - 1 - textHeight) / 2;
 				int textLeftOffset = contentArea.x + imageSpace;
-				gc.drawFocus(textLeftOffset - 2, textTopOffset, textWidth + 4,
-						textHeight);
-			} else {
-				gc.drawFocus(3, 3, r.width - 7, r.height - 7);
+				gc.drawText(text, textLeftOffset, textTopOffset, DRAW_FLAGS);
 			}
-		}
-
-		if (isArrowButton()) {
-			Color bg2 = gc.getBackground();
-
-			gc.setBackground(
-					getDisplay().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND));
-
-			int centerHeight = r.height / 2;
-			int centerWidth = r.width / 2;
-			if (hasBorder()) {
-				// border ruins center position...
-				centerHeight -= 2;
-				centerWidth -= 2;
+			if (hasFocus()) {
+				if (((style & SWT.RADIO) | (style & SWT.CHECK)) != 0) {
+					int textTopOffset = (r.height - 1 - textHeight) / 2;
+					int textLeftOffset = contentArea.x + imageSpace;
+					gc.drawFocus(textLeftOffset - 2, textTopOffset, textWidth + 4,
+					             textHeight);
+				}
+				else {
+					gc.drawFocus(3, 3, r.width - 7, r.height - 7);
+				}
 			}
 
-			// TODO: in the next version use a bezier path
+			if (isArrowButton()) {
+				Color bg2 = gc.getBackground();
 
-			int[] curve = null;
+				gc.setBackground(
+						getDisplay().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND));
 
-			if ((style & SWT.DOWN) != 0) {
-				curve = new int[]{centerWidth, centerHeight + 5,
-						centerWidth - 5, centerHeight - 5, centerWidth + 5,
-						centerHeight - 5};
+				int centerHeight = r.height / 2;
+				int centerWidth = r.width / 2;
+				if (hasBorder()) {
+					// border ruins center position...
+					centerHeight -= 2;
+					centerWidth -= 2;
+				}
 
-			} else if ((style & SWT.LEFT) != 0) {
-				curve = new int[]{centerWidth - 5, centerHeight,
-						centerWidth + 5, centerHeight + 5, centerWidth + 5,
-						centerHeight - 5};
+				// TODO: in the next version use a bezier path
 
-			} else if ((style & SWT.RIGHT) != 0) {
-				curve = new int[]{centerWidth + 5, centerHeight,
-						centerWidth - 5, centerHeight - 5, centerWidth - 5,
-						centerHeight + 5};
+				int[] curve = null;
 
-			} else {
-				curve = new int[]{centerWidth, centerHeight - 5,
-						centerWidth - 5, centerHeight + 5, centerWidth + 5,
-						centerHeight + 5};
+				if ((style & SWT.DOWN) != 0) {
+					curve = new int[] {centerWidth, centerHeight + 5,
+					                   centerWidth - 5, centerHeight - 5, centerWidth + 5,
+					                   centerHeight - 5};
+				}
+				else if ((style & SWT.LEFT) != 0) {
+					curve = new int[] {centerWidth - 5, centerHeight,
+					                   centerWidth + 5, centerHeight + 5, centerWidth + 5,
+					                   centerHeight - 5};
+				}
+				else if ((style & SWT.RIGHT) != 0) {
+					curve = new int[] {centerWidth + 5, centerHeight,
+					                   centerWidth - 5, centerHeight - 5, centerWidth - 5,
+					                   centerHeight + 5};
+				}
+				else {
+					curve = new int[] {centerWidth, centerHeight - 5,
+					                   centerWidth - 5, centerHeight + 5, centerWidth + 5,
+					                   centerHeight + 5};
+				}
+
+				gc.fillPolygon(curve);
+				gc.setBackground(bg2);
 			}
-
-			gc.fillPolygon(curve);
-			gc.setBackground(bg2);
 		}
 
 		gc.commit();
