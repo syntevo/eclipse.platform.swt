@@ -460,6 +460,7 @@ ImageData(
 		y,
 		disposalMethod,
 		delayTime);
+	SkijaGC.getSkijaColorType(this);
 }
 
 /**

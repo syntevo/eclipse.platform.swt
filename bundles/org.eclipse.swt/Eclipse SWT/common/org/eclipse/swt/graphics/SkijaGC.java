@@ -188,7 +188,7 @@ public class SkijaGC implements IGraphicsContext {
 
 	}
 
-	private static ColorType getSkijaColorType(ImageData imageData) {
+	public static ColorType getSkijaColorType(ImageData imageData) {
 		PaletteData palette = imageData.palette;
 
 		if (imageData.getTransparencyType() == SWT.TRANSPARENCY_MASK) {

@@ -703,8 +703,16 @@ public class Label extends Control implements ICustomWidget {
 
 		// draw the image
 		if (img != null) {
-			gc.drawImage(img, 0, 0, imageRect.width, imageHeight, x, imageY,
-					imageRect.width, imageHeight);
+			try {
+				gc.drawImage(img, 0, 0, imageRect.width, imageHeight, x, imageY,
+						imageRect.width, imageHeight);
+			}
+			catch (UnsupportedOperationException e) {
+				final Color bkgnd = gc.getBackground();
+				gc.setBackground(new Color(255, 127, 127));
+				gc.fillRectangle(x, imageY, imageRect.width, imageHeight);
+				gc.setBackground(bkgnd);
+			}
 			x += imageRect.width + GAP;
 			extent.x -= imageRect.width + GAP;
 		}
