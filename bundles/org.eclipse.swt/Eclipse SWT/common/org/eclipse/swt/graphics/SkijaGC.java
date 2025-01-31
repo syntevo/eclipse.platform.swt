@@ -568,7 +568,7 @@ public class SkijaGC implements IGraphicsContext {
 			style = FontStyle.ITALIC;
 		}
 		this.font = new Font(Typeface.makeFromName(fontData.getName(), style));
-		int fontSize = DPIUtil.autoScaleUp(fontData.getHeight());
+		int fontSize = DPIUtil.scaleUp(fontData.getHeight(), DPIUtil.getNativeDeviceZoom());
 		if (SWT.getPlatform().equals("win32")) {
 			fontSize *= this.font.getSize() / innerGC.getDevice().getSystemFont().getFontData()[0].getHeight();
 		}
