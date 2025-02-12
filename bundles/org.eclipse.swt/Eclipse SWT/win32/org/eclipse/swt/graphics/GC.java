@@ -322,7 +322,7 @@ public void drawArc (int x, int y, int width, int height, int startAngle, int ar
  * @see #drawRectangle(int, int, int, int)
  */
 public void drawFocus (int x, int y, int width, int height) {
-	innerGC.drawFocus(x, y, width, height);
+	innerGC.drawFocus(x + offsetX, y + offsetY, width, height);
 }
 
 
@@ -431,7 +431,7 @@ public void drawLine (int x1, int y1, int x2, int y2) {
  */
 public void drawOval (int x, int y, int width, int height) {
 
-	innerGC.drawOval(x, y, width, height);
+	innerGC.drawOval(x + offsetX, y + offsetY, width, height);
 
 }
 
@@ -587,7 +587,7 @@ public void drawRectangle (Rectangle rect) {
  * </ul>
  */
 public void drawRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
-	innerGC.drawRoundRectangle(x, y, width, height, arcWidth, arcHeight);
+	innerGC.drawRoundRectangle(x + offsetX, y + offsetY, width, height, arcWidth, arcHeight);
 }
 
 
@@ -742,7 +742,7 @@ public void drawText (String string, int x, int y, boolean isTransparent) {
  * </ul>
  */
 public void drawText (String string, int x, int y, int flags) {
-	innerGC.drawText(string, x, y, flags);
+	innerGC.drawText(string, x + offsetX, y + offsetY, flags);
 }
 
 /**
@@ -837,7 +837,7 @@ public void fillGradientRectangle (int x, int y, int width, int height, boolean 
  * @see #drawOval
  */
 public void fillOval (int x, int y, int width, int height) {
-	innerGC.fillOval(x, y, width, height);
+	innerGC.fillOval(x + offsetX, y + offsetY, width, height);
 }
 
 /**
@@ -946,7 +946,7 @@ public void fillRectangle (Rectangle rect) {
  * @see #drawRoundRectangle
  */
 public void fillRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
-	innerGC.fillRoundRectangle(x, y, width, height, arcWidth, arcHeight);
+	innerGC.fillRoundRectangle(x + offsetX, y + offsetY, width, height, arcWidth, arcHeight);
 }
 
 
@@ -1687,6 +1687,10 @@ public void setClipping (Path path) {
  * </ul>
  */
 public void setClipping (Rectangle rect) {
+	if ((offsetX != 0 || offsetY != 0) && rect != null) {
+		rect = new Rectangle(rect.x + offsetX, rect.y + offsetY,
+		                     rect.width, rect.height);
+	}
 	innerGC.setClipping(rect);
 }
 
@@ -2183,4 +2187,11 @@ public void commit() {
 
 }
 
+private int offsetX;
+private int offsetY;
+
+public void translate(int x, int y) {
+	offsetX += x;
+	offsetY += y;
+}
 }
