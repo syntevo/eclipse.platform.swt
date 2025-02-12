@@ -51,7 +51,7 @@ import org.eclipse.swt.graphics.*;
  *      information</a>
  * @see Label#shortenText(GC, String, int)
  */
-public class Label extends Control implements ICustomWidget {
+public class Label extends CustomControl {
 
 	/** Gap between icon and text */
 	private static final int GAP = 5;
@@ -168,12 +168,8 @@ public class Label extends Control implements ICustomWidget {
 
 	@Override
 	boolean isTabItem() {
+		// to not be focused by traverse events, e.g. tab key
 		return false;
-	}
-
-	@Override
-	public Point computeSize(int wHint, int hHint) {
-		return computeSize(wHint, hHint, true);
 	}
 
 	@Override
@@ -523,7 +519,6 @@ public class Label extends Control implements ICustomWidget {
 	}
 
 	void onPaint(PaintEvent event) {
-
 		Rectangle rect = getBounds();
 		if (rect.width == 0 && rect.height == 0) {
 			return;
@@ -532,11 +527,14 @@ public class Label extends Control implements ICustomWidget {
 			return;
 		}
 
+		final GC gc = event.gc;
+/*
 		GC gc = GCFactory.createGraphicsContext(event.gc);
 
 		gc.setFont(font);
 		gc.setBackground(getBackground());
 		gc.setClipping(new Rectangle(0, 0, rect.width, rect.height));
+*/
 
 
 
@@ -744,8 +742,10 @@ public class Label extends Control implements ICustomWidget {
 			}
 		}
 
+/*
 		gc.commit();
 		gc.dispose();
+*/
 	}
 
 	@Override

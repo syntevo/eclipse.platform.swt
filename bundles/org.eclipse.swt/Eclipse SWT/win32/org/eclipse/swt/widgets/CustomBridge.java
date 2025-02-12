@@ -1,0 +1,151 @@
+package org.eclipse.swt.widgets;
+
+import java.util.*;
+import java.util.List;
+
+import org.eclipse.swt.*;
+import org.eclipse.swt.graphics.*;
+
+/**
+ * @author Thomas Singer
+ */
+final class CustomBridge {
+
+	private final List<CustomControl> childs = new ArrayList<>();
+	private final Composite composite;
+
+	private CustomControl mouseOverControl;
+
+	public CustomBridge(Composite composite) {
+		this.composite = Objects.requireNonNull(composite);
+
+		final Listener listener = e -> {
+			Objects.requireNonNull(childs);
+
+			switch (e.type) {
+			case SWT.Paint -> onPaint(e);
+			case SWT.MouseMove -> onMouseMove(e);
+			case SWT.MouseEnter -> onMouseEnter(e);
+			case SWT.MouseExit -> onMouseExit(e);
+			case SWT.MouseDown,
+			     SWT.MouseUp -> onMouseDownOrUp(e);
+			}
+		};
+		this.composite.addListener(SWT.Paint, listener);
+		this.composite.addListener(SWT.MouseMove, listener);
+		this.composite.addListener(SWT.MouseEnter, listener);
+		this.composite.addListener(SWT.MouseExit, listener);
+		this.composite.addListener(SWT.MouseDown, listener);
+		this.composite.addListener(SWT.MouseUp, listener);
+	}
+
+	public int getChildCount() {
+		return childs.size();
+	}
+
+	public void add(CustomControl child) {
+		Objects.requireNonNull(child);
+		if (childs.contains(child)) {
+			throw new IllegalArgumentException("duplicate child");
+		}
+
+		childs.add(child);
+	}
+
+	public CustomControl[] getChildren() {
+		return childs.toArray(new CustomControl[0]);
+	}
+
+	private void onPaint(Event e) {
+		for (CustomControl customControl : childs) {
+			if (!customControl.getVisible()) {
+				continue;
+			}
+
+			final Rectangle b = customControl.getBounds();
+			if (b.width < 1 || b.height < 1) {
+				continue;
+			}
+
+			e.gc.setClipping(b);
+			e.gc.translate(b.x, b.y);
+			try {
+				sendEvent(customControl, e);
+			}
+			finally {
+				e.gc.translate(-b.x, -b.y);
+			}
+		}
+	}
+
+	private void onMouseMove(Event e) {
+		final CustomControl mouseControl = getChildAt(e);
+		if (mouseControl != mouseOverControl) {
+			if (mouseOverControl != null) {
+				e.type = SWT.MouseExit;
+				sendEvent(mouseOverControl, e);
+			}
+			mouseOverControl = mouseControl;
+			e.type = SWT.MouseEnter;
+		}
+		if (mouseControl != null) {
+			sendEvent(mouseControl, e);
+		}
+	}
+
+	private void onMouseEnter(Event e) {
+		mouseOverControl = getChildAt(e);
+		if (mouseOverControl != null) {
+			sendEvent(mouseOverControl, e);
+		}
+	}
+
+	private void onMouseExit(Event e) {
+		if (mouseOverControl != null) {
+			sendEvent(mouseOverControl, e);
+			mouseOverControl = null;
+		}
+	}
+
+	private void onMouseDownOrUp(Event e) {
+		final CustomControl mouseControl = getChildAt(e);
+		if (mouseControl != mouseOverControl) {
+			if (mouseOverControl != null) {
+				final Event event = new Event();
+				event.type = SWT.MouseExit;
+				event.x = e.x;
+				event.y = e.y;
+				sendEvent(mouseOverControl, event);
+			}
+			mouseOverControl = mouseControl;
+		}
+		if (mouseControl != null) {
+			sendEvent(mouseControl, e);
+		}
+	}
+
+	private CustomControl getChildAt(Event e) {
+		if (mouseOverControl != null && mouseOverControl.isEnabled() && mouseOverControl.isVisible()) {
+			final Rectangle bounds = mouseOverControl.getBounds();
+			if (bounds.contains(e.x, e.y)) {
+				return mouseOverControl;
+			}
+		}
+		for (CustomControl control : childs) {
+			if (!control.isVisible()) {
+				continue;
+			}
+
+			final Rectangle bounds = control.getBounds();
+			if (bounds.contains(e.x, e.y)) {
+				return control;
+			}
+		}
+		return null;
+	}
+
+	private static void sendEvent(Control control, Event event) {
+		event.widget = control;
+		control.sendEvent(event);
+	}
+}
