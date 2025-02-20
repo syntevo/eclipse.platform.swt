@@ -567,26 +567,29 @@ public class Button extends CustomControl {
 
 	private void drawRadioButton(GC gc, int x, int y, ColorProvider colorProvider) {
 		if (getSelection()) {
-			gc.setBackground(colorProvider.getColor(KEY_SELECTION));
+			gc.setBackground(colorProvider.getColor(isEnabled() ? KEY_SELECTION : KEY_DISABLE));
 			int partialBoxBorder = 2;
-			gc.fillOval(x + partialBoxBorder, y + partialBoxBorder,
-					BOX_SIZE - 2 * partialBoxBorder + 1, BOX_SIZE - 2 * partialBoxBorder + 1);
-		}
-		if (hasMouseEntered) {
-			gc.setBackground(colorProvider.getColor(KEY_HOVER));
-			int partialBoxBorder = getSelection() ? 4 : 0;
 			gc.fillOval(x + partialBoxBorder, y + partialBoxBorder,
 					BOX_SIZE - 2 * partialBoxBorder + 1, BOX_SIZE - 2 * partialBoxBorder + 1);
 		}
 		if (!isEnabled()) {
 			gc.setForeground(colorProvider.getColor(KEY_DISABLE));
 		}
+		else if (hasMouseEntered) {
+			gc.setBackground(colorProvider.getColor(KEY_HOVER));
+			int partialBoxBorder = getSelection() ? 4 : 0;
+			gc.fillOval(x + partialBoxBorder, y + partialBoxBorder,
+					BOX_SIZE - 2 * partialBoxBorder + 1, BOX_SIZE - 2 * partialBoxBorder + 1);
+		}
 		gc.drawOval(x, y, BOX_SIZE, BOX_SIZE);
 	}
 
 	private void drawCheckbox(GC gc, int x, int y, ColorProvider colorProvider) {
 		if (getSelection()) {
-			if (grayed) {
+			if (!isEnabled()) {
+				gc.setBackground(colorProvider.getColor(KEY_DISABLE));
+			}
+			else if (grayed) {
 				gc.setBackground(colorProvider.getColor(KEY_GRAYED));
 			} else {
 				gc.setBackground(colorProvider.getColor(KEY_SELECTION));
@@ -596,9 +599,12 @@ public class Button extends CustomControl {
 					BOX_SIZE - 2 * partialBoxBorder + 1, BOX_SIZE - 2 * partialBoxBorder + 1,
 					BOX_SIZE / 4 - partialBoxBorder / 2,
 					BOX_SIZE / 4 - partialBoxBorder / 2);
-
 		}
-		if (hasMouseEntered) {
+
+		if (!isEnabled()) {
+			gc.setForeground(colorProvider.getColor(KEY_DISABLE));
+		}
+		else if (hasMouseEntered) {
 			gc.setBackground(colorProvider.getColor(KEY_HOVER));
 			int partialBoxBorder = getSelection() ? 4 : 0;
 			gc.fillRoundRectangle(x + partialBoxBorder, y + partialBoxBorder,
