@@ -7,6 +7,14 @@ import org.eclipse.swt.graphics.*;
 
 public class CSimpleText extends Scrollable implements ICustomWidget {
 
+	static final String KEY_BACKGROUND = "text.background"; //$NON-NLS-1$
+	static final String KEY_BACKGROUND_READONLY = "text.background.readonly"; //$NON-NLS-1$
+	static final String KEY_FOREGROUND = "text.foreground"; //$NON-NLS-1$
+	static final String KEY_DISABLED = "text.disabled"; //$NON-NLS-1$
+	static final String KEY_SELECTION_FOREGROUND = "text.selection.foreground"; //$NON-NLS-1$
+	static final String KEY_SELECTION_BACKGROUND = "text.selection.background"; //$NON-NLS-1$
+	static final String KEY_BORDER = "text.border"; //$NON-NLS-1$
+
 	public static final int LIMIT = 0x7FFFFFFF;
 	public static final String DELIMITER = CSimpleTextModel.DELIMITER;
 
@@ -21,7 +29,8 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 	private boolean doubleClick;
 	private CTextCaret caret;
 	private int style;
-	private boolean customBackground;
+	private Color customBackground;
+	private Color customForeground;
 
 	public CSimpleText(Composite parent, int style) {
 		super(parent, checkStyle(style) & ~SWT.BORDER);
@@ -32,9 +41,6 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 		setCaret(new CTextCaret(this, SWT.NONE));
 
 		setCursor(display.getSystemCursor(SWT.CURSOR_IBEAM));
-		setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
-		setBackground(getDisplay().getSystemColor(SWT.COLOR_WHITE));
-		this.customBackground = false;
 
 		addListeners();
 	}
@@ -372,32 +378,45 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 
 	@Override
 	public void setBackground(Color color) {
-		if (color != null) {
-			super.setBackground(color);
-			this.customBackground = true;
-		}
+		customBackground = color;
+		redraw();
+	}
+
+	@Override
+	public void setForeground(Color color) {
+		customForeground = color;
+		redraw();
 	}
 
 	private void paintControl(Event e) {
+		final ColorProvider colorProvider = getColorProvider();
 		Rectangle visibleArea = getVisibleArea();
 		e.gc.setFont(getFont());
-		e.gc.setForeground(getForeground());
-		e.gc.setBackground(getBackground());
-		if (!isEnabled()) {
-			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
-		}
-		if (!customBackground) {
-			if (!isEnabled() || ((style & SWT.BORDER) == 1 && !getEditable())) {
-				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_LIGHT_SHADOW));
-			}
-			if ((style & SWT.BORDER) == 0 && !getEditable()) {
-				e.gc.setBackground(getParent().getBackground());
-			}
-		}
 
-		drawBackground(e);
+		final Color foreground = customForeground != null
+				? customForeground
+				: colorProvider.getColor(isEnabled() ? KEY_FOREGROUND : KEY_DISABLED);
+
+		final Color background;
+		if (customBackground != null) {
+			background = customBackground;
+		}
+		else {
+			if ((style & SWT.BORDER) == 0 && !getEditable()) {
+				background = getParent().getBackground();
+			} else if (!isEnabled() || ((style & SWT.BORDER) != 0 && !getEditable())) {
+				background = colorProvider.getColor(KEY_BACKGROUND_READONLY);
+			}
+			else {
+				background = colorProvider.getColor(KEY_BACKGROUND);
+			}
+		}
+		e.gc.setForeground(foreground);
+		e.gc.setBackground(background);
+
+		drawBackground(e, colorProvider);
 		drawText(e, visibleArea);
-		drawSelection(e, visibleArea);
+		drawSelection(e, visibleArea, colorProvider);
 		drawCaret(e, visibleArea);
 	}
 
@@ -407,7 +426,7 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 		redraw();
 	}
 
-	private void drawSelection(Event e, Rectangle visibleArea) {
+	private void drawSelection(Event e, Rectangle visibleArea, ColorProvider colorProvider) {
 		GC gc = e.gc;
 		int textLength = model.getText().length();
 		int start = Math.min(Math.max(model.getSelectionStart(), 0), textLength);
@@ -420,8 +439,8 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 
 			Color oldForeground = gc.getForeground();
 			Color oldBackground = gc.getBackground();
-			gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_LIST_SELECTION_TEXT));
-			gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_LIST_SELECTION));
+			gc.setForeground(colorProvider.getColor(KEY_SELECTION_FOREGROUND));
+			gc.setBackground(colorProvider.getColor(KEY_SELECTION_BACKGROUND));
 			for (int i = startLocation.line; i <= endLocation.line; i++) {
 				TextLocation location = new TextLocation(i, 0);
 				String text = textLines[i];
@@ -485,12 +504,12 @@ public class CSimpleText extends Scrollable implements ICustomWidget {
 		gc.drawText(text, _x, _y, true);
 	}
 
-	private void drawBackground(Event e) {
+	private void drawBackground(Event e, ColorProvider colorProvider) {
 		GC gc = e.gc;
 		gc.fillRectangle(e.x, e.y, e.width - 1, e.height - 1);
 		if ((style & SWT.BORDER) != 0 && getEditable() && isEnabled()) {
 			Color foreground = gc.getForeground();
-			gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+			gc.setForeground(colorProvider.getColor(KEY_BORDER));
 			gc.drawLine(e.x, e.y + e.height - 1, e.x + e.x + e.width - 1, e.y + e.height - 1);
 			gc.setForeground(foreground);
 		}
