@@ -24,7 +24,6 @@ public abstract class ButtonRenderer extends ControlRenderer {
 	private Image image;
 	private Image disabledImage;
 	private boolean selected;
-	private boolean grayed;
 	private boolean pressed;
 	private boolean hover;
 
@@ -65,14 +64,6 @@ public abstract class ButtonRenderer extends ControlRenderer {
 		this.selected = checked;
 	}
 
-	public final boolean isGrayed() {
-		return grayed;
-	}
-
-	public final void setGrayed(boolean grayed) {
-		this.grayed = grayed;
-	}
-
 	public final boolean isHover() {
 		return hover;
 	}
@@ -100,20 +91,5 @@ public abstract class ButtonRenderer extends ControlRenderer {
 			}
 			gc.drawImage(disabledImage, x, y);
 		}
-	}
-
-	protected final boolean isPushOrToggle() {
-		final int style = getStyle();
-		return (style & (SWT.PUSH | SWT.TOGGLE)) != 0;
-	}
-
-	protected final boolean isToggle() {
-		final int style = getStyle();
-		return (style & SWT.TOGGLE) != 0;
-	}
-
-	protected final boolean isArrowButton() {
-		final int style = getStyle();
-		return (style & SWT.ARROW) != 0;
 	}
 }
