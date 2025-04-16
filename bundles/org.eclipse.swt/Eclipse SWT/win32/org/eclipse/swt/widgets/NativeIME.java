@@ -41,7 +41,7 @@ import org.eclipse.swt.internal.win32.*;
  * @since 3.4
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class IME extends Widget {
+public class NativeIME extends NativeWidget {
 	Canvas parent;
 	int caretOffset;
 	int startOffset;
@@ -60,7 +60,7 @@ public class IME extends Widget {
 /**
  * Prevents uninitialized instances from being created outside the package.
  */
-IME () {
+NativeIME () {
 }
 
 /**
@@ -90,7 +90,7 @@ IME () {
  * @see Widget#checkSubclass
  * @see Widget#getStyle
  */
-public IME (Canvas parent, int style) {
+public NativeIME (Canvas parent, int style) {
 	super (parent, style);
 	this.parent = parent;
 	createWidget ();

@@ -73,7 +73,7 @@ import org.eclipse.swt.internal.win32.*;
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class Slider extends Control {
+public class NativeSlider extends NativeControl {
 	int increment, pageIncrement;
 	boolean ignoreFocus;
 	static final long ScrollBarProc;

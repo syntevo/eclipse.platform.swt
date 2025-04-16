@@ -36,7 +36,7 @@ import org.eclipse.swt.internal.win32.*;
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  * @noextend This class is not intended to be subclassed by clients.
  */
-public abstract class Scrollable extends Control {
+public abstract class NativeScrollable extends NativeControl {
 	ScrollBar horizontalBar, verticalBar;
 
 	/**
@@ -49,7 +49,7 @@ public abstract class Scrollable extends Control {
 /**
  * Prevents uninitialized instances from being created outside the package.
  */
-Scrollable () {
+NativeScrollable () {
 }
 
 /**
@@ -81,7 +81,7 @@ Scrollable () {
  * @see Widget#checkSubclass
  * @see Widget#getStyle
  */
-public Scrollable (Composite parent, int style) {
+public NativeScrollable (Composite parent, int style) {
 	super (parent, style);
 }
 

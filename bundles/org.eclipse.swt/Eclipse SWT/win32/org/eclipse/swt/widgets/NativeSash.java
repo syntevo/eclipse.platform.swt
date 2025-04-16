@@ -41,7 +41,7 @@ import org.eclipse.swt.internal.win32.*;
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class Sash extends Control {
+public class NativeSash extends NativeControl {
 	boolean dragging;
 	int startX, startY, lastX, lastY;
 	final static int INCREMENT = 1;

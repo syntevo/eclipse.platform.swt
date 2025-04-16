@@ -47,7 +47,7 @@ import org.eclipse.swt.internal.win32.*;
  * @since 3.2
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class ExpandBar extends Composite {
+public class NativeExpandBar extends NativeComposite {
 	ExpandItem[] items;
 	int itemCount;
 	ExpandItem focusItem;

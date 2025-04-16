@@ -44,7 +44,7 @@ import org.eclipse.swt.internal.win32.*;
  * @since 3.1
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class Link extends Control {
+public class NativeLink extends NativeControl {
 	String text;
 	int linkForeground = -1;
 	String [] ids;

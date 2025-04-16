@@ -49,7 +49,7 @@ import org.eclipse.swt.internal.win32.*;
  * @see <a href="http://www.eclipse.org/swt/snippets/#composite">Composite snippets</a>
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  */
-public class Composite extends Scrollable {
+public class NativeComposite extends NativeScrollable {
 	Layout layout;
 	WINDOWPOS [] lpwp;
 	Control [] tabList;

@@ -41,7 +41,7 @@ import org.eclipse.swt.internal.win32.*;
  * @see <a href="http://www.eclipse.org/swt/examples.php">SWT Example: ControlExample</a>
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  */
-public class Canvas extends Composite {
+public class NativeCanvas extends NativeComposite {
 	Caret caret;
 	IME ime;
 

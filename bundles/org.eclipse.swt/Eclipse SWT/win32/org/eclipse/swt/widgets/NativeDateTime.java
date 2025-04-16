@@ -47,7 +47,7 @@ import org.eclipse.swt.internal.win32.*;
  * @since 3.3
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class DateTime extends Composite {
+public class NativeDateTime extends NativeComposite {
 	static final int MIN_YEAR = 1752; // Gregorian switchover in North America: September 19, 1752
 	static final int MAX_YEAR = 9999;
 	boolean doubleClick, ignoreSelection;

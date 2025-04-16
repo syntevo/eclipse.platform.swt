@@ -37,7 +37,7 @@ import org.eclipse.swt.internal.win32.*;
  * @since 3.2
  * @noextend This class is not intended to be subclassed by clients.
  */
-public class ExpandItem extends Item {
+public class NativeExpandItem extends NativeItem {
 	ExpandBar parent;
 	Control control;
 	boolean expanded, hover;
