@@ -2833,10 +2833,11 @@ public boolean isDisposed () {
 }
 
 private static char replaceBelowSpaceCharacters(char chr) {
-	return chr >= ' '
-		? chr
-		//: (char)(0x2400 + chr);
-		: '?';
+	if (chr >= 0x20 || chr == '\t' || chr == '\r' || chr == '\n') {
+		return chr;
+	}
+
+	return '?'; // (char)(0x2400 + chr);
 }
 
 /*
