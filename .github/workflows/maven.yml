@@ -35,7 +35,7 @@ jobs:
     name: Verify ${{ matrix.config.name }} with Java-${{ matrix.java }}
     steps:
     - name: checkout swt
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       with:
        fetch-depth: 0 # required for jgit timestamp provider to work
        lfs: false # lfs-pull is not necessary, the natives are re-build in each run
@@ -49,7 +49,7 @@ jobs:
         git lfs pull --include='/binaries/org.eclipse.swt.win32.win32.x86_64/WebView2Loader.dll'
       if: ${{ matrix.config.native == 'win32.win32.x86_64'}}
     - name: Set up Java ${{ matrix.java }}
-      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
+      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
       with:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
@@ -62,22 +62,23 @@ jobs:
       uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1.0.1
       with:
        run: >-
-        mvn --batch-mode -V -U
+        mvn --batch-mode -V -U -e
         --threads 1C
         -DforkCount=1
         -Dnative=${{ matrix.config.native }}
+        -Papi-check
         -Dcompare-version-with-baselines.skip=true
         -Dtycho.baseline.replace=none
         --fail-at-end
         -DskipNativeTests=false
         -DfailIfNoTests=false
-        clean verify
+        clean install
     - name: Performance tests
       if: contains(github.event.pull_request.labels.*.name, 'performance')
       uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3 # v1.0.1
       with:
        run: >-
-        mvn --batch-mode -V -U
+        mvn --batch-mode -V -U -e
         -DforkCount=1
         -Dcompare-version-with-baselines.skip=true
         --fail-at-end

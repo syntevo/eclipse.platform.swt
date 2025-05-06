@@ -156,6 +156,9 @@ public class OS extends C {
 	public static final long sel_setStyle = Selector.sel_setStyle.value;
 	public static final int NSTableViewStylePlain = 4;
 
+    /** 14.0 selector */
+    public static final long sel_setClipsToBounds_ = Selector.sel_setClipsToBounds_.value;
+
 	/* AWT application delegate. Remove these when JavaRuntimeSupport.framework has bridgesupport generated for it. */
 	public static final long class_JRSAppKitAWT = objc_getClass("JRSAppKitAWT");
 	public static final long sel_awtAppDelegate = Selector.sel_awtAppDelegate.value;
@@ -179,7 +182,7 @@ public class OS extends C {
 	 * Custom message that will be sent when setTheme is called for example from Platform UI code.
 	 */
 	public static final long sel_appAppearanceChanged = OS.sel_registerName("appAppearanceChanged");
-	
+
 	/**
 	 * Experimental API for dark theme.
 	 * <p>
@@ -194,7 +197,7 @@ public class OS extends C {
 	 * On GTK, behavior may be different as the boolean flag doesn't force dark
 	 * theme instead it specify that dark theme is preferred.
 	 * </p>
-	 * 
+	 *
 	 * @param isDarkTheme <code>true</code> for dark theme
 	 */
 	public static void setTheme(boolean isDarkTheme) {
@@ -2217,6 +2220,7 @@ public static final int NSEventTypeGesture = 29;
 public static final int NSEventTypeMagnify = 30;
 public static final int NSEventTypeRotate = 18;
 public static final int NSEventTypeSwipe = 31;
+public static final int NSFileHandlingPanelCancelButton = 0;
 public static final int NSFileHandlingPanelOKButton = 1;
 public static final int NSFlagsChanged = 12;
 public static final int NSFocusRingTypeNone = 1;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2024 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -12,6 +12,9 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.swt.widgets;
+
+import java.util.*;
+import java.util.stream.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.events.*;
@@ -439,11 +442,11 @@ boolean resignFirstResponder (long id, long sel) {
 }
 
 /**
- * Adds the listener to the collection of listeners who will
+ * Adds the listener to the collection of {@link Listener listeners} who will
  * be notified when an event of the given type occurs. When the
  * event does occur in the widget, the listener is notified by
  * sending it the <code>handleEvent()</code> message. The event
- * type is one of the event constants defined in class <code>SWT</code>.
+ * type is one of the event constants defined in class {@link SWTError}.
  *
  * @param eventType the type of event to listen for
  * @param listener the listener which should be notified when the event occurs
@@ -456,8 +459,6 @@ boolean resignFirstResponder (long id, long sel) {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  *
- * @see Listener
- * @see SWT
  * @see #getListeners(int)
  * @see #removeListener(int, Listener)
  * @see #notifyListeners
@@ -466,6 +467,43 @@ public void addListener (int eventType, Listener listener) {
 	checkWidget();
 	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
 	_addListener (eventType, listener);
+}
+
+/**
+ * Adds the {@link EventListener typed listener} to the collection of listeners
+ * who will be notified when an event of the given types occurs.
+ * When the event does occur in the widget, the listener is notified
+ * by calling the type's handling methods.
+ * The event type is one of the event constants defined in class {@link SWT}
+ * and must correspond to the listeners type.
+ * If for example a {@link SelectionListener} is passed the {@code eventTypes}
+ * can be {@link SWT#Selection} or {@link SWT#DefaultSelection}.
+ *
+ * @param listener the listener which should be notified when the event occurs
+ * @param eventTypes the types of event to listen for
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @see #getTypedListeners(int, Class)
+ * @see #removeTypedListener(int, EventListener)
+ * @see #notifyListeners
+ * @since 3.126
+ */
+protected void addTypedListener (EventListener listener, int... eventTypes) {
+	checkWidget();
+	if (listener == null) {
+		SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	}
+	TypedListener typedListener = new TypedListener(listener);
+	for (int eventType : eventTypes) {
+		_addListener(eventType, typedListener);
+	}
 }
 
 void _addListener (int eventType, Listener listener) {
@@ -493,10 +531,7 @@ void _addListener (int eventType, Listener listener) {
  * @see #removeDisposeListener
  */
 public void addDisposeListener (DisposeListener listener) {
-	checkWidget();
-	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
-	TypedListener typedListener = new TypedListener (listener);
-	addListener (SWT.Dispose, typedListener);
+	addTypedListener(listener, SWT.Dispose);
 }
 
 boolean canBecomeKeyView(long id, long sel) {
@@ -759,6 +794,13 @@ void drawRect (long id, long sel, NSRect rect) {
 	if (!isDrawing()) return;
 	Display display = this.display;
 	NSView view = new NSView(id);
+
+	/*
+	* Since macOS 14 the clipsToBounds property of NSView has to be set to true
+	* See https://developer.apple.com/documentation/macos-release-notes/appkit-release-notes-for-macos-14
+	*/
+	OS.objc_msgSend(id, OS.sel_setClipsToBounds_, true);
+
 	display.isPainting.addObject(view);
 	NSGraphicsContext context = NSGraphicsContext.currentContext();
 	context.saveGraphicsState();
@@ -941,9 +983,9 @@ boolean getDrawing () {
 }
 
 /**
- * Returns an array of listeners who will be notified when an event
+ * Returns an array of {@link Listener listeners} who will be notified when an event
  * of the given type occurs. The event type is one of the event constants
- * defined in class <code>SWT</code>.
+ * defined in class {@link SWT}.
  *
  * @param eventType the type of event to listen for
  * @return an array of listeners that will be notified when the event occurs
@@ -953,8 +995,6 @@ boolean getDrawing () {
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
  *
- * @see Listener
- * @see SWT
  * @see #addListener(int, Listener)
  * @see #removeListener(int, Listener)
  * @see #notifyListeners
@@ -965,6 +1005,33 @@ public Listener[] getListeners (int eventType) {
 	checkWidget();
 	if (eventTable == null) return new Listener[0];
 	return eventTable.getListeners(eventType);
+}
+
+/**
+ * Returns the typed listeners who will be notified when an event of the given type occurs.
+ * The event type is one of the event constants defined in class {@link SWT}
+ * and the specified listener-type must correspond to that event.
+ * If for example the {@code eventType} is {@link SWT#Selection},
+ * the listeners type should be {@link SelectionListener}.
+ *
+ * @param eventType the type of event to listen for
+ * @return a stream of typed listeners that will be notified when the event occurs
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @see #addTypedListener(EventListener, int...)
+ * @see #removeTypedListener(int, EventListener)
+ * @see #notifyListeners
+ *
+ * @since 3.126
+ */
+public <L extends EventListener> Stream<L> getTypedListeners (int eventType, Class<L> listenerType) {
+	return Arrays.stream(getListeners(eventType)) //
+			.filter(TypedListener.class::isInstance).map(l -> ((TypedListener) l).eventListener)
+			.filter(listenerType::isInstance).map(listenerType::cast);
 }
 
 String getName () {
@@ -1456,11 +1523,42 @@ public void removeListener (int eventType, Listener listener) {
  * @noreference This method is not intended to be referenced by clients.
  * @nooverride This method is not intended to be re-implemented or extended by clients.
  */
-protected void removeListener (int eventType, SWTEventListener handler) {
+protected void removeListener (int eventType, SWTEventListener listener) {
+	removeTypedListener(eventType, listener);
+}
+
+/**
+ * Removes the listener from the collection of listeners who will
+ * be notified when an event of the given type occurs.
+ * <p>
+ * <b>IMPORTANT:</b> This method is <em>not</em> part of the SWT
+ * public API. It is marked public only so that it can be shared
+ * within the packages provided by SWT. It should never be
+ * referenced from application code.
+ * </p>
+ *
+ * @param eventType the type of event to listen for
+ * @param listener the listener which should no longer be notified
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_NULL_ARGUMENT - if the listener is null</li>
+ * </ul>
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @see Listener
+ * @see #addListener
+ *
+ * @noreference This method is not intended to be referenced by clients.
+ * @nooverride This method is not intended to be re-implemented or extended by clients.
+ */
+protected void removeTypedListener (int eventType, EventListener listener) {
 	checkWidget();
-	if (handler == null) error (SWT.ERROR_NULL_ARGUMENT);
+	if (listener == null) error (SWT.ERROR_NULL_ARGUMENT);
 	if (eventTable == null) return;
-	eventTable.unhook (eventType, handler);
+	eventTable.unhook (eventType, listener);
 }
 
 /**

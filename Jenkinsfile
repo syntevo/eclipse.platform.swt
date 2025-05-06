@@ -150,9 +150,9 @@ pipeline {
 									'comma_ver='+swtVersions['comma_ver'], "new_comma_ver=${swtVersions['maj_ver']},${swtVersions['min_ver']},${swtVersions['new_rev']},0" ]) {
 								sh '''
 									# Delete native binaries to be replaced by subsequent binaries build
-									rm -f binaries/org.eclipse.swt.gtk.*/lib*-${swt_version}.so
-									rm -f binaries/org.eclipse.swt.win32.*/*-${swt_version}.dll
-									rm -f binaries/org.eclipse.swt.cocoa.*/lib*-${swt_version}.jnilib
+									rm binaries/org.eclipse.swt.gtk.*/libswt-*.so
+									rm binaries/org.eclipse.swt.win32.*/swt-*.dll
+									rm binaries/org.eclipse.swt.cocoa.*/libswt-*.jnilib
 									
 									echo "Incrementing version from ${swt_version} to ${new_version}; new comma_ver=${new_comma_ver}"
 									
@@ -223,13 +223,10 @@ pipeline {
 												ls -1R libs
 											'''
 										} else {
-											withEnv(['PATH=C:\\tools\\cygwin\\bin;' + env.PATH]) {
-												bat '''
-													mkdir libs
-													cmd /c build.bat install
-													ls -1R libs
-												'''
-											}
+											bat '''
+												mkdir libs
+												cmd /c build.bat install
+											'''
 										}
 									}
 									dir('libs') {
@@ -299,7 +296,8 @@ pipeline {
 					dir('eclipse.platform.swt') {
 						sh '''
 							mvn clean verify \
-								--batch-mode --threads 1C -DforkCount=0 \
+								--batch-mode --threads 1C -V -U -e -DforkCount=0 \
+								-Papi-check \
 								-Dcompare-version-with-baselines.skip=false \
 								-Dorg.eclipse.swt.tests.junit.disable.test_isLocal=true \
 								-Dmaven.test.failure.ignore=true -Dmaven.test.error.ignore=true
