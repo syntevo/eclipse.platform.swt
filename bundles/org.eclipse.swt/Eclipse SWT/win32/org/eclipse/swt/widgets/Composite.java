@@ -1517,30 +1517,32 @@ LRESULT WM_PAINT (long wParam, long lParam) {
 				RECT prcTarget = new RECT ();
 				OS.SetRect (prcTarget, ps.left, ps.top, ps.right, ps.bottom);
 				long hBufferedPaint = OS.BeginBufferedPaint (hDC, prcTarget, flags, null, phdc);
-				GCData data = new GCData ();
-				data.device = display;
-				data.foreground = getForegroundPixel ();
-				Control control = findBackgroundControl ();
-				if (control == null) control = this;
-				data.background = control.getBackgroundPixel ();
-				data.font = Font.win32_new(display, OS.SendMessage (handle, OS.WM_GETFONT, 0, 0));
-				data.uiState = (int)OS.SendMessage (handle, OS.WM_QUERYUISTATE, 0, 0);
-				if ((style & SWT.NO_BACKGROUND) != 0) {
-					/* This code is intentionally commented because it may be slow to copy bits from the screen */
-					//paintGC.copyArea (image, ps.left, ps.top);
-				} else {
-					RECT rect = new RECT ();
-					OS.SetRect (rect, ps.left, ps.top, ps.right, ps.bottom);
-					drawBackground (phdc [0], rect);
+				if (hBufferedPaint != 0 && phdc[0] != 0) {
+					GCData data = new GCData ();
+					data.device = display;
+					data.foreground = getForegroundPixel ();
+					Control control = findBackgroundControl ();
+					if (control == null) control = this;
+					data.background = control.getBackgroundPixel ();
+					data.font = Font.win32_new(display, OS.SendMessage (handle, OS.WM_GETFONT, 0, 0));
+					data.uiState = (int)OS.SendMessage (handle, OS.WM_QUERYUISTATE, 0, 0);
+					if ((style & SWT.NO_BACKGROUND) != 0) {
+						/* This code is intentionally commented because it may be slow to copy bits from the screen */
+						//paintGC.copyArea (image, ps.left, ps.top);
+					} else {
+						RECT rect = new RECT ();
+						OS.SetRect (rect, ps.left, ps.top, ps.right, ps.bottom);
+						drawBackground (phdc [0], rect);
+					}
+					GC gc = GC.win32_new (phdc [0], data);
+					Event event = new Event ();
+					event.gc = gc;
+					event.setBoundsInPixels(new Rectangle(ps.left, ps.top, width, height));
+					sendEvent (SWT.Paint, event);
+					if (data.focusDrawn && !isDisposed ()) updateUIState ();
+					gc.dispose ();
+					OS.EndBufferedPaint (hBufferedPaint, true);
 				}
-				GC gc = GC.win32_new (phdc [0], data);
-				Event event = new Event ();
-				event.gc = gc;
-				event.setBoundsInPixels(new Rectangle(ps.left, ps.top, width, height));
-				sendEvent (SWT.Paint, event);
-				if (data.focusDrawn && !isDisposed ()) updateUIState ();
-				gc.dispose ();
-				OS.EndBufferedPaint (hBufferedPaint, true);
 			}
 			OS.EndPaint (handle, ps);
 		} else {
