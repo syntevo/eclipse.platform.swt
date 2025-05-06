@@ -98,6 +98,7 @@ public class CTabFolderRenderer {
 	static final int ITEM_LEFT_MARGIN = 4;
 	static final int ITEM_RIGHT_MARGIN = 4;
 	static final int INTERNAL_SPACING = 4;
+	static final int TABS_WITHOUT_ICONS_PADDING = 14;
 	static final int FLAGS = SWT.DRAW_TRANSPARENT | SWT.DRAW_MNEMONIC | SWT.DRAW_DELIMITER;
 	static final String ELLIPSIS = "..."; //$NON-NLS-1$
 	private static final String CHEVRON_ELLIPSIS = "99+"; //$NON-NLS-1$
@@ -318,10 +319,11 @@ public class CTabFolderRenderer {
 					Image image = item.getImage();
 					if (image != null && !image.isDisposed()) {
 						Rectangle bounds = image.getBounds();
-						if ((state & SWT.SELECTED) != 0 || parent.showUnselectedImage) {
+						if (((state & SWT.SELECTED) != 0 && parent.showSelectedImage)
+								|| ((state & SWT.SELECTED) == 0 && parent.showUnselectedImage)) {
 							width += bounds.width;
 						}
-						height =  bounds.height;
+						height = bounds.height;
 					}
 					String text = null;
 					if ((state & MINIMUM_SIZE) != 0) {
@@ -355,9 +357,16 @@ public class CTabFolderRenderer {
 							gc.setFont(gcFont);
 						}
 					}
+
+					width += getTextPadding(item, state) * 2;
+
 					if (parent.showClose || item.showClose) {
 						if ((state & SWT.SELECTED) != 0 || parent.showUnselectedClose) {
-							if (width > 0) width += INTERNAL_SPACING;
+							if (!applyLargeTextPadding(parent)) {
+								if (width > 0) width += INTERNAL_SPACING;
+							} else {
+								if (width > 0) width -= INTERNAL_SPACING;
+							}
 							width += computeSize(PART_CLOSE_BUTTON, SWT.NONE, gc, SWT.DEFAULT, SWT.DEFAULT).x;
 						}
 					}
@@ -368,6 +377,30 @@ public class CTabFolderRenderer {
 		width = trim.width;
 		height = trim.height;
 		return new Point(width, height);
+	}
+
+	/**
+	 * Returns padding for the text of a tab when image is not available or is hidden.
+	 *
+	 * @param item CTabItem
+	 * @param state current state
+	 *
+	 */
+	private int getTextPadding(CTabItem item, int state) {
+		CTabFolder parent = item.getParent();
+		String text = item.getText();
+
+		if (text != null && parent.getMinimumCharacters() != 0) {
+			if (applyLargeTextPadding(parent)) {
+				return TABS_WITHOUT_ICONS_PADDING;
+			}
+		}
+
+		return 0;
+	}
+
+	private boolean applyLargeTextPadding(CTabFolder tabFolder) {
+		return !tabFolder.showSelectedImage && !tabFolder.showUnselectedImage;
 	}
 
 	/**
@@ -755,9 +788,6 @@ public class CTabFolderRenderer {
 
 	/*
 	 * Draw the border of the tab
-	 *
-	 * @param gc
-	 * @param shape
 	 */
 	void drawBorder(GC gc, int[] shape) {
 
@@ -1045,8 +1075,6 @@ public class CTabFolderRenderer {
 
 	/*
 	 * Draw the unselected border for the receiver on the left.
-	 *
-	 * @param gc
 	 */
 	void drawLeftUnselectedBorder(GC gc, Rectangle bounds, int state) {
 		int x = bounds.x;
@@ -1184,8 +1212,6 @@ public class CTabFolderRenderer {
 
 	/*
 	 * Draw the unselected border for the receiver on the right.
-	 *
-	 * @param gc
 	 */
 	void drawRightUnselectedBorder(GC gc, Rectangle bounds, int state) {
 		int x = bounds.x;
@@ -1392,7 +1418,7 @@ public class CTabFolderRenderer {
 			int xDraw = x - trim.x;
 			if (parent.single && (parent.showClose || item.showClose)) xDraw += item.closeRect.width;
 			Image image = item.getImage();
-			if (image != null && !image.isDisposed()) {
+			if (image != null && !image.isDisposed() && parent.showSelectedImage) {
 				Rectangle imageBounds = image.getBounds();
 				// only draw image if it won't overlap with close button
 				int maxImageWidth = rightEdge - xDraw - (trim.width + trim.x);
@@ -1407,6 +1433,7 @@ public class CTabFolderRenderer {
 			}
 
 			// draw Text
+			xDraw += getTextPadding(item, state);
 			int textWidth = rightEdge - xDraw - (trim.width + trim.x);
 			if (!parent.single && item.closeRect.width > 0) textWidth -= item.closeRect.width + INTERNAL_SPACING;
 			if (textWidth > 0) {
@@ -1620,6 +1647,7 @@ public class CTabFolderRenderer {
 				}
 			}
 			// draw Text
+			xDraw += getTextPadding(item, state);
 			int textWidth = x + width - xDraw - (trim.width + trim.x);
 			if (parent.showUnselectedClose && (parent.showClose || item.showClose)) {
 				textWidth -= item.closeRect.width + INTERNAL_SPACING;

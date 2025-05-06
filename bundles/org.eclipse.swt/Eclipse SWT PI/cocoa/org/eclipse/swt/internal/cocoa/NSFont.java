@@ -75,7 +75,7 @@ public static NSFont monospacedDigitSystemFontOfSize(double fontSize) {
 }
 
 public double pointSize() {
-return OS.objc_msgSend_fpret(this.id, OS.sel_pointSize);
+	return OS.objc_msgSend_fpret(this.id, OS.sel_pointSize);
 }
 
 public static double smallSystemFontSize() {

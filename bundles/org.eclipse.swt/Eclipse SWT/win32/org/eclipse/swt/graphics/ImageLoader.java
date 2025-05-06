@@ -78,7 +78,6 @@ public class ImageLoader {
 	 * the background pixel for the logical screen (this
 	 * corresponds to the GIF89a Background Color Index value).
 	 * The default is -1 which means 'unspecified background'
-	 *
 	 */
 	public int backgroundPixel;
 
@@ -250,17 +249,12 @@ public void save(OutputStream stream, int format) {
  * </ul>
  */
 public void save(String filename, int format) {
-	if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
-	OutputStream stream = null;
-	try {
-		stream = new FileOutputStream(filename);
+	if (filename == null)
+		SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	try (OutputStream stream = new FileOutputStream(filename)) {
+		save(stream, format);
 	} catch (IOException e) {
 		SWT.error(SWT.ERROR_IO, e);
-	}
-	save(stream, format);
-	try {
-		stream.close();
-	} catch (IOException e) {
 	}
 }
 

@@ -293,7 +293,6 @@ long eventSurface () {
 /**
  * GdkEventType constants different on GTK4 and GTK3.
  * This checks for GTK versions and return the correct constants defined in GDK.java
- * @param eventType
  * @return constant defined
  */
 static int fixGdkEventTypeValues(int eventType) {
@@ -4805,6 +4804,14 @@ void release (boolean destroy) {
 	if (destroy) {
 		if (previous != null && next != null) previous.addRelation (next);
 	}
+}
+
+@Override
+void releaseChildren (boolean destroy) {
+	if (font != null && font.isDisposed()) {
+		SWT.error(SWT.ERROR_GRAPHIC_DISPOSED, font.disposeStackTrace);
+	}
+	super.releaseChildren(destroy);
 }
 
 @Override

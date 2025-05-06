@@ -13,10 +13,15 @@
  *******************************************************************************/
 package org.eclipse.swt.internal;
 
-import java.io.*;
-import java.net.*;
-import java.nio.file.*;
-import java.util.jar.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.jar.Attributes;
 
 public class Library {
 
@@ -30,12 +35,12 @@ public class Library {
 	/**
 	 * SWT Minor version number (must be in the range 0..999)
 	 */
-	static int MINOR_VERSION = 963;
+	static int MINOR_VERSION = 964;
 
 	/**
 	 * SWT revision number (must be >= 0)
 	 */
-	static int REVISION = 3;
+	static int REVISION = 4;
 
 	/**
 	 * The JAVA and SWT versions
@@ -116,9 +121,6 @@ static int parseVersion(String version) {
 /**
  * Returns the Java version number as an integer.
  *
- * @param major
- * @param minor
- * @param micro
  * @return the version
  */
 public static int JAVA_VERSION (int major, int minor, int micro) {
@@ -128,8 +130,6 @@ public static int JAVA_VERSION (int major, int minor, int micro) {
 /**
  * Returns the SWT version number as an integer.
  *
- * @param major
- * @param minor
  * @return the version
  */
 public static int SWT_VERSION (int major, int minor) {

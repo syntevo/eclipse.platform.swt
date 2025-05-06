@@ -196,6 +196,7 @@ public class CTabFolder extends Composite {
 	int[] gradientPercents;
 	boolean gradientVertical;
 	boolean showUnselectedImage = true;
+	boolean showSelectedImage = true;
 
 	// close, min/max and chevron buttons
 	boolean showClose = false;
@@ -872,7 +873,6 @@ ToolBar getChevron() {
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
  * </ul>
- *
  */
 /*public*/ boolean getChevronVisible() {
 	checkWidget();
@@ -1366,6 +1366,18 @@ public boolean getUnselectedCloseVisible() {
 public boolean getUnselectedImageVisible() {
 	checkWidget();
 	return showUnselectedImage;
+}
+/**
+ * Returns <code>true</code> if an image appears
+ * in selected tabs.
+ *
+ * @return <code>true</code> if an image appears in selected tabs
+ *
+ * @since 3.125
+ */
+public boolean getSelectedImageVisible() {
+	checkWidget();
+	return showSelectedImage;
 }
 /**
  * Return the index of the specified tab or -1 if the tab is not
@@ -3695,6 +3707,25 @@ public void setUnselectedImageVisible(boolean visible) {
 	updateFolder(REDRAW);
 }
 /**
+ * Specify whether the image appears on selected tabs.
+ *
+ * @param visible <code>true</code> makes the image appear
+ *
+ * @exception SWTException <ul>
+ *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
+ *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
+ * </ul>
+ *
+ * @since 3.125
+ */
+public void setSelectedImageVisible(boolean visible) {
+	checkWidget();
+	if (showSelectedImage == visible) return;
+	// display image on selected items
+	showSelectedImage = visible;
+	updateFolder(REDRAW);
+}
+/**
  * Shows the item.  If the item is already showing in the receiver,
  * this method simply returns.  Otherwise, the items are scrolled until
  * the item is visible.
@@ -4176,7 +4207,6 @@ int getWrappedHeight (Point size) {
  *    <li>ERROR_THREAD_INVALID_ACCESS when called from the wrong thread</li>
  *    <li>ERROR_WIDGET_DISPOSED when the widget has been disposed</li>
  * </ul>
- *
  */
 /*public*/ void setChevronVisible(boolean visible) {
 	checkWidget();

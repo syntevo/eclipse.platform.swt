@@ -70,7 +70,7 @@ public class TreeItem extends Item {
  * @see Widget#getStyle
  */
 public TreeItem (Tree parent, int style) {
-	this (checkNull (parent), 0, style, -1, true);
+	this (checkNull (parent), 0, style, -1, 0);
 }
 
 /**
@@ -103,7 +103,7 @@ public TreeItem (Tree parent, int style) {
  * @see Tree#setRedraw
  */
 public TreeItem (Tree parent, int style, int index) {
-	this (checkNull (parent), 0, style, checkIndex (index), true);
+	this (checkNull (parent), 0, style, checkIndex (index), 0);
 }
 
 /**
@@ -129,7 +129,7 @@ public TreeItem (Tree parent, int style, int index) {
  * @see Widget#getStyle
  */
 public TreeItem (TreeItem parentItem, int style) {
-	this (checkNull (parentItem).parent, parentItem.handle, style, -1, true);
+	this (checkNull (parentItem).parent, parentItem.handle, style, -1, 0);
 }
 
 /**
@@ -158,17 +158,19 @@ public TreeItem (TreeItem parentItem, int style) {
  * @see Tree#setRedraw
  */
 public TreeItem (TreeItem parentItem, int style, int index) {
-	this (checkNull (parentItem).parent, parentItem.handle, style, checkIndex (index), true);
+	this (checkNull (parentItem).parent, parentItem.handle, style, checkIndex (index), 0);
 }
 
-TreeItem (Tree parent, long parentIter, int style, int index, boolean create) {
+TreeItem (Tree parent, long parentIter, int style, int index, long iter) {
 	super (parent, style);
 	this.parent = parent;
-	if (create) {
+	if (iter == 0) {
 		parent.createItem (this, parentIter, index);
 	} else {
+		assert handle == 0;
 		handle = OS.g_malloc (GTK.GtkTreeIter_sizeof ());
-		GTK.gtk_tree_model_iter_nth_child (parent.modelHandle, handle, parentIter, index);
+		if (handle == 0) error(SWT.ERROR_NO_HANDLES);
+		C.memmove(handle, iter, GTK.GtkTreeIter_sizeof ());
 	}
 }
 
@@ -363,7 +365,6 @@ void destroyWidget () {
  * </ul>
  *
  * @since 2.0
- *
  */
 public Color getBackground () {
 	checkWidget ();
@@ -603,7 +604,6 @@ public Font getFont (int index) {
  * </ul>
  *
  * @since 2.0
- *
  */
 public Color getForeground () {
 	checkWidget ();
@@ -1138,7 +1138,6 @@ public void removeAll () {
  * </ul>
  *
  * @since 2.0
- *
  */
 public void setBackground (Color color) {
 	checkWidget ();
@@ -1168,7 +1167,6 @@ public void setBackground (Color color) {
  * </ul>
  *
  * @since 3.1
- *
  */
 public void setBackground (int index, Color color) {
 	checkWidget ();
@@ -1377,7 +1375,6 @@ public void setFont (int index, Font font) {
  * </ul>
  *
  * @since 2.0
- *
  */
 public void setForeground (Color color){
 	checkWidget ();
@@ -1407,7 +1404,6 @@ public void setForeground (Color color){
  * </ul>
  *
  * @since 3.1
- *
  */
 public void setForeground (int index, Color color){
 	checkWidget ();

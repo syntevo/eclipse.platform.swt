@@ -3492,7 +3492,6 @@ int numpadKey (int key) {
  * </ul>
  *
  * @since 3.0
- *
  */
 public boolean post (Event event) {
 	synchronized (Device.class) {

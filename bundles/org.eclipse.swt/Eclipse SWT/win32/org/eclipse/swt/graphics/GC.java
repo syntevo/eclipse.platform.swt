@@ -323,24 +323,30 @@ void checkGC(int mask) {
 			data.gdipFont = gdipFont;
 		}
 		if ((state & DRAW_OFFSET) != 0) {
-			data.gdipXOffset = data.gdipYOffset = 0;
-			long matrix = Gdip.Matrix_new(1, 0, 0, 1, 0, 0);
-			PointF point = new PointF();
-			point.X = point.Y = 1;
-			Gdip.Graphics_GetTransform(gdipGraphics, matrix);
-			Gdip.Matrix_TransformVectors(matrix, point, 1);
-			Gdip.Matrix_delete(matrix);
-			float scaling = point.X;
-			if (scaling < 0) scaling = -scaling;
-			float penWidth = data.lineWidth * scaling;
-			if (penWidth == 0 || (((int)penWidth) & 1) == 1) {
-				data.gdipXOffset = 0.5f / scaling;
-			}
-			scaling = point.Y;
-			if (scaling < 0) scaling = -scaling;
-			penWidth = data.lineWidth * scaling;
-			if (penWidth == 0 || (((int)penWidth) & 1) == 1) {
-				data.gdipYOffset = 0.5f / scaling;
+			boolean isAntiAliasingActive = getAntialias() != SWT.OFF;
+			int effectiveLineWidth = data.lineWidth < 1 ? 1 : Math.round(data.lineWidth);
+			if (isAntiAliasingActive || effectiveLineWidth % 2 == 1) {
+				PointF offset = new PointF();
+				// In case the effective line width is odd or anti-aliasing is used, add (0.5, 0.5) to coordinates in
+				// the coordinate system in which drawings are performed.
+				// I.e., a line starting at (0,0) will effectively start in pixel right below
+				// that coordinate with its center at (0.5, 0.5).
+				offset.X = offset.Y = 0.5f;
+				if (!isAntiAliasingActive) {
+					offset.X /= effectiveLineWidth;
+					offset.Y /= effectiveLineWidth;
+				}
+				// The offset will be applied to the coordinate system of the GC; so transform
+				// it from the drawing coordinate system to the coordinate system of the GC by
+				// applying the inverse transformation as the one applied to the GC and correct
+				// it by the line width.
+				long newMatrix = Gdip.Matrix_new(1, 0, 0, 1, 0, 0);
+				Gdip.Graphics_GetTransform(gdipGraphics, newMatrix);
+				Gdip.Matrix_Invert(newMatrix);
+				Gdip.Matrix_TransformVectors(newMatrix, offset, 1);
+				Gdip.Matrix_delete(newMatrix);
+				data.gdipXOffset = Math.abs(offset.X);
+				data.gdipYOffset = Math.abs(offset.Y);
 			}
 		}
 		return;
@@ -604,7 +610,6 @@ static long createGdipFont(long hDC, long hFont, long graphics, long fontCollect
  * The returned brush has to be disposed by the caller.
  *
  * @param brush Brush with pattern
- * @param alpha
  * @return new brush with transparency
  * @exception SWTError <ul>
  *    <li>ERROR_CANNOT_BE_ZERO - if the image in the brush is null</li>
@@ -3886,9 +3891,6 @@ long identity() {
 }
 
 void init(Drawable drawable, GCData data, long hDC) {
-	if (hDC == 0) {
-		throw new IllegalArgumentException("missing hDC");
-	}
 	int foreground = data.foreground;
 	if (foreground != -1) {
 		data.state &= ~(FOREGROUND | FOREGROUND_TEXT | PEN);

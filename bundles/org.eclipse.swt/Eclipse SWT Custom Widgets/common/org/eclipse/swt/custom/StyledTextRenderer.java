@@ -28,6 +28,9 @@ import org.eclipse.swt.widgets.*;
  * This class can be used to render to the display or to a printer.
  */
 class StyledTextRenderer {
+
+	private static final String TEST_NON_US_ASCII = System.getProperty("org.eclipse.swt.internal.styledtext.additionalTextForSizeTest", "");
+
 	Device device;
 	StyledText styledText;
 	StyledTextContent content;
@@ -1388,13 +1391,15 @@ void setFont(Font font, int tabs) {
 		if (boldItalicFont != null) boldItalicFont.dispose();
 		boldFont = italicFont = boldItalicFont = null;
 		regularFont = font;
-		layout.setText("    \u8FB6");
+		layout.setText("    " + TEST_NON_US_ASCII);
 		layout.setFont(font);
 		layout.setStyle(new TextStyle(getFont(SWT.NORMAL), null, null), 0, 0);
 		layout.setStyle(new TextStyle(getFont(SWT.BOLD), null, null), 1, 1);
 		layout.setStyle(new TextStyle(getFont(SWT.ITALIC), null, null), 2, 2);
 		layout.setStyle(new TextStyle(getFont(SWT.BOLD | SWT.ITALIC), null, null), 3, 3);
-		layout.setStyle(new TextStyle(getFont(SWT.NORMAL), null, null), 4, 4);
+		if (TEST_NON_US_ASCII.length() > 0) {
+			layout.setStyle(new TextStyle(getFont(SWT.NORMAL), null, null), 4, 3 + TEST_NON_US_ASCII.length());
+		}
 		FontMetrics metrics = layout.getLineMetrics(0);
 		ascent = metrics.getAscent() + metrics.getLeading();
 		descent = metrics.getDescent();
