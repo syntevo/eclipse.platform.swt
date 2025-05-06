@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2024 IBM Corporation and others.
+ * Copyright (c) 2010, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -736,7 +736,9 @@ public void create (Composite parent, int style) {
 	OS.g_object_set (settings, WebKitGTK.enable_developer_extras, 1, 0);
 	//disable hardware acceleration due to  https://bugs.webkit.org/show_bug.cgi?id=239429#c11
 	//even evolution ended up doing the same https://gitlab.gnome.org/GNOME/evolution/-/commit/eb62ccaa28bbbca7668913ce7d8056a6d75f9b05
-	OS.g_object_set (settings, WebKitGTK.hardware_acceleration_policy, 2, 0);
+	if (!GTK.GTK4) {
+		OS.g_object_set (settings, WebKitGTK.hardware_acceleration_policy, 2, 0);
+	}
 
 	OS.g_object_set (settings, WebKitGTK.default_charset, utfBytes, 0);
 	if (WebKitGTK.webkit_get_minor_version() >= 14) {
@@ -1125,10 +1127,26 @@ private static class Webkit2AsyncToSync {
 		long context = WebKitGTK.webkit_web_context_get_default();
 		long cookieManager = WebKitGTK.webkit_web_context_get_cookie_manager(context);
 		byte[] bytes = Converter.wcsToMbcs (cookieUrl, true);
-		long uri = WebKitGTK.soup_uri_new (bytes);
-		if (uri == 0) {
-			System.err.println("SWT WebKit: SoupURI == 0 when setting cookie");
-			return false;
+		long uri;
+		if (WebKitGTK.soup_get_major_version()==2) {
+			uri = WebKitGTK.soup_uri_new (bytes);
+			if (uri == 0) {
+				System.err.println("SWT WebKit: SoupURI == 0 when setting cookie");
+				return false;
+			}
+		} else {
+			long [] error = new long [1];
+			uri = OS.g_uri_parse(bytes, 0, error);
+			if (uri == 0) {
+				long errorMessageC = OS.g_error_get_message(error[0]);
+				String errorMessageStr = Converter.cCharPtrToJavaString(errorMessageC, false);
+				OS.g_error_free(error[0]);
+				System.err.format(
+						"SWT WebKit: Failed to parse cookie URI: %s%n",
+						errorMessageStr);
+				return false;
+			}
+
 		}
 		bytes = Converter.wcsToMbcs (cookieValue, true);
 		long soupCookie = WebKitGTK.soup_cookie_parse (bytes, uri);
@@ -2064,8 +2082,8 @@ public boolean setUrl (String url, String postData, String[] headers) {
 					{ // Extract result meta data
 						// Get Media Type from Content-Type
 						String content_type = conn.getContentType();
-						int paramaterSeparatorIndex = content_type.indexOf(';');
-						mime_type = paramaterSeparatorIndex > 0 ? content_type.substring(0, paramaterSeparatorIndex) : content_type;
+						int parameterSeparatorIndex = content_type.indexOf(';');
+						mime_type = parameterSeparatorIndex > 0 ? content_type.substring(0, parameterSeparatorIndex) : content_type;
 
 						// Get Encoding if defined
 						if (content_type.indexOf(';') > 0) {

@@ -35,12 +35,12 @@ public class Library {
 	/**
 	 * SWT Minor version number (must be in the range 0..999)
 	 */
-	static int MINOR_VERSION = 968;
+	static int MINOR_VERSION = 969;
 
 	/**
 	 * SWT revision number (must be >= 0)
 	 */
-	static int REVISION = 2;
+	static int REVISION = 10;
 
 	/**
 	 * The JAVA and SWT versions
@@ -373,8 +373,8 @@ public static String getVersionString () {
 			if (MINOR_VERSION < 100) version += "0"; //$NON-NLS-1$
 		}
 		version += MINOR_VERSION;
-		/* No "r" until first revision */
-		if (REVISION > 0) version += "r" + REVISION; //$NON-NLS-1$
+		/* "r" followed by respective revision version starting with zero(0) */
+		version += "r" + REVISION; //$NON-NLS-1$
 	}
 	return version;
 }

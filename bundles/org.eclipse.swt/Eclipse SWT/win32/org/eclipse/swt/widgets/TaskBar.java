@@ -65,6 +65,7 @@ public class TaskBar extends Widget {
 
 TaskBar (Display display, int style) {
 	this.display = display;
+	this.nativeZoom = display.getDeviceZoom();
 	createHandle ();
 	reskinWidget ();
 }
@@ -166,7 +167,7 @@ IShellLink createShellLink (MenuItem item) {
 				ImageData data;
 				if (item.hBitmap != 0) {
 					long handle = OS.CopyImage(item.hBitmap, SWT.BITMAP, 0, 0, 0);
-					Image image2 = Image.win32_new (display, SWT.BITMAP, handle);
+					Image image2 = Image.win32_new (display, SWT.BITMAP, handle, nativeZoom);
 					data = image2.getImageData (DPIUtil.getDeviceZoom ());
 					image2.dispose();
 				} else {

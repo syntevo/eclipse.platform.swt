@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,12 +15,14 @@ package org.eclipse.swt.graphics;
 
 
 import java.io.*;
+import java.util.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.DPIUtil.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
+import org.eclipse.swt.internal.image.*;
 
 /**
  * Instances of this class are graphics which have been prepared
@@ -152,6 +154,11 @@ public final class Image extends Resource implements Drawable {
 	private ImageDataProvider imageDataProvider;
 
 	/**
+	 * ImageGcDrawer to provide a callback to draw on a GC for various zoom levels
+	 */
+	private ImageGcDrawer imageGcDrawer;
+
+	/**
 	 * Style flag used to differentiate normal, gray-scale and disabled images based
 	 * on image data providers. Without this, a normal and a disabled image of the
 	 * same image data provider would be considered equal.
@@ -263,6 +270,7 @@ public Image(Device device, Image srcImage, int flag) {
 	this.type = srcImage.type;
 	this.imageDataProvider = srcImage.imageDataProvider;
 	this.imageFileNameProvider = srcImage.imageFileNameProvider;
+	this.imageGcDrawer = srcImage.imageGcDrawer;
 	this.styleFlag = srcImage.styleFlag | flag;
 	this.currentDeviceZoom = srcImage.currentDeviceZoom;
 
@@ -523,9 +531,9 @@ public Image(Device device, ImageData source, ImageData mask) {
  */
 public Image(Device device, InputStream stream) {
 	super(device);
-	ImageData data = new ImageData(stream);
 	currentDeviceZoom = DPIUtil.getDeviceZoom();
-	data = DPIUtil.autoScaleUp (device, data);
+	ElementAtZoom<ImageData> image = ImageDataLoader.load(stream, FileFormat.DEFAULT_ZOOM, currentDeviceZoom);
+	ImageData data = DPIUtil.scaleImageData(device, image, currentDeviceZoom);
 	init(data);
 	init();
 }
@@ -565,10 +573,9 @@ public Image(Device device, InputStream stream) {
 public Image(Device device, String filename) {
 	super(device);
 	if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
-
-	ImageData data = new ImageData(filename);
 	currentDeviceZoom = DPIUtil.getDeviceZoom();
-	data = DPIUtil.autoScaleUp (device, data);
+	ElementAtZoom<ImageData> image = ImageDataLoader.load(filename, FileFormat.DEFAULT_ZOOM, currentDeviceZoom);
+	ImageData data = DPIUtil.scaleImageData(device, image, currentDeviceZoom);
 	init(data);
 	init();
 }
@@ -606,19 +613,7 @@ public Image(Device device, ImageFileNameProvider imageFileNameProvider) {
 	super(device);
 	this.imageFileNameProvider = imageFileNameProvider;
 	currentDeviceZoom = DPIUtil.getDeviceZoom();
-	ElementAtZoom<String> filename = DPIUtil.validateAndGetImagePathAtZoom (imageFileNameProvider, currentDeviceZoom);
-	if (filename.zoom() == currentDeviceZoom) {
-		initNative (filename.element());
-
-		if (this.surface == 0) {
-			ImageData data = new ImageData(filename.element());
-			init(data);
-		}
-	} else {
-		ImageData imageData = new ImageData (filename.element());
-		ImageData resizedData = DPIUtil.autoScaleImageData (device, imageData, filename.zoom());
-		init(resizedData);
-	}
+	initFromFileNameProvider(currentDeviceZoom);
 	init ();
 }
 
@@ -655,9 +650,37 @@ public Image(Device device, ImageDataProvider imageDataProvider) {
 	super(device);
 	this.imageDataProvider = imageDataProvider;
 	currentDeviceZoom = DPIUtil.getDeviceZoom();
-	ElementAtZoom<ImageData> data =  DPIUtil.validateAndGetImageDataAtZoom(imageDataProvider, currentDeviceZoom);
-	ImageData resizedData = DPIUtil.autoScaleImageData(device, data.element(), data.zoom());
-	init (resizedData);
+	initFromImageDataProvider(currentDeviceZoom);
+	init ();
+}
+
+/**
+ * The provided ImageGcDrawer will be called on demand whenever a new variant of the
+ * Image for an additional zoom is required. Depending on the OS-specific implementation
+ * these calls will be done during the instantiation or later when a new variant is
+ * requested.
+ *
+ * @param device the device on which to create the image
+ * @param imageGcDrawer the ImageGcDrawer object to be called when a new image variant
+ * for another zoom is required.
+ * @param width the width of the new image in points
+ * @param height the height of the new image in points
+ *
+ * @exception IllegalArgumentException <ul>
+ *    <li>ERROR_NULL_ARGUMENT - if device is null and there is no current device</li>
+ *    <li>ERROR_NULL_ARGUMENT - if the ImageGcDrawer is null</li>
+ * </ul>
+ * @since 3.129
+ */
+public Image(Device device, ImageGcDrawer imageGcDrawer, int width, int height) {
+	super(device);
+	if (imageGcDrawer == null) {
+		SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	}
+	this.imageGcDrawer = imageGcDrawer;
+	currentDeviceZoom = DPIUtil.getDeviceZoom();
+	ImageData imageData = drawWithImageGcDrawer(width, height, currentDeviceZoom);
+	init (imageData);
 	init ();
 }
 
@@ -687,37 +710,30 @@ boolean refreshImageForZoom () {
 	if (imageFileNameProvider != null) {
 		int deviceZoomLevel = deviceZoom;
 		if (deviceZoomLevel != currentDeviceZoom) {
-			ElementAtZoom<String> filename = DPIUtil.validateAndGetImagePathAtZoom (imageFileNameProvider, deviceZoomLevel);
-			/* Avoid re-creating the fall-back image, when current zoom is already 100% */
-			if (filename.zoom() == deviceZoomLevel) {
-				/* Release current native resources */
-				destroy ();
-				initNative(filename.element());
-				if (this.surface == 0) {
-					ImageData data = new ImageData(filename.element());
-					init(data);
-				}
-				init ();
-				refreshed = true;
-			} else {
-				/* Release current native resources */
-				destroy ();
-				ImageData imageData = new ImageData (filename.element());
-				ImageData resizedData = DPIUtil.autoScaleImageData (device, imageData, filename.zoom());
-				init(resizedData);
-				init ();
-				refreshed = true;
-			}
+			/* Release current native resources */
+			destroy ();
+			initFromFileNameProvider(deviceZoomLevel);
+			init ();
+			refreshed = true;
 			currentDeviceZoom = deviceZoomLevel;
 		}
 	} else if (imageDataProvider != null) {
 		int deviceZoomLevel = deviceZoom;
 		if (deviceZoomLevel != currentDeviceZoom) {
-			ElementAtZoom<ImageData> data = DPIUtil.validateAndGetImageDataAtZoom (imageDataProvider, deviceZoomLevel);
 			/* Release current native resources */
 			destroy ();
-			ImageData resizedData = DPIUtil.autoScaleImageData (device, data.element(), data.zoom());
-			init(resizedData);
+			initFromImageDataProvider(deviceZoomLevel);
+			init();
+			refreshed = true;
+			currentDeviceZoom = deviceZoomLevel;
+		}
+	} else if (imageGcDrawer != null) {
+		int deviceZoomLevel = deviceZoom;
+		if (deviceZoomLevel != currentDeviceZoom) {
+			ImageData data = drawWithImageGcDrawer(width, height, deviceZoomLevel);
+			/* Release current native resources */
+			destroy ();
+			init(data);
 			init();
 			refreshed = true;
 			currentDeviceZoom = deviceZoomLevel;
@@ -751,6 +767,27 @@ void initNative(String filename) {
 			}
 		}
 	} catch (SWTException e) {}
+}
+
+private void initFromFileNameProvider(int zoom) {
+	ElementAtZoom<String> fileForZoom = DPIUtil.validateAndGetImagePathAtZoom (imageFileNameProvider, zoom);
+	if (fileForZoom.zoom() == zoom) {
+		initNative(fileForZoom.element());
+	}
+	if (this.surface == 0) {
+		ElementAtZoom<ImageData> imageDataAtZoom = ImageDataLoader.load(fileForZoom.element(), fileForZoom.zoom(), zoom);
+		ImageData imageData = imageDataAtZoom.element();
+		if (imageDataAtZoom.zoom() != zoom) {
+			imageData = DPIUtil.scaleImageData(device, imageDataAtZoom, zoom);
+		}
+		init(imageData);
+	}
+}
+
+private void initFromImageDataProvider(int zoom) {
+	ElementAtZoom<ImageData> data = DPIUtil.validateAndGetImageDataAtZoom (imageDataProvider, zoom);
+	ImageData resizedData = DPIUtil.scaleImageData (device, data.element(), zoom, data.zoom());
+	init(resizedData);
 }
 
 void createFromPixbuf(int type, long pixbuf) {
@@ -904,6 +941,9 @@ public boolean equals (Object object) {
 		return (styleFlag == image.styleFlag) && imageDataProvider.equals (image.imageDataProvider);
 	} else if (imageFileNameProvider != null && image.imageFileNameProvider != null) {
 		return (styleFlag == image.styleFlag) && imageFileNameProvider.equals (image.imageFileNameProvider);
+	} else if (imageGcDrawer != null && image.imageGcDrawer != null) {
+		return styleFlag == image.styleFlag && imageGcDrawer.equals(image.imageGcDrawer) && width == image.width
+				&& height == image.height;
 	} else {
 		return surface == image.surface;
 	}
@@ -1110,8 +1150,24 @@ public ImageData getImageData (int zoom) {
 	} else if (imageFileNameProvider != null) {
 		ElementAtZoom<String> fileName = DPIUtil.validateAndGetImagePathAtZoom (imageFileNameProvider, zoom);
 		return DPIUtil.scaleImageData (device, new ImageData (fileName.element()), zoom, fileName.zoom());
+	} else if (imageGcDrawer != null) {
+		return drawWithImageGcDrawer(width, height, zoom);
 	} else {
 		return DPIUtil.scaleImageData (device, getImageDataAtCurrentZoom (), zoom, currentDeviceZoom);
+	}
+}
+
+private ImageData drawWithImageGcDrawer(int width, int height, int zoom) {
+	Image image = new Image(device, width, height);
+	GC gc = new GC(image);
+	try {
+		imageGcDrawer.drawOn(gc, width, height);
+		ImageData imageData = image.getImageData(zoom);
+		imageGcDrawer.postProcess(imageData);
+		return imageData;
+	} finally {
+		gc.dispose();
+		image.dispose();
 	}
 }
 
@@ -1179,6 +1235,8 @@ public int hashCode () {
 		return imageDataProvider.hashCode();
 	} else if (imageFileNameProvider != null) {
 		return imageFileNameProvider.hashCode();
+	} else if (imageGcDrawer != null) {
+		return Objects.hash(imageGcDrawer, width, height);
 	} else {
 		return (int)surface;
 	}
@@ -1391,8 +1449,8 @@ public long internal_new_GC (GCData data) {
 			}
 		}
 		data.device = device;
-		data.foregroundRGBA = device.COLOR_BLACK.handle;
-		data.backgroundRGBA = device.COLOR_WHITE.handle;
+		data.foregroundRGBA = Device.COLOR_BLACK.handle;
+		data.backgroundRGBA = Device.COLOR_WHITE.handle;
 		data.font = device.systemFont;
 		data.image = this;
 	}

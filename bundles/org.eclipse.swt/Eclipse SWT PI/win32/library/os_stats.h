@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2024 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,6 +30,7 @@ typedef enum {
 	ActivateKeyboardLayout_FUNC,
 	AddFontResourceEx_FUNC,
 	AdjustWindowRectEx_FUNC,
+	AdjustWindowRectExForDpi_FUNC,
 	AllowDarkModeForWindow_FUNC,
 	AllowSetForegroundWindow_FUNC,
 	AlphaBlend_FUNC,
@@ -202,6 +203,7 @@ typedef enum {
 	GetDlgItem_FUNC,
 	GetDoubleClickTime_FUNC,
 	GetDpiForMonitor_FUNC,
+	GetDpiForWindow_FUNC,
 	GetFocus_FUNC,
 	GetFontLanguageInfo_FUNC,
 	GetForegroundWindow_FUNC,
@@ -364,6 +366,7 @@ typedef enum {
 	LoadCursor_FUNC,
 	LoadIcon_FUNC,
 	LoadIconMetric_FUNC,
+	LoadIconWithScaleDown_FUNC,
 	LoadImage_FUNC,
 	LoadKeyboardLayout_FUNC,
 	LocalFree_FUNC,
@@ -566,6 +569,7 @@ typedef enum {
 	SCROLLBARINFO_1sizeof_FUNC,
 	SCROLLINFO_1sizeof_FUNC,
 	SHDRAGIMAGE_1sizeof_FUNC,
+	SHDefExtractIcon_FUNC,
 	SHELLEXECUTEINFO_1sizeof_FUNC,
 	SHFILEINFO_1sizeof_FUNC,
 	SHGetFileInfo_FUNC,

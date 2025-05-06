@@ -441,12 +441,12 @@ C enums don't map onto Java's enums. Instead, to add an enum like GtkAlign to OS
     public static final int GTK_ALIGN_CENTER = 3;
     public static final int GTK_ALIGN_BASELINE = 4;
 
-And when you declare a function, delcare the java-doc paramater cast like this:
+And when you declare a function, delcare the java-doc parameter cast like this:
 
     @param gtkalign cast=(GtkAlign)    // note (GtkAlign) with no pointer, not (GtkAlign *)
 
 
-This will allow the native call to understand that the paramater is an enum.
+This will allow the native call to understand that the parameter is an enum.
 
 **Appendix: Special custom bindings**
 
@@ -460,7 +460,7 @@ Suppose you have:
      _g_object_set(long /*int*/ object, byte[] first_property_name, GdkRGBA data, long /*int*/ terminator);       ### GdkRGBA is specific to GTK3.
 
 
-Add the method signature to OS.java. Clean the project and attempt a build. You will get a build error about GdkRGBA paramater in g_object_set(). This is because GdkRGBA only exists in GTK3.4+.
+Add the method signature to OS.java. Clean the project and attempt a build. You will get a build error about GdkRGBA parameter in g_object_set(). This is because GdkRGBA only exists in GTK3.4+.
 
 Now search os.c for "NO__ …. g object set ", you will find something like: 
 
@@ -667,7 +667,7 @@ You should consider browsing unstable API more often than stable API. Often you 
 **Getting help with GTK**
 
 * GTK IRC channel: Folks are very helpful here. I often got responses very quickly. Mostly good for quick little bits and general wisdom.
-* GTK bugzilla: If you think you have come across a bug, or need some official statment from GTK folks about some functionality (e.g if something doesn't work in SWT, have a link to a GTK bug that explains things). Posting a bug to the GTK bugzilla is the way to go. E.g: https://bugzilla.gnome.org/show_bug.cgi?id=747798
+* GTK bugzilla: If you think you have come across a bug, or need some official statement from GTK folks about some functionality (e.g if something doesn't work in SWT, have a link to a GTK bug that explains things). Posting a bug to the GTK bugzilla is the way to go. E.g: https://bugzilla.gnome.org/show_bug.cgi?id=747798
 * Mailing lists: I didn't get many responses when I asked complex questions, but for small & straight forward stuff, people respond quite well: See: http://www.gtk.org/mailing-lists.php
 * Stack Overflow: For your broken snippets. Tag things with GTK http://stackoverflow.com/
 * See: http://www.gtk.org/development.php

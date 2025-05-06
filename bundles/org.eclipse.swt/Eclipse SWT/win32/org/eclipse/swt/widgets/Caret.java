@@ -126,7 +126,7 @@ public Rectangle getBounds () {
 
 Rectangle getBoundsInPixels () {
 	if (image != null) {
-		Rectangle rect = image.getBoundsInPixels ();
+		Rectangle rect = DPIUtil.scaleUp(image.getBounds(), getZoom());
 		return new Rectangle (getXInPixels(), getYInPixels(), rect.width, rect.height);
 	}
 	if (width == 0) {
@@ -220,7 +220,7 @@ public Point getSize () {
 
 Point getSizeInPixels () {
 	if (image != null) {
-		Rectangle rect = image.getBoundsInPixels ();
+		Rectangle rect = DPIUtil.scaleUp(image.getBounds(), getZoom());
 		return new Point (rect.width, rect.height);
 	}
 	if (width == 0) {
@@ -663,9 +663,10 @@ public void setVisible (boolean visible) {
  */
 public static void win32_setHeight(Caret caret, int height) {
 	caret.checkWidget();
-	if(caret.height == height && caret.isCurrentCaret()) return;
-	caret.height = height;
-	caret.resized = true;
+	if(caret.height != height) {
+		caret.height = height;
+		caret.resized = true;
+	}
 	if(caret.isVisible && caret.hasFocus()) caret.resize();
 }
 

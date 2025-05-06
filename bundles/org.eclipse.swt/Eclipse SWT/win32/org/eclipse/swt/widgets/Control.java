@@ -2219,7 +2219,15 @@ public boolean print (GC gc) {
 	}
 	int flags = OS.RDW_UPDATENOW | OS.RDW_ALLCHILDREN;
 	OS.RedrawWindow (topHandle, null, 0, flags);
-	printWidget (topHandle, hdc, gc);
+	int printWindowFlags = 0;
+	if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN8_1) {
+		/*
+		 * Undocumented flag in windows, which also allows the capturing
+		 * of GPU-drawn areas, e.g. an embedded Edge WebView2.
+		 */
+		printWindowFlags |= OS.PW_RENDERFULLCONTENT;
+	}
+	printWidget (topHandle, hdc, gc, printWindowFlags);
 	if (gdipGraphics != 0) {
 		OS.RestoreDC(hdc, state);
 		Gdip.Graphics_ReleaseHDC(gdipGraphics, hdc);
@@ -2227,7 +2235,7 @@ public boolean print (GC gc) {
 	return true;
 }
 
-void printWidget (long hwnd, long hdc, GC gc) {
+void printWidget (long hwnd, long hdc, GC gc, int printWindowFlags) {
 	/*
 	* Bug in Windows.  For some reason, PrintWindow()
 	* returns success but does nothing when it is called
@@ -2311,7 +2319,7 @@ void printWidget (long hwnd, long hdc, GC gc) {
 		if ((bits1 & OS.WS_VISIBLE) == 0) {
 			OS.ShowWindow (hwnd, OS.SW_SHOW);
 		}
-		success = OS.PrintWindow (hwnd, hdc, 0);
+		success = OS.PrintWindow (hwnd, hdc, printWindowFlags);
 		if ((bits1 & OS.WS_VISIBLE) == 0) {
 			OS.ShowWindow (hwnd, OS.SW_HIDE);
 		}
@@ -2434,14 +2442,11 @@ public void redraw () {
 public void redraw (int x, int y, int width, int height, boolean all) {
 	checkWidget ();
 	int zoom = getZoom();
-	x = DPIUtil.scaleUp(x, zoom);
-	y = DPIUtil.scaleUp(y, zoom);
-	width = DPIUtil.scaleUp(width, zoom);
-	height = DPIUtil.scaleUp(height, zoom);
 	if (width <= 0 || height <= 0) return;
+	Rectangle rectangle = DPIUtil.scaleUp(new Rectangle(x, y, width, height), zoom);
 
 	RECT rect = new RECT ();
-	OS.SetRect (rect, x, y, x + width, y + height);
+	OS.SetRect (rect, rectangle.x, rectangle.y, rectangle.x + rectangle.width, rectangle.y + rectangle.height);
 
 	redrawInPixels(rect, all);
 }
@@ -3176,13 +3181,7 @@ void setBackgroundPixel (int pixel) {
  * </ul>
  */
 public void setBounds(int x, int y, int width, int height) {
-	checkWidget ();
-	int zoom = getZoom();
-	x = DPIUtil.scaleUp(x, zoom);
-	y = DPIUtil.scaleUp(y, zoom);
-	width = DPIUtil.scaleUp(width, zoom);
-	height = DPIUtil.scaleUp(height, zoom);
-	setBoundsInPixels(x, y, width, height);
+	setBounds(new Rectangle(x, y, width, height));
 }
 
 void setBoundsInPixels (int x, int y, int width, int height) {
@@ -3652,8 +3651,8 @@ public void setRedraw (boolean redraw) {
 	 *
 	 * https://github.com/eclipse-platform/eclipse.platform.swt/issues/1122
 	 */
-	boolean isShown = isVisible() && !isDisposed();
-	if (!redraw && isShown && embedsWin32Control()) {
+	if (!redraw && embedsWin32Control()) {
+		drawCount++;
 		return;
 	}
 
@@ -3694,6 +3693,9 @@ public void setRedraw (boolean redraw) {
 }
 
 private boolean embedsWin32Control () {
+	if (this.isDisposed() || !this.isVisible()) {
+		return false;
+	}
 //	if (this instanceof Browser browser) {
 //		// The Edge browser embeds webView2
 //		return "edge".equals(browser.getBrowserType());
@@ -4864,6 +4866,7 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		case OS.WM_XBUTTONDOWN:			result = WM_XBUTTONDOWN (wParam, lParam); break;
 		case OS.WM_XBUTTONUP:			result = WM_XBUTTONUP (wParam, lParam); break;
 		case OS.WM_DPICHANGED:			result = WM_DPICHANGED (wParam, lParam); break;
+		case OS.WM_DISPLAYCHANGE:		result = WM_DISPLAYCHANGE(wParam, lParam); break;
 	}
 	if (result != null) return result.value;
 	// widget could be disposed at this point
@@ -4941,21 +4944,22 @@ LRESULT WM_DESTROY (long wParam, long lParam) {
 	return null;
 }
 
+void handleMonitorSpecificDpiChange(int newNativeZoom, Rectangle newBoundsInPixels) {
+	float scalingFactor = 1f * DPIUtil.getZoomForAutoscaleProperty(newNativeZoom) / DPIUtil.getZoomForAutoscaleProperty(nativeZoom);
+	DPIUtil.setDeviceZoom (newNativeZoom);
+	DPIZoomChangeRegistry.applyChange(this, newNativeZoom, scalingFactor);
+	this.setBoundsInPixels(newBoundsInPixels.x, newBoundsInPixels.y, newBoundsInPixels.width, newBoundsInPixels.height);
+}
+
 LRESULT WM_DPICHANGED (long wParam, long lParam) {
 	// Map DPI to Zoom and compare
 	int newNativeZoom = DPIUtil.mapDPIToZoom (OS.HIWORD (wParam));
 	if (getDisplay().isRescalingAtRuntime()) {
 		Device.win32_destroyUnusedHandles(getDisplay());
-		int oldNativeZoom = nativeZoom;
-		if (newNativeZoom != oldNativeZoom) {
-			DPIUtil.setDeviceZoom (newNativeZoom);
-
-			float scalingFactor = 1f * DPIUtil.getZoomForAutoscaleProperty(newNativeZoom) / DPIUtil.getZoomForAutoscaleProperty(oldNativeZoom);
-			DPIZoomChangeRegistry.applyChange(this, newNativeZoom, scalingFactor);
-
+		if (newNativeZoom != nativeZoom) {
 			RECT rect = new RECT ();
 			COM.MoveMemory(rect, lParam, RECT.sizeof);
-			this.setBoundsInPixels(rect.left, rect.top, rect.right - rect.left, rect.bottom-rect.top);
+			handleMonitorSpecificDpiChange(newNativeZoom, new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom-rect.top));
 			return LRESULT.ZERO;
 		}
 	} else {
@@ -4971,6 +4975,14 @@ LRESULT WM_DPICHANGED (long wParam, long lParam) {
 			notifyListeners(SWT.ZoomChanged, event);
 			return LRESULT.ZERO;
 		}
+	}
+	return LRESULT.ONE;
+}
+
+LRESULT WM_DISPLAYCHANGE (long wParam, long lParam) {
+	if (getDisplay().isRescalingAtRuntime()) {
+		Device.win32_destroyUnusedHandles(getDisplay());
+		return LRESULT.ZERO;
 	}
 	return LRESULT.ONE;
 }

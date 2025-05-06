@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,47 +15,103 @@ package org.eclipse.swt.internal.image;
 
 
 import java.io.*;
+import java.util.*;
+import java.util.function.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.DPIUtil.*;
 
 /**
  * Abstract factory class for loading/unloading images from files or streams
  * in various image file formats.
  */
 public abstract class FileFormat {
-	static final String FORMAT_PACKAGE = "org.eclipse.swt.internal.image"; //$NON-NLS-1$
-	static final String FORMAT_SUFFIX = "FileFormat"; //$NON-NLS-1$
-	static final String[] FORMATS = {"WinBMP", "WinBMP", "GIF", "WinICO", "JPEG", "PNG", "TIFF", "OS2BMP"}; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$//$NON-NLS-5$ //$NON-NLS-6$//$NON-NLS-7$//$NON-NLS-8$
+	private static final List<Supplier<FileFormat>> FORMAT_FACTORIES = new ArrayList<>();
+	static {
+		try {
+			FORMAT_FACTORIES.add(WinBMPFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(WinBMPFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(GIFFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(WinICOFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(JPEGFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(PNGFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(TIFFFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(OS2BMPFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+		try {
+			FORMAT_FACTORIES.add(SVGFileFormat::new);
+		} catch (NoClassDefFoundError e) { } // ignore format
+	}
+
+	public static final int DEFAULT_ZOOM = 100;
+
+	private static Optional<FileFormat> determineFileFormat(LEDataInputStream stream) {
+		return FORMAT_FACTORIES.stream().skip(1).map(Supplier::get).filter(f -> {
+			try {
+				return f.isFileFormat(stream);
+			} catch (IOException e) {
+				return false;
+			}
+		}).findFirst();
+	}
+
+	private static final int MAX_SIGNATURE_BYTES = 18 + 2; // e.g. Win-BMP or OS2-BMP plus a safety-margin
+
+	public static boolean isDynamicallySizableFormat(InputStream is) {
+		Optional<FileFormat> format = determineFileFormat(new LEDataInputStream(is, MAX_SIGNATURE_BYTES));
+		return format.isPresent() && !(format.get() instanceof StaticImageFileFormat);
+	}
+
+	static abstract class StaticImageFileFormat extends FileFormat {
+
+		abstract ImageData[] loadFromByteStream();
+
+		@Override
+		List<ElementAtZoom<ImageData>> loadFromByteStream(int fileZoom, int targetZoom) {
+			return Arrays.stream(loadFromByteStream()).map(d -> new ElementAtZoom<>(d, fileZoom)).toList();
+		}
+	}
 
 	LEDataInputStream inputStream;
 	LEDataOutputStream outputStream;
 	ImageLoader loader;
 	int compression;
 
-static FileFormat getFileFormat (LEDataInputStream stream, String format) throws Exception {
-	Class<?> clazz = Class.forName(FORMAT_PACKAGE + '.' + format + FORMAT_SUFFIX);
-	FileFormat fileFormat = (FileFormat) clazz.getDeclaredConstructor().newInstance();
-	if (fileFormat.isFileFormat(stream)) return fileFormat;
-	return null;
-}
+	/**
+	 * Return whether or not the specified input stream represents a supported file
+	 * format.
+	 */
+	abstract boolean isFileFormat(LEDataInputStream stream) throws IOException;
 
-/**
- * Return whether or not the specified input stream
- * represents a supported file format.
- */
-abstract boolean isFileFormat(LEDataInputStream stream);
-
-abstract ImageData[] loadFromByteStream();
+	/**
+	 * Format that do not implement {@link StaticImageFileFormat} MUST return
+	 * {@link ImageData} with the specified {@code targetZoom}.
+	 */
+	abstract List<ElementAtZoom<ImageData>> loadFromByteStream(int fileZoom, int targetZoom);
 
 /**
  * Read the specified input stream, and return the
  * device independent image array represented by the stream.
  */
-public ImageData[] loadFromStream(LEDataInputStream stream) {
+public List<ElementAtZoom<ImageData>> loadFromStream(LEDataInputStream stream, int fileZoom, int targetZoom) {
 	try {
 		inputStream = stream;
-		return loadFromByteStream();
+		return loadFromByteStream(fileZoom, targetZoom);
 	} catch (Exception e) {
 		if (e instanceof IOException) {
 			SWT.error(SWT.ERROR_IO, e);
@@ -70,23 +126,14 @@ public ImageData[] loadFromStream(LEDataInputStream stream) {
  * Read the specified input stream using the specified loader, and
  * return the device independent image array represented by the stream.
  */
-public static ImageData[] load(InputStream is, ImageLoader loader) {
-	FileFormat fileFormat = null;
-	LEDataInputStream stream = new LEDataInputStream(is);
-	for (int i = 1; i < FORMATS.length; i++) {
-		if (FORMATS[i] != null) {
-			try {
-				fileFormat = getFileFormat (stream, FORMATS[i]);
-				if (fileFormat != null) break;
-			} catch (ClassNotFoundException e) {
-				FORMATS[i] = null;
-			} catch (Exception e) {
-			}
-		}
-	}
-	if (fileFormat == null) SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
+public static List<ElementAtZoom<ImageData>> load(ElementAtZoom<InputStream> is, ImageLoader loader, int targetZoom) {
+	LEDataInputStream stream = new LEDataInputStream(is.element());
+	FileFormat fileFormat = determineFileFormat(stream).orElseGet(() -> {
+		SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
+		return null;
+	});
 	fileFormat.loader = loader;
-	return fileFormat.loadFromStream(stream);
+	return fileFormat.loadFromStream(stream, is.zoom(), targetZoom);
 }
 
 /**
@@ -94,18 +141,13 @@ public static ImageData[] load(InputStream is, ImageLoader loader) {
  * to the specified output stream using the specified file format.
  */
 public static void save(OutputStream os, int format, ImageLoader loader) {
-	if (format < 0 || format >= FORMATS.length) SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
-	if (FORMATS[format] == null) SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
+	if (format < 0 || format >= FORMAT_FACTORIES.size()) {
+		SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
+	}
 	if (loader.data == null || loader.data.length < 1) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 
 	LEDataOutputStream stream = new LEDataOutputStream(os);
-	FileFormat fileFormat = null;
-	try {
-		Class<?> clazz = Class.forName(FORMAT_PACKAGE + '.' + FORMATS[format] + FORMAT_SUFFIX);
-		fileFormat = (FileFormat) clazz.getDeclaredConstructor().newInstance();
-	} catch (Exception e) {
-		SWT.error(SWT.ERROR_UNSUPPORTED_FORMAT);
-	}
+	FileFormat fileFormat = FORMAT_FACTORIES.get(format).get();
 	if (format == SWT.IMAGE_BMP_RLE) {
 		switch (loader.data[0].depth) {
 			case 8: fileFormat.compression = 1; break;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2022 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -116,7 +116,7 @@ import org.eclipse.swt.internal.gtk4.*;
  */
 public class Display extends Device implements Executor {
 
-	static boolean strictChecks = System.getProperty("org.eclipse.swt.internal.gtk.enableStrictChecks") != null;
+	static boolean strictChecks = System.getProperty("org.eclipse.swt.internal.enableStrictChecks") != null;
 
 	private static final int SLOT_IN_USE = -2;
 	private static final int LAST_TABLE_INDEX = -1;
@@ -1015,6 +1015,9 @@ static void checkDisplay (Thread thread, boolean multiple) {
 }
 
 long checkIfEventProc (long display, long xEvent, long userData) {
+	if (GTK.GTK4) {
+		return 0;
+	}
 	int type = OS.X_EVENT_TYPE (xEvent);
 	switch (type) {
 		case OS.Expose:
@@ -1140,12 +1143,12 @@ void checkIMModule () {
 	if (module != null && module.equals("xim")) {
 		System.err.println("***WARNING: Detected: GTK_IM_MODULE=xim. This input method is unsupported and can cause graphical issues.");
 		System.err.println("***WARNING: Unset GTK_IM_MODULE or set GTK_IM_MODULE=ibus if flicking is experienced. ");
-	}
-	// Enforce ibus as the input module on GNOME
-	if (OS.isGNOME) {
-		long settings = GTK.gtk_settings_get_default ();
-		byte[] ibus = Converter.wcsToMbcs ("ibus", true);
-		if (settings != 0) OS.g_object_set (settings, GTK.gtk_im_module, ibus, 0);
+		// Enforce ibus as the input module on GNOME X11
+		if (OS.isGNOME && OS.isX11()) {
+			long settings = GTK.gtk_settings_get_default ();
+			byte[] ibus = Converter.wcsToMbcs ("ibus", true);
+			if (settings != 0) OS.g_object_set (settings, GTK.gtk_im_module, ibus, 0);
+		}
 	}
 }
 
@@ -1208,15 +1211,17 @@ void createDisplay (DeviceData data) {
 		System.setProperty("org.eclipse.swt.internal.gdk.backend", "x11");
 	}
 	if (OS.SWT_DEBUG) Device.DEBUG = true;
-	long ptr = GTK.gtk_check_version (GTK3_MAJOR, GTK3_MINOR, GTK3_MICRO);
-	if (ptr != 0) {
-		int length = C.strlen (ptr);
-		byte [] buffer = new byte [length];
-		C.memmove (buffer, ptr, length);
-		System.out.println ("***WARNING: " + new String (Converter.mbcsToWcs (buffer))); //$NON-NLS-1$
-		System.out.println ("***WARNING: SWT requires GTK " + GTK3_MAJOR+ "." + GTK3_MINOR + "." + GTK3_MICRO); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		int major = GTK.gtk_get_major_version(), minor = GTK.gtk_get_minor_version (), micro = GTK.gtk_get_micro_version ();
-		System.out.println ("***WARNING: Detected: " + major + "." + minor + "." + micro); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	if (!GTK.GTK4) {
+		long ptr = GTK.gtk_check_version (GTK3_MAJOR, GTK3_MINOR, GTK3_MICRO);
+		if (ptr != 0) {
+			int length = C.strlen (ptr);
+			byte [] buffer = new byte [length];
+			C.memmove (buffer, ptr, length);
+			System.out.println ("***WARNING: " + new String (Converter.mbcsToWcs (buffer))); //$NON-NLS-1$
+			System.out.println ("***WARNING: SWT requires GTK " + GTK3_MAJOR+ "." + GTK3_MINOR + "." + GTK3_MICRO); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			int major = GTK.gtk_get_major_version(), minor = GTK.gtk_get_minor_version (), micro = GTK.gtk_get_micro_version ();
+			System.out.println ("***WARNING: Detected: " + major + "." + minor + "." + micro); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
 	}
 	fixed_type = OS.swt_fixed_get_type();
 	if (rendererClassInitProc == 0) {
@@ -4812,26 +4817,28 @@ void releaseDisplay () {
 	keysChangedProc = 0;
 
 	/* Dispose subclass */
-	long pangoLayoutType = OS.PANGO_TYPE_LAYOUT ();
-	long pangoLayoutClass = OS.g_type_class_ref (pangoLayoutType);
-	OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoLayoutClass, pangoLayoutNewProc);
-	OS.g_type_class_unref (pangoLayoutClass);
-	pangoLayoutNewProc = 0;
-	long imContextType = GTK.GTK_TYPE_IM_MULTICONTEXT ();
-	long imContextClass = OS.g_type_class_ref (imContextType);
-	OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (imContextClass, imContextNewProc);
-	OS.g_type_class_unref (imContextClass);
-	imContextNewProc = 0;
-	long pangoFontFamilyType = OS.PANGO_TYPE_FONT_FAMILY ();
-	long pangoFontFamilyClass = OS.g_type_class_ref (pangoFontFamilyType);
-	OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoFontFamilyClass, pangoFontFamilyNewProc);
-	OS.g_type_class_unref (pangoFontFamilyClass);
-	pangoFontFamilyNewProc = 0;
-	long pangoFontFaceType = OS.PANGO_TYPE_FONT_FACE ();
-	long pangoFontFaceClass = OS.g_type_class_ref (pangoFontFaceType);
-	OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoFontFaceClass, pangoFontFaceNewProc);
-	OS.g_type_class_unref (pangoFontFaceClass);
-	pangoFontFaceNewProc = 0;
+	if (!GTK.GTK4) {
+		long pangoLayoutType = OS.PANGO_TYPE_LAYOUT ();
+		long pangoLayoutClass = OS.g_type_class_ref (pangoLayoutType);
+		OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoLayoutClass, pangoLayoutNewProc);
+		OS.g_type_class_unref (pangoLayoutClass);
+		pangoLayoutNewProc = 0;
+		long imContextType = GTK.GTK_TYPE_IM_MULTICONTEXT ();
+		long imContextClass = OS.g_type_class_ref (imContextType);
+		OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (imContextClass, imContextNewProc);
+		OS.g_type_class_unref (imContextClass);
+		imContextNewProc = 0;
+		long pangoFontFamilyType = OS.PANGO_TYPE_FONT_FAMILY ();
+		long pangoFontFamilyClass = OS.g_type_class_ref (pangoFontFamilyType);
+		OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoFontFamilyClass, pangoFontFamilyNewProc);
+		OS.g_type_class_unref (pangoFontFamilyClass);
+		pangoFontFamilyNewProc = 0;
+		long pangoFontFaceType = OS.PANGO_TYPE_FONT_FACE ();
+		long pangoFontFaceClass = OS.g_type_class_ref (pangoFontFaceType);
+		OS.G_OBJECT_CLASS_SET_CONSTRUCTOR (pangoFontFaceClass, pangoFontFaceNewProc);
+		OS.g_type_class_unref (pangoFontFaceClass);
+		pangoFontFaceNewProc = 0;
+	}
 
 	/* Release the sleep resources */
 	max_priority = timeout = null;
@@ -6294,7 +6301,10 @@ public boolean isRescalingAtRuntime() {
  * @param activate whether rescaling shall be activated or deactivated
  * @return whether activating or deactivating the rescaling was successful
  * @since 3.127
+ * @deprecated this method should not be used as it needs to be called already
+ *             during instantiation to take proper effect
  */
+@Deprecated(since = "2025-03", forRemoval = true)
 public boolean setRescalingAtRuntime(boolean activate) {
 	// not implemented for GTK
 	return false;

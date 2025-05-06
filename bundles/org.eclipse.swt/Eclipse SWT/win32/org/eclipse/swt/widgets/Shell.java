@@ -1068,7 +1068,7 @@ Point getMaximumSizeInPixels () {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
+			adjustWindowRectEx(rect, bits1, false, bits2);
 			height = Math.min (height, rect.bottom - rect.top);
 		}
 	}
@@ -1109,7 +1109,7 @@ Point getMinimumSizeInPixels () {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
+			adjustWindowRectEx(rect, bits1, false, bits2);
 			height = Math.max (height, rect.bottom - rect.top);
 		}
 	}
@@ -1596,7 +1596,12 @@ public void setBounds(Rectangle rect) {
 	if (rect == null) error (SWT.ERROR_NULL_ARGUMENT);
 	checkWidget ();
 	Rectangle boundsInPixels = getDisplay().translateToDisplayCoordinates(rect, getZoom());
-	setBoundsInPixels(boundsInPixels.x, boundsInPixels.y, boundsInPixels.width, boundsInPixels.height);
+	// The scaling of the width and height in case of a monitor change is handled by
+	// the WM_DPICHANGED event processing. So to avoid duplicate scaling, we always
+	// have to scale width and height with the zoom of the original monitor (still
+	// returned by getZoom()) here.
+	setBoundsInPixels(boundsInPixels.x, boundsInPixels.y, DPIUtil.scaleUp(rect.width, getZoom()),
+			DPIUtil.scaleUp(rect.height, getZoom()));
 }
 
 @Override
@@ -1815,7 +1820,7 @@ void setMaximumSizeInPixels (int width, int height) {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
+			adjustWindowRectEx(rect, bits1, false, bits2);
 			heightLimit = rect.bottom - rect.top;
 		}
 	}
@@ -1861,7 +1866,7 @@ void setMinimumSizeInPixels (int width, int height) {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
+			adjustWindowRectEx(rect, bits1, false, bits2);
 			heightLimit = rect.bottom - rect.top;
 		}
 	}
@@ -2671,11 +2676,31 @@ LRESULT WM_WINDOWPOSCHANGING (long wParam, long lParam) {
 				RECT rect = new RECT ();
 				int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 				int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-				OS.AdjustWindowRectEx (rect, bits1, false, bits2);
+				adjustWindowRectEx(rect, bits1, false, bits2);
 				lpwp.cy = Math.max (lpwp.cy, rect.bottom - rect.top);
 			}
 		}
 		OS.MoveMemory (lParam, lpwp, WINDOWPOS.sizeof);
+	}
+	return result;
+}
+
+@Override
+LRESULT WM_WINDOWPOSCHANGED (long wParam, long lParam) {
+	LRESULT result = super.WM_WINDOWPOSCHANGED(wParam, lParam);
+	// When the process is started with System DPI awareness and
+	// only the thread is PerMonitorV2 aware, there are some scenarios, when the
+	// OS does not send a DPI change event when a child Shell is positioned and
+	// opened on another monitor as its parent Shell. To work around that limitation
+	// this check is added to trigger a dpi change event if an unexpected DPI value is
+	// detected.
+	if (display.isRescalingAtRuntime()) {
+		int dpiForWindow = DPIUtil.mapDPIToZoom(OS.GetDpiForWindow(getShell().handle));
+		if (dpiForWindow != nativeZoom) {
+			WINDOWPOS lpwp = new WINDOWPOS ();
+			OS.MoveMemory (lpwp, lParam, WINDOWPOS.sizeof);
+			handleMonitorSpecificDpiChange(dpiForWindow, new Rectangle(lpwp.x, lpwp.y, lpwp.cx, lpwp.cy));
+		}
 	}
 	return result;
 }

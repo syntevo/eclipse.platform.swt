@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2024 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -120,6 +120,30 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(AdjustWindowRectEx)
 fail:
 	if (arg0 && lparg0) setRECTFields(env, arg0, lparg0);
 	OS_NATIVE_EXIT(env, that, AdjustWindowRectEx_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_AdjustWindowRectExForDpi
+JNIEXPORT jboolean JNICALL OS_NATIVE(AdjustWindowRectExForDpi)
+	(JNIEnv *env, jclass that, jobject arg0, jint arg1, jboolean arg2, jint arg3, jint arg4)
+{
+	RECT _arg0, *lparg0=NULL;
+	jboolean rc = 0;
+	OS_NATIVE_ENTER(env, that, AdjustWindowRectExForDpi_FUNC);
+	if (arg0) if ((lparg0 = getRECTFields(env, arg0, &_arg0)) == NULL) goto fail;
+/*
+	rc = (jboolean)AdjustWindowRectExForDpi(lparg0, arg1, arg2, arg3, arg4);
+*/
+	{
+		OS_LOAD_FUNCTION(fp, AdjustWindowRectExForDpi)
+		if (fp) {
+			rc = (jboolean)((jboolean (CALLING_CONVENTION*)(RECT *, jint, jboolean, jint, jint))fp)(lparg0, arg1, arg2, arg3, arg4);
+		}
+	}
+fail:
+	if (arg0 && lparg0) setRECTFields(env, arg0, lparg0);
+	OS_NATIVE_EXIT(env, that, AdjustWindowRectExForDpi_FUNC);
 	return rc;
 }
 #endif
@@ -2486,6 +2510,26 @@ fail:
 }
 #endif
 
+#ifndef NO_GetDpiForWindow
+JNIEXPORT jint JNICALL OS_NATIVE(GetDpiForWindow)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jint rc = 0;
+	OS_NATIVE_ENTER(env, that, GetDpiForWindow_FUNC);
+/*
+	rc = (jint)GetDpiForWindow(arg0);
+*/
+	{
+		OS_LOAD_FUNCTION(fp, GetDpiForWindow)
+		if (fp) {
+			rc = (jint)((jint (CALLING_CONVENTION*)(jlong))fp)(arg0);
+		}
+	}
+	OS_NATIVE_EXIT(env, that, GetDpiForWindow_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_GetFocus
 JNIEXPORT jlong JNICALL OS_NATIVE(GetFocus)
 	(JNIEnv *env, jclass that)
@@ -4697,6 +4741,22 @@ JNIEXPORT jint JNICALL OS_NATIVE(LoadIconMetric)
 fail:
 	if (arg3 && lparg3) (*env)->ReleaseLongArrayElements(env, arg3, lparg3, 0);
 	OS_NATIVE_EXIT(env, that, LoadIconMetric_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_LoadIconWithScaleDown
+JNIEXPORT jlong JNICALL OS_NATIVE(LoadIconWithScaleDown)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jint arg2, jint arg3, jlongArray arg4)
+{
+	jlong *lparg4=NULL;
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, LoadIconWithScaleDown_FUNC);
+	if (arg4) if ((lparg4 = (*env)->GetLongArrayElements(env, arg4, NULL)) == NULL) goto fail;
+	rc = (jlong)LoadIconWithScaleDown((HINSTANCE)arg0, (LPWSTR)arg1, arg2, arg3, (HICON *)lparg4);
+fail:
+	if (arg4 && lparg4) (*env)->ReleaseLongArrayElements(env, arg4, lparg4, 0);
+	OS_NATIVE_EXIT(env, that, LoadIconWithScaleDown_FUNC);
 	return rc;
 }
 #endif
@@ -7470,6 +7530,28 @@ JNIEXPORT jint JNICALL OS_NATIVE(SHDRAGIMAGE_1sizeof)
 	OS_NATIVE_ENTER(env, that, SHDRAGIMAGE_1sizeof_FUNC);
 	rc = (jint)SHDRAGIMAGE_sizeof();
 	OS_NATIVE_EXIT(env, that, SHDRAGIMAGE_1sizeof_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_SHDefExtractIcon
+JNIEXPORT jint JNICALL OS_NATIVE(SHDefExtractIcon)
+	(JNIEnv *env, jclass that, jcharArray arg0, jint arg1, jint arg2, jlongArray arg3, jlongArray arg4, jint arg5)
+{
+	jchar *lparg0=NULL;
+	jlong *lparg3=NULL;
+	jlong *lparg4=NULL;
+	jint rc = 0;
+	OS_NATIVE_ENTER(env, that, SHDefExtractIcon_FUNC);
+	if (arg0) if ((lparg0 = (*env)->GetCharArrayElements(env, arg0, NULL)) == NULL) goto fail;
+	if (arg3) if ((lparg3 = (*env)->GetLongArrayElements(env, arg3, NULL)) == NULL) goto fail;
+	if (arg4) if ((lparg4 = (*env)->GetLongArrayElements(env, arg4, NULL)) == NULL) goto fail;
+	rc = (jint)SHDefExtractIcon((LPWSTR)lparg0, arg1, arg2, (HICON FAR *)lparg3, (HICON FAR *)lparg4, arg5);
+fail:
+	if (arg4 && lparg4) (*env)->ReleaseLongArrayElements(env, arg4, lparg4, 0);
+	if (arg3 && lparg3) (*env)->ReleaseLongArrayElements(env, arg3, lparg3, 0);
+	if (arg0 && lparg0) (*env)->ReleaseCharArrayElements(env, arg0, lparg0, 0);
+	OS_NATIVE_EXIT(env, that, SHDefExtractIcon_FUNC);
 	return rc;
 }
 #endif

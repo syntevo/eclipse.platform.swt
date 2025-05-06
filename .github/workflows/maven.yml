@@ -11,6 +11,10 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+    types: [opened, reopened, synchronize, labeled]
+
+env:
+  SWT_GTK4: "${{ contains(github.event.pull_request.labels.*.name, 'gtk4') && '1' || '0' }}"
 
 jobs:
   event_file:
@@ -18,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Upload
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -44,13 +48,13 @@ jobs:
       if: ${{ matrix.config.native == 'gtk.linux.x86_64'}}
       run: |
         sudo apt-get update -qq 
-        sudo apt-get install -qq -y libgtk-3-dev libgtk-4-dev freeglut3-dev webkit2gtk-driver
+        WEBKIT_VERSION=2.44.0-2 && sudo apt-get install -qq -y libgtk-3-dev libgtk-4-dev freeglut3-dev webkit2gtk-driver=${WEBKIT_VERSION} libwebkit2gtk-4.1-0=${WEBKIT_VERSION} libjavascriptcoregtk-4.1-0=${WEBKIT_VERSION}
     - name: Pull large static Windows binaries
       if: ${{ matrix.config.native == 'win32.win32.x86_64'}}
       run: |
         git lfs pull --include='/binaries/org.eclipse.swt.win32.win32.x86_64/WebView2Loader.dll'
     - name: Set up Java ${{ matrix.java }}
-      uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
+      uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
       with:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
@@ -60,6 +64,8 @@ jobs:
       with:
         maven-version: 3.9.9
     - name: Build
+      env:
+        GTK_XCFLAGS: '-Wno-deprecated-declarations'
       run: >-
         ${{ contains(matrix.config.native, 'linux') && 'xvfb-run' || '' }}
         mvn --batch-mode -V -U -e
@@ -86,9 +92,10 @@ jobs:
         integration-test
     - name: Upload Test Results for ${{ matrix.config.name }} / Java-${{ matrix.java }}
       if: always()
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: test-results-${{ matrix.config.native }}-java${{ matrix.java }}
         if-no-files-found: warn
         path: |
           ${{ github.workspace }}/**/target/surefire-reports/*.xml
+          ${{ github.workspace }}/**/hs_err_pid*.log

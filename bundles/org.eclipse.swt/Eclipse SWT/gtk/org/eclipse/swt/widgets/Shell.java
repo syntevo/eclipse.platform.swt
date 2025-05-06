@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1862,7 +1862,7 @@ long gtk_size_allocate (long widget, long allocation) {
 			GDK.gdk_monitor_get_geometry(monitor, monitorSize);
 			long header = GTK4.gtk_widget_get_next_sibling(GTK4.gtk_widget_get_first_child(shellHandle));
 			int[] headerNaturalHeight = new int[1];
-			GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, 0, null, headerNaturalHeight, null, null);
+			GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, -1, null, headerNaturalHeight, null, null);
 			widthA[0] = monitorSize.width;
 			heightA[0] = monitorSize.height - headerNaturalHeight[0];
 		}
@@ -2377,7 +2377,7 @@ int setBounds (int x, int y, int width, int height, boolean move, boolean resize
 				 */
 				long header = GTK4.gtk_widget_get_next_sibling(GTK4.gtk_widget_get_first_child(shellHandle));
 				int[] headerNaturalHeight = new int[1];
-				GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, 0, null, headerNaturalHeight, null, null);
+				GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, -1, null, headerNaturalHeight, null, null);
 				GTK.gtk_window_set_default_size(shellHandle, width, height + headerNaturalHeight[0]);
 			} else {
 				GTK3.gtk_window_resize (shellHandle, width, height);
@@ -2541,9 +2541,11 @@ void setInitialBounds() {
 				 * On GTK4, GtkWindow size includes the header bar. In order to keep window size allocation of the client area
 				 * consistent with previous versions of SWT, we need to include the header bar height in addition to the given height value.
 				 */
-				long header = GTK4.gtk_widget_get_next_sibling(GTK4.gtk_widget_get_first_child(shellHandle));
+				long header = GTK4.gtk_window_get_titlebar(shellHandle);
 				int[] headerNaturalHeight = new int[1];
-				GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, 0, null, headerNaturalHeight, null, null);
+				if (header != 0) {
+					GTK4.gtk_widget_measure(header, GTK.GTK_ORIENTATION_VERTICAL, -1, null, headerNaturalHeight, null, null);
+				}
 
 				GTK.gtk_window_set_default_size(shellHandle, width, height + headerNaturalHeight[0]);
 			}

@@ -19,15 +19,12 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.widgets.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
 
+@ExtendWith(PlatformSpecificExecutionExtension.class)
 class ScalingSWTFontRegistryTests {
 	private static String TEST_FONT = "Helvetica";
 	private SWTFontRegistry fontRegistry;
-
-	@BeforeAll
-	public static void assumeIsFittingPlatform() {
-		PlatformSpecificExecution.assumeIsFittingPlatform();
-	}
 
 	@BeforeEach
 	public void setUp() {
@@ -70,7 +67,7 @@ class ScalingSWTFontRegistryTests {
 
 	@Test
 	public void fontsAreScaled() {
-		FontData fontData = new FontData(TEST_FONT, 10, SWT.NORMAL);
+		FontData fontData = new FontData(TEST_FONT, 9, SWT.NORMAL);
 		FontData font100 = fontRegistry.getFont(fontData, 100).getFontData()[0];
 		FontData font200 = fontRegistry.getFont(fontData, 200).getFontData()[0];
 		assertEquals("Point height must be equal for all zoom factors", font100.getHeight(), font200.getHeight());

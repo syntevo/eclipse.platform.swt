@@ -17,12 +17,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>eclipse.platform.swt</groupId>
+		<groupId>org.eclipse.platform</groupId>
 		<artifactId>eclipse.platform.swt</artifactId>
-		<version>4.35.0-SNAPSHOT</version>
+		<version>4.36.0-SNAPSHOT</version>
 	</parent>
 
-	<groupId>org.eclipse.swt</groupId>
 	<artifactId>eclipse.platform.swt.binaries</artifactId>
 	<packaging>pom</packaging>
 
@@ -52,7 +51,7 @@
 					<dependency>
 						<groupId>org.apache.maven.surefire</groupId>
 						<artifactId>surefire-junit-platform</artifactId>
-						<version>3.2.5</version>
+						<version>${surefire.version}</version>
 					</dependency>
 				</dependencies>
 				<executions>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,11 +14,13 @@
 package org.eclipse.swt.internal.image;
 
 
-import org.eclipse.swt.*;
-import org.eclipse.swt.graphics.*;
 import java.io.*;
 
-public final class WinICOFileFormat extends FileFormat {
+import org.eclipse.swt.*;
+import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.image.FileFormat.*;
+
+public final class WinICOFileFormat extends StaticImageFileFormat {
 
 byte[] bitInvertData(byte[] data, int startIndex, int endIndex) {
 	// Destructively bit invert data in the given byte array.
@@ -53,17 +55,15 @@ int iconSize(ImageData i) {
 	int paletteSize = i.palette.colors != null ? i.palette.colors.length * 4 : 0;
 	return WinBMPFileFormat.BMPHeaderFixedSize + paletteSize + dataSize;
 }
-@Override
-boolean isFileFormat(LEDataInputStream stream) {
-	try {
+
+	@Override
+	boolean isFileFormat(LEDataInputStream stream) throws IOException {
 		byte[] header = new byte[4];
 		stream.read(header);
 		stream.unread(header);
 		return header[0] == 0 && header[1] == 0 && header[2] == 1 && header[3] == 0;
-	} catch (Exception e) {
-		return false;
 	}
-}
+
 boolean isValidIcon(ImageData i) {
 	switch (i.depth) {
 		case 1:
@@ -130,10 +130,10 @@ ImageData[] loadFromByteStream() {
  */
 ImageData loadIcon(int[] iconHeader) {
 	try {
-		FileFormat png = getFileFormat(inputStream, "PNG");
-		if (png != null) {
+		StaticImageFileFormat png = new PNGFileFormat();
+		if (png.isFileFormat(inputStream)) {
 			png.loader = this.loader;
-			return png.loadFromStream(inputStream)[0];
+			return png.loadFromStream(inputStream, DEFAULT_ZOOM, DEFAULT_ZOOM).get(0).element();
 		}
 	} catch (Exception e) {
 	}
