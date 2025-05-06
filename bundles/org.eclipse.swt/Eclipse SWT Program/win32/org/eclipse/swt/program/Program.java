@@ -380,6 +380,22 @@ public ImageData getImageData () {
  * @since 3.125
  */
 public ImageData getImageData (int zoom) {
+	// Windows API returns image data according to primary monitor zoom factor
+	// rather than at original scaling
+	int nativeZoomFactor = 100 * Display.getCurrent().getPrimaryMonitor().getZoom() / DPIUtil.getDeviceZoom();
+	int imageZoomFactor = 100 * zoom / nativeZoomFactor;
+	if (extension != null) {
+		SHFILEINFO shfi = new SHFILEINFO ();
+		int flags = OS.SHGFI_ICON | OS.SHGFI_SMALLICON | OS.SHGFI_USEFILEATTRIBUTES;
+		TCHAR pszPath = new TCHAR (0, extension, true);
+		OS.SHGetFileInfo (pszPath.chars, OS.FILE_ATTRIBUTE_NORMAL, shfi, SHFILEINFO.sizeof, flags);
+		if (shfi.hIcon != 0) {
+			Image image = Image.win32_new (null, SWT.ICON, shfi.hIcon);
+			ImageData imageData = image.getImageData (imageZoomFactor);
+			image.dispose ();
+			return imageData;
+		}
+	}
 	int nIconIndex = 0;
 	String fileName = iconName;
 	int index = iconName.indexOf (',');
@@ -399,26 +415,9 @@ public ImageData getImageData (int zoom) {
 	TCHAR lpszFile = new TCHAR (0, fileName, true);
 	long [] phiconSmall = new long[1], phiconLarge = null;
 	OS.ExtractIconEx (lpszFile, nIconIndex, phiconLarge, phiconSmall, 1);
-
-	long hIcon = phiconSmall [0];
-
-	if (hIcon == 0) {
-		SHFILEINFO shfi = new SHFILEINFO ();
-		int flags = OS.SHGFI_ICON | OS.SHGFI_SMALLICON | OS.SHGFI_USEFILEATTRIBUTES;
-		TCHAR pszPath = new TCHAR (0, extension, true);
-		OS.SHGetFileInfo (pszPath.chars, OS.FILE_ATTRIBUTE_NORMAL, shfi, SHFILEINFO.sizeof, flags);
-
-		hIcon = shfi.hIcon;
-
-		if (hIcon == 0) return null;
-	}
-
-
-	Image image = Image.win32_new (null, SWT.ICON, hIcon);
-	// Windows API returns image data according to primary monitor zoom factor
-	// rather than at original scaling
-	int nativeZoomFactor = 100 * Display.getCurrent().getPrimaryMonitor().getZoom() / DPIUtil.getDeviceZoom();
-	ImageData imageData = image.getImageData (100 * zoom / nativeZoomFactor);
+	if (phiconSmall [0] == 0) return null;
+	Image image = Image.win32_new (null, SWT.ICON, phiconSmall [0]);
+	ImageData imageData = image.getImageData (imageZoomFactor);
 	image.dispose ();
 	return imageData;
 }
