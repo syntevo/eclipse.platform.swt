@@ -19,8 +19,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
@@ -43,6 +48,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.test.Screenshots;
+import org.junit.rules.TemporaryFolder;
 
 public class SwtTestUtil {
 	/**
@@ -446,7 +452,6 @@ public static boolean waitEvent(Runnable trigger, Control control, int swtEvent,
  *                      arrive *before* you call this function, and it will
  *                      fail to receive event.
  * @param shell         the Shell to wait for
- * @return <code>true</code> if Shell became active within timeout
  */
 public static void waitShellActivate(Runnable trigger, Shell shell) {
 	final int timeoutInMsec = 3000;
@@ -573,5 +578,21 @@ public static boolean hasPixelNotMatching(Image image, Color nonMatchingColor, R
 		}
 	}
 	return false;
+}
+
+public static Path getPath(String fileName, TemporaryFolder tempFolder) {
+	Path filePath = tempFolder.getRoot().toPath().resolve("image-resources").resolve(Path.of(fileName));
+	if (!Files.isRegularFile(filePath)) {
+		// Extract resource on the classpath to a temporary file to ensure it's
+		// available as plain file, even if this bundle is packed as jar
+		try (InputStream inStream = SwtTestUtil.class.getResourceAsStream(fileName)) {
+			assertNotNull(inStream, "InputStream == null for file " + fileName);
+			Files.createDirectories(filePath.getParent());
+			Files.copy(inStream, filePath);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+	}
+	return filePath;
 }
 }

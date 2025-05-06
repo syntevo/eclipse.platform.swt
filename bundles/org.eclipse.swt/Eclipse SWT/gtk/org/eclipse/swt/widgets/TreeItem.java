@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -407,7 +407,7 @@ public Color getBackground (int index) {
  */
 public Rectangle getBounds (int index) {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getBoundsInPixels (index));
+	return getBoundsInPixels (index);
 }
 
 Rectangle getBoundsInPixels (int index) {
@@ -454,7 +454,7 @@ Rectangle getBoundsInPixels (int index) {
  */
 public Rectangle getBounds () {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getBoundsInPixels ());
+	return getBoundsInPixels ();
 }
 
 Rectangle getBoundsInPixels () {
@@ -694,7 +694,7 @@ public Image getImage (int index) {
  */
 public Rectangle getImageBounds (int index) {
 	checkWidget ();
-	return DPIUtil.autoScaleDown(getImageBoundsInPixels(index));
+	return getImageBoundsInPixels(index);
 }
 
 Rectangle getImageBoundsInPixels (int index) {
@@ -928,7 +928,7 @@ public String getText (int index) {
  */
 public Rectangle getTextBounds (int index) {
 	checkWidget ();
-	return DPIUtil.autoScaleDown(getTextBoundsInPixels(index));
+	return getTextBoundsInPixels(index);
 }
 
 Rectangle getTextBoundsInPixels (int index) {
@@ -991,11 +991,7 @@ Rectangle getTextBoundsInPixels (int index) {
 	Image image = _getImage(index);
 	int imageWidth = 0;
 	if (image != null) {
-		if (DPIUtil.useCairoAutoScale()) {
-			imageWidth = image.getBounds ().width;
-		} else {
-			imageWidth = image.getBoundsInPixels ().width;
-		}
+		imageWidth = image.getBounds ().width;
 	}
 	if (x [0] < imageWidth) {
 		rect.x += imageWidth;
@@ -1528,14 +1524,8 @@ public void setImage(int index, Image image) {
 	GTK.gtk_cell_renderer_get_fixed_size (pixbufRenderer, currentWidth, currentHeight);
 	if (!parent.pixbufSizeSet) {
 		if (image != null) {
-			int iWidth, iHeight;
-			if (DPIUtil.useCairoAutoScale()) {
-				iWidth = image.getBounds ().width;
-				iHeight = image.getBounds ().height;
-			} else {
-				iWidth = image.getBoundsInPixels ().width;
-				iHeight = image.getBoundsInPixels ().height;
-			}
+			int	iWidth = image.getBounds ().width;
+			int	iHeight = image.getBounds ().height;
 			if (iWidth > currentWidth [0] || iHeight > currentHeight [0]) {
 				GTK.gtk_cell_renderer_set_fixed_size (pixbufRenderer, iWidth, iHeight);
 				parent.pixbufSizeSet = true;

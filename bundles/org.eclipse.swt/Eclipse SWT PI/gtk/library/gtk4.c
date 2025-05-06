@@ -127,6 +127,22 @@ JNIEXPORT jlong JNICALL GTK4_NATIVE(gdk_1content_1formats_1builder_1new)
 }
 #endif
 
+#ifndef NO_gdk_1content_1formats_1get_1gtypes
+JNIEXPORT jlong JNICALL GTK4_NATIVE(gdk_1content_1formats_1get_1gtypes)
+	(JNIEnv *env, jclass that, jlong arg0, jlongArray arg1)
+{
+	jlong *lparg1=NULL;
+	jlong rc = 0;
+	GTK4_NATIVE_ENTER(env, that, gdk_1content_1formats_1get_1gtypes_FUNC);
+	if (arg1) if ((lparg1 = (*env)->GetLongArrayElements(env, arg1, NULL)) == NULL) goto fail;
+	rc = (jlong)gdk_content_formats_get_gtypes((GdkContentFormats *)arg0, (gsize *)lparg1);
+fail:
+	if (arg1 && lparg1) (*env)->ReleaseLongArrayElements(env, arg1, lparg1, 0);
+	GTK4_NATIVE_EXIT(env, that, gdk_1content_1formats_1get_1gtypes_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_gdk_1content_1formats_1to_1string
 JNIEXPORT jlong JNICALL GTK4_NATIVE(gdk_1content_1formats_1to_1string)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -1346,6 +1362,18 @@ JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1gesture_1drag_1new)
 }
 #endif
 
+#ifndef NO_gtk_1gesture_1get_1last_1updated_1sequence
+JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1gesture_1get_1last_1updated_1sequence)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	GTK4_NATIVE_ENTER(env, that, gtk_1gesture_1get_1last_1updated_1sequence_FUNC);
+	rc = (jlong)gtk_gesture_get_last_updated_sequence((GtkGesture *)arg0);
+	GTK4_NATIVE_EXIT(env, that, gtk_1gesture_1get_1last_1updated_1sequence_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_gtk_1gesture_1rotate_1new
 JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1gesture_1rotate_1new)
 	(JNIEnv *env, jclass that)
@@ -1354,6 +1382,18 @@ JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1gesture_1rotate_1new)
 	GTK4_NATIVE_ENTER(env, that, gtk_1gesture_1rotate_1new_FUNC);
 	rc = (jlong)gtk_gesture_rotate_new();
 	GTK4_NATIVE_EXIT(env, that, gtk_1gesture_1rotate_1new_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_gtk_1gesture_1set_1sequence_1state
+JNIEXPORT jboolean JNICALL GTK4_NATIVE(gtk_1gesture_1set_1sequence_1state)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jint arg2)
+{
+	jboolean rc = 0;
+	GTK4_NATIVE_ENTER(env, that, gtk_1gesture_1set_1sequence_1state_FUNC);
+	rc = (jboolean)gtk_gesture_set_sequence_state((GtkGesture *)arg0, (GdkEventSequence *)arg1, (GtkEventSequenceState)arg2);
+	GTK4_NATIVE_EXIT(env, that, gtk_1gesture_1set_1sequence_1state_FUNC);
 	return rc;
 }
 #endif
@@ -1570,6 +1610,18 @@ JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1named_1action_1new)
 fail:
 	if (arg0 && lparg0) (*env)->ReleaseByteArrayElements(env, arg0, lparg0, 0);
 	GTK4_NATIVE_EXIT(env, that, gtk_1named_1action_1new_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_gtk_1native_1get_1for_1surface
+JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1native_1get_1for_1surface)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	GTK4_NATIVE_ENTER(env, that, gtk_1native_1get_1for_1surface_FUNC);
+	rc = (jlong)gtk_native_get_for_surface((GdkSurface *)arg0);
+	GTK4_NATIVE_EXIT(env, that, gtk_1native_1get_1for_1surface_FUNC);
 	return rc;
 }
 #endif
@@ -2135,6 +2187,18 @@ fail:
 	if (arg4 && lparg4) (*env)->ReleaseIntArrayElements(env, arg4, lparg4, 0);
 	if (arg3 && lparg3) (*env)->ReleaseIntArrayElements(env, arg3, lparg3, 0);
 	GTK4_NATIVE_EXIT(env, that, gtk_1widget_1measure_FUNC);
+}
+#endif
+
+#ifndef NO_gtk_1widget_1pick
+JNIEXPORT jlong JNICALL GTK4_NATIVE(gtk_1widget_1pick)
+	(JNIEnv *env, jclass that, jlong arg0, jdouble arg1, jdouble arg2, jint arg3)
+{
+	jlong rc = 0;
+	GTK4_NATIVE_ENTER(env, that, gtk_1widget_1pick_FUNC);
+	rc = (jlong)gtk_widget_pick((GtkWidget *)arg0, (double)arg1, (double)arg2, (GtkPickFlags)arg3);
+	GTK4_NATIVE_EXIT(env, that, gtk_1widget_1pick_FUNC);
+	return rc;
 }
 #endif
 

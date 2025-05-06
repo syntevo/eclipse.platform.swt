@@ -50,6 +50,7 @@ class Edge extends WebBrowser {
 	// System.getProperty() keys
 	static final String BROWSER_DIR_PROP = "org.eclipse.swt.browser.EdgeDir";
 	static final String BROWSER_ARGS_PROP = "org.eclipse.swt.browser.EdgeArgs";
+	static final String ALLOW_SINGLE_SIGN_ON_USING_OS_PRIMARY_ACCOUNT_PROP = "org.eclipse.swt.browser.Edge.allowSingleSignOnUsingOSPrimaryAccount";
 	static final String DATA_DIR_PROP = "org.eclipse.swt.browser.EdgeDataDir";
 	static final String LANGUAGE_PROP = "org.eclipse.swt.browser.EdgeLanguage";
 	static final String VERSIONT_PROP = "org.eclipse.swt.browser.EdgeVersion";
@@ -79,8 +80,9 @@ class Edge extends WebBrowser {
 
 	WebViewEnvironment containingEnvironment;
 
-	static boolean inCallback;
+	static int inCallback;
 	boolean inNewWindow;
+	private boolean inEvaluate;
 	HashMap<Long, LocationEvent> navigations = new HashMap<>();
 	private boolean ignoreGotFocus;
 	private boolean ignoreFocusIn;
@@ -233,11 +235,11 @@ static void error(int code, int hr) {
 
 static IUnknown newCallback(ICoreWebView2SwtCallback handler) {
 	long punk = COM.CreateSwtWebView2Callback((arg0, arg1) -> {
-		inCallback = true;
+		inCallback++;
 		try {
 			return handler.Invoke(arg0, arg1);
 		} finally {
-			inCallback = false;
+			inCallback--;
 		}
 	});
 	if (punk == 0) error(SWT.ERROR_NO_HANDLES, COM.E_OUTOFMEMORY);
@@ -550,7 +552,7 @@ void checkDeadlock() {
 	// and JavaScript callbacks are serialized. An event handler waiting
 	// for a completion of another handler will deadlock. Detect this
 	// situation and throw an exception instead.
-	if (inCallback || inNewWindow) {
+	if (inCallback > 0 || inNewWindow) {
 		SWT.error(SWT.ERROR_FAILED_EVALUATE, null, " [WebView2: deadlock detected]");
 	}
 }
@@ -564,6 +566,9 @@ WebViewEnvironment createEnvironment() {
 	String browserDir = System.getProperty(BROWSER_DIR_PROP);
 	String browserArgs = System.getProperty(BROWSER_ARGS_PROP);
 	String language = System.getProperty(LANGUAGE_PROP);
+
+	boolean allowSSO = Boolean.getBoolean(ALLOW_SINGLE_SIGN_ON_USING_OS_PRIMARY_ACCOUNT_PROP);
+
 	String dataDir = getDataDir(display);
 
 	// Initialize options
@@ -579,6 +584,11 @@ WebViewEnvironment createEnvironment() {
 	if (language != null) {
 		char[] pLanguage = stringToWstr(language);
 		options.put_Language(pLanguage);
+	}
+
+	if (allowSSO) {
+		int[] pAllowSSO = new int[]{1};
+		options.put_AllowSingleSignOnUsingOSPrimaryAccount(pAllowSSO);
 	}
 
 	// Create the environment
@@ -811,7 +821,7 @@ void browserDispose(Event event) {
 		if(controller != null) {
 			// Bug in WebView2. Closing the controller from an event handler results
 			// in a crash. The fix is to delay the closure with asyncExec.
-			if (inCallback) {
+			if (inCallback > 0) {
 				ICoreWebView2Controller controller1 = controller;
 				controller.put_IsVisible(false);
 				browser.getDisplay().asyncExec(() -> {
@@ -906,11 +916,21 @@ public Object evaluate(String script) throws SWTException {
 	// Feature in WebView2. ExecuteScript works regardless of IsScriptEnabled setting.
 	// Disallow programmatic execution manually.
 	if (!jsEnabled) return null;
-
+	if(inCallback > 0) {
+		// Execute script, but do not wait for async call to complete as otherwise it
+		// can cause a deadlock if execute inside a WebView callback.
+		execute(script);
+		return null;
+	}
 	String script2 = "(function() {try { " + script + " } catch (e) { return '" + ERROR_ID + "' + e.message; } })();\0";
 	String[] pJson = new String[1];
-	int hr = callAndWait(pJson, completion -> webViewProvider.getWebView(true).ExecuteScript(script2.toCharArray(), completion));
-	if (hr != COM.S_OK) error(SWT.ERROR_FAILED_EVALUATE, hr);
+	inEvaluate = true;
+	try {
+		int hr = callAndWait(pJson, completion -> webViewProvider.getWebView(true).ExecuteScript(script2.toCharArray(), completion));
+		if (hr != COM.S_OK) error(SWT.ERROR_FAILED_EVALUATE, hr);
+	} finally {
+		inEvaluate = false;
+	}
 
 	Object data = JSON.parse(pJson[0]);
 	if (data instanceof String && ((String) data).startsWith(ERROR_ID)) {
@@ -997,12 +1017,15 @@ long handleCallJava(int index, long bstrToken, long bstrArgsJson) {
 	String token = bstrToString(bstrToken);
 	BrowserFunction function = functions.get(index);
 	if (function != null && token.equals (function.token)) {
+		inCallback++;
 		try {
 			String argsJson = bstrToString(bstrArgsJson);
 			Object args = JSON.parse(argsJson.toCharArray());
 			result = function.function ((Object[]) args);
 		} catch (Throwable e) {
 			result = WebBrowser.CreateErrorString(e.getLocalizedMessage());
+		} finally {
+			inCallback--;
 		}
 	}
 	String json = JSON.stringify(result);
@@ -1319,7 +1342,7 @@ int handleNewWindowRequested(long pView, long pArgs) {
 	args.GetDeferral(ppv);
 	ICoreWebView2Deferral deferral = new ICoreWebView2Deferral(ppv[0]);
 	inNewWindow = true;
-	browser.getDisplay().asyncExec(() -> {
+	Runnable openWindowHandler = () -> {
 		try {
 			if (browser.isDisposed()) return;
 			WindowEvent openEvent = new WindowEvent(browser);
@@ -1355,7 +1378,21 @@ int handleNewWindowRequested(long pView, long pArgs) {
 			args.Release();
 			inNewWindow = false;
 		}
-	});
+	};
+
+	// Creating a new browser instance within the same environment from inside the OpenWindowListener of another browser
+	// can lead to a deadlock. To prevent this, handlers should typically run asynchronously.
+	// However, if a new window is opened using `evaluate(window.open)`, running the handler asynchronously in that context
+	// may also result in a deadlock.
+	// Therefore, whether the listener runs synchronously or asynchronously should depend on the `inEvaluate` condition.
+	// That said, combining both situations—opening a window via `evaluate` and launching a new browser inside the OpenWindowListener—
+	// should be avoided altogether, as it significantly increases the risk of deadlocks.
+	if (inEvaluate) {
+		openWindowHandler.run();
+	} else {
+		browser.getDisplay().asyncExec(openWindowHandler);
+	}
+
 	return COM.S_OK;
 }
 

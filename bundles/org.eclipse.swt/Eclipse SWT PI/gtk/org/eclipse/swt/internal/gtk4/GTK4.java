@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2024 Syntevo and others.
+ * Copyright (c) 2021, 2025 Syntevo and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -21,6 +21,14 @@ import org.eclipse.swt.internal.gtk.*;
 public class GTK4 {
 
 	public static final int GTK_POPOVER_MENU_NESTED = 1 << 0;
+
+	public static final int GTK_EVENT_SEQUENCE_NONE = 0;
+	public static final int GTK_EVENT_SEQUENCE_CLAIMED = 1;
+	public static final int GTK_EVENT_SEQUENCE_DENIED = 2;
+
+	public static final int GTK_PICK_DEFAULT = 0;
+	public static final int GTK_PICK_INSENSITIVE = 1;
+	public static final int GTK_PICK_NON_TARGETABLE = 2;
 
 	/**
 	 * @param context cast=(GtkIMContext *)
@@ -125,6 +133,10 @@ public class GTK4 {
 
 	/* GTK Initialization */
 	public static final native boolean gtk_init_check();
+
+	/* GtkNative */
+	/** @param surface cast=(GdkSurface *) */
+	public static final native long gtk_native_get_for_surface(long surface);
 
 	/* GdkToplevel */
 	/** @param toplevel cast=(GdkToplevel *) */
@@ -663,6 +675,13 @@ public class GTK4 {
 	 * @param next_sibling cast=(GtkWidget *)
 	 */
 	public static final native void gtk_widget_insert_before(long widget, long parent, long next_sibling);
+	/**
+	 * @param widget cast=(GtkWidget *)
+	 * @param x cast=(double)
+	 * @param y cast=(double)
+	 * @param flags cast=(GtkPickFlags)
+	 */
+	public static final native long gtk_widget_pick(long widget, double x, double y, int flags);
 
 	/* GtkComboBox */
 	/** @param combo_box cast=(GtkComboBox *) */
@@ -818,11 +837,28 @@ public class GTK4 {
 	public static final native long gdk_content_provider_new_union(long[] providers, int n_providers);
 	/** @param formats cast=(GdkContentFormats *) */
 	public static final native long gdk_content_formats_to_string(long formats);
+	/**
+	 * @param formats cast=(GdkContentFormats *)
+	 * @param n_gtypes cast=(gsize *)
+	 */
+	public static final native long gdk_content_formats_get_gtypes(long formats, long[] n_gtypes);
 
 	public static final native long gtk_gesture_rotate_new();
 
 	public static final native long gtk_gesture_zoom_new();
 
 	public static final native long gtk_gesture_drag_new();
+
+	/**
+	 * @param gesture cast=(GtkGesture *)
+	 * @param sequence cast=(GdkEventSequence *)
+	 * @param state cast=(GtkEventSequenceState)
+	 */
+	public static final native boolean gtk_gesture_set_sequence_state(long gesture, long sequence, int state);
+
+	/**
+	 * @param gesture cast=(GtkGesture *)
+	 */
+	public static final native long gtk_gesture_get_last_updated_sequence(long gesture);
 
 }

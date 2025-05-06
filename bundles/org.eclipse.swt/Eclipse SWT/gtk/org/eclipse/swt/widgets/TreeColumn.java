@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -321,7 +321,7 @@ public String getToolTipText () {
  */
 public int getWidth () {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getWidthInPixels ());
+	return getWidthInPixels ();
 }
 
 int getWidthInPixels () {
@@ -365,10 +365,12 @@ long gtk_clicked (long widget) {
 }
 
 @Override
-void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
+int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
 	boolean doubleClick = n_press >= 2 ? true : false;
 
 	sendSelectionEvent(doubleClick ? SWT.DefaultSelection : SWT.Selection);
+
+	return GTK4.GTK_EVENT_SEQUENCE_NONE;
 }
 
 @Override
@@ -735,7 +737,7 @@ public void setToolTipText(String string) {
  */
 public void setWidth(int width) {
 	checkWidget();
-	setWidthInPixels(DPIUtil.autoScaleUp(width));
+	setWidthInPixels(width);
 }
 
 void setWidthInPixels(int width) {

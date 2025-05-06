@@ -44,6 +44,7 @@ final class ScalingSWTFontRegistry implements SWTFontRegistry {
 
 		private Font createAndCacheFont(int zoom) {
 			Font newFont = createFont(zoom);
+			customFontHandlesKeyMap.put(newFont.handle, this);
 			scaledFonts.put(zoom, newFont);
 			return newFont;
 		}
@@ -112,6 +113,7 @@ final class ScalingSWTFontRegistry implements SWTFontRegistry {
 
 	private ScaledFontContainer systemFontContainer;
 	private Map<FontData, ScaledFontContainer> customFontsKeyMap = new HashMap<>();
+	private Map<Long, ScaledFontContainer> customFontHandlesKeyMap = new HashMap<>();
 	private Device device;
 
 	ScalingSWTFontRegistry(Device device) {
@@ -130,10 +132,19 @@ final class ScalingSWTFontRegistry implements SWTFontRegistry {
 		if (customFontsKeyMap.containsKey(fontData)) {
 			container = customFontsKeyMap.get(fontData);
 		} else {
-			container = new ScaledCustomFontContainer(fontData);
-			customFontsKeyMap.put(fontData, container);
+			FontData clonedFontData = new FontData(fontData.toString());
+			container = new ScaledCustomFontContainer(clonedFontData);
+			customFontsKeyMap.put(clonedFontData, container);
 		}
 		return container.getScaledFont(zoom);
+	}
+
+	@Override
+	public Font getFont(long fontHandle, int zoom) {
+		if (customFontHandlesKeyMap.containsKey(fontHandle)) {
+			return customFontHandlesKeyMap.get(fontHandle).getScaledFont(zoom);
+		}
+		return Font.win32_new(device, fontHandle, zoom);
 	}
 
 	@Override

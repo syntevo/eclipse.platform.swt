@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -536,7 +536,7 @@ public int getItemCount () {
  */
 public int getItemHeight () {
 	checkWidget();
-	return DPIUtil.autoScaleDown(getItemHeightInPixels());
+	return getItemHeightInPixels();
 }
 
 int getItemHeightInPixels() {
@@ -905,14 +905,16 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-void gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	if (n_press == 1) return;
-	super.gtk_gesture_press_event(gesture, n_press, x, y, event);
+int gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
+	if (n_press == 1) return GTK4.GTK_EVENT_SEQUENCE_NONE;
+	int result = super.gtk_gesture_press_event(gesture, n_press, x, y, event);
 
 	if (n_press == 2 && rowActivated) {
 		sendTreeDefaultSelection ();
 		rowActivated = false;
 	}
+
+	return result;
 }
 
 @Override

@@ -48,13 +48,13 @@ jobs:
       if: ${{ matrix.config.native == 'gtk.linux.x86_64'}}
       run: |
         sudo apt-get update -qq 
-        WEBKIT_VERSION=2.44.0-2 && sudo apt-get install -qq -y libgtk-3-dev libgtk-4-dev freeglut3-dev webkit2gtk-driver=${WEBKIT_VERSION} libwebkit2gtk-4.1-0=${WEBKIT_VERSION} libjavascriptcoregtk-4.1-0=${WEBKIT_VERSION}
+        sudo apt-get install -qq -y libgtk-3-dev libgtk-4-dev freeglut3-dev webkit2gtk-driver
     - name: Pull large static Windows binaries
       if: ${{ matrix.config.native == 'win32.win32.x86_64'}}
       run: |
         git lfs pull --include='/binaries/org.eclipse.swt.win32.win32.x86_64/WebView2Loader.dll'
     - name: Set up Java ${{ matrix.java }}
-      uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
       with:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
@@ -72,7 +72,7 @@ jobs:
         --threads 1C
         -DforkCount=1
         '-Dnative=${{ matrix.config.native }}'
-        -Papi-check
+        -Papi-check -Pjavadoc
         '-Dtycho.baseline.replace=none'
         --fail-at-end
         -DskipNativeTests=false

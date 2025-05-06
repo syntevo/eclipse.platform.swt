@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -627,7 +627,7 @@ void dropDownCalendar (boolean drop) {
 
 	//To display popup calendar, we need to know where the parent is relative to the whole screen.
 	Rectangle coordsRelativeToScreen = display.mapInPixels (getParent (), null, getBoundsInPixels ());
-	Rectangle displayRect = DPIUtil.autoScaleUp(getMonitor ().getClientArea ());
+	Rectangle displayRect = getMonitor ().getClientArea ();
 
 	showPopupShell (containerBounds, calendarSize, coordsRelativeToScreen, displayRect);
 
@@ -2222,7 +2222,7 @@ long gtk_button_release_event (long widget, long event) {
 }
 
 @Override
-void gtk_gesture_release_event(long gesture, int n_press, double x, double y, long event) {
+int gtk_gesture_release_event(long gesture, int n_press, double x, double y, long event) {
 	if (isDate() || isTime()) {
 		int button = GTK.gtk_gesture_single_get_current_button(gesture);
 
@@ -2231,7 +2231,7 @@ void gtk_gesture_release_event(long gesture, int n_press, double x, double y, lo
 		}
 	}
 
-	super.gtk_gesture_release_event(gesture, n_press, x, y, event);
+	return super.gtk_gesture_release_event(gesture, n_press, x, y, event);
 }
 
 /**

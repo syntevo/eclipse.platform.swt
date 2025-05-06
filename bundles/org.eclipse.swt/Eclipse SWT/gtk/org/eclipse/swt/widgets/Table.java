@@ -1434,7 +1434,7 @@ TableItem getFocusItem () {
  */
 public int getGridLineWidth () {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getGridLineWidthInPixels ());
+	return getGridLineWidthInPixels ();
 }
 
 int getGridLineWidthInPixels () {
@@ -1488,7 +1488,7 @@ public Color getHeaderForeground () {
  */
 public int getHeaderHeight () {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getHeaderHeightInPixels ());
+	return getHeaderHeightInPixels ();
 }
 
 int getHeaderHeightInPixels () {
@@ -1599,7 +1599,7 @@ public TableItem getItem (int index) {
  */
 public TableItem getItem (Point point) {
 	checkWidget();
-	return getItemInPixels(DPIUtil.autoScaleUp(point));
+	return getItemInPixels(point);
 }
 
 TableItem getItemInPixels (Point point) {
@@ -1657,7 +1657,7 @@ public int getItemCount () {
  */
 public int getItemHeight () {
 	checkWidget ();
-	return DPIUtil.autoScaleDown (getItemHeightInPixels ());
+	return getItemHeightInPixels ();
 }
 
 int getItemHeightInPixels () {
@@ -2129,9 +2129,9 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-void gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
-	if (n_press == 1) return;
-	super.gtk_gesture_press_event(gesture, n_press, x, y, event);
+int gtk_gesture_press_event (long gesture, int n_press, double x, double y, long event) {
+	if (n_press == 1) return  GTK4.GTK_EVENT_SEQUENCE_NONE;
+	int result = super.gtk_gesture_press_event(gesture, n_press, x, y, event);
 
 	// TODO: GTK4 replicate gtk_button_press_event functions
 
@@ -2139,6 +2139,8 @@ void gtk_gesture_press_event (long gesture, int n_press, double x, double y, lon
 		sendTreeDefaultSelection ();
 		rowActivated = false;
 	}
+
+	return result;
 }
 
 @Override
@@ -2878,13 +2880,7 @@ void sendMeasureEvent (long cell, long width, long height) {
 			Image image = item.getImage (columnIndex);
 			int imageWidth = 0;
 			if (image != null) {
-				Rectangle bounds;
-				if (DPIUtil.useCairoAutoScale()) {
-					bounds = image.getBounds ();
-				} else {
-					bounds = image.getBoundsInPixels();
-				}
-				imageWidth = bounds.width;
+				imageWidth = image.getBounds ().width;
 			}
 			contentWidth [0] += imageWidth;
 			GC gc = new GC (this);
@@ -2894,11 +2890,11 @@ void sendMeasureEvent (long cell, long width, long height) {
 			event.index = columnIndex;
 			event.gc = gc;
 			Rectangle eventRect = new Rectangle (0, 0, contentWidth [0], contentHeight [0]);
-			event.setBounds (DPIUtil.autoScaleDown (eventRect));
+			event.setBounds (eventRect);
 			if (isSelected) event.detail = SWT.SELECTED;
 			sendEvent (SWT.MeasureItem, event);
 			gc.dispose ();
-			Rectangle rect = DPIUtil.autoScaleUp (event.getBounds ());
+			Rectangle rect = event.getBounds ();
 			contentWidth [0] = rect.width - imageWidth;
 			if (contentHeight [0] < rect.height) contentHeight [0] = rect.height;
 			if (width != 0) C.memmove (width, contentWidth, 4);
@@ -3048,13 +3044,9 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 				if (cr != 0) {
 					GdkRectangle r = new GdkRectangle();
 					GDK.gdk_cairo_get_clip_rectangle(cr, r);
-					Rectangle rect2 = DPIUtil.autoScaleDown(rect);
-					// Caveat: rect2 is necessary because GC#setClipping(Rectangle) got broken by bug 446075
-					gc.setClipping(rect2.x, rect2.y, rect2.width, rect2.height);
+					gc.setClipping(rect.x, rect.y, rect.width, rect.height);
 				} else {
-					Rectangle rect2 = DPIUtil.autoScaleDown(rect);
-					// Caveat: rect2 is necessary because GC#setClipping(Rectangle) got broken by bug 446075
-					gc.setClipping(rect2.x, rect2.y, rect2.width, rect2.height);
+					gc.setClipping(rect.x, rect.y, rect.width, rect.height);
 
 				}
 
@@ -3072,7 +3064,7 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 					event.index = columnIndex;
 					event.gc = gc;
 					event.detail = drawState;
-					event.setBounds (DPIUtil.autoScaleDown (eventRect));
+					event.setBounds (eventRect);
 					sendEvent (SWT.EraseItem, event);
 				} finally {
 					Cairo.cairo_translate (cr, 0, y_offset);
@@ -3106,7 +3098,7 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 	if ((drawState & SWT.BACKGROUND) != 0 && (drawState & SWT.SELECTED) == 0) {
 		GC gc = getGC(cr);
 		gc.setBackground (item.getBackground (columnIndex));
-		gc.fillRectangle (DPIUtil.autoScaleDown (rendererRect.toRectangle ()));
+		gc.fillRectangle (rendererRect.toRectangle ());
 		gc.dispose ();
 	}
 	if ((drawState & SWT.FOREGROUND) != 0 || GTK.GTK_IS_CELL_RENDERER_TOGGLE (cell)) {
@@ -3141,13 +3133,7 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 				Image image = item.getImage (columnIndex);
 				int imageWidth = 0;
 				if (image != null) {
-					Rectangle bounds;
-					if (DPIUtil.useCairoAutoScale()) {
-						bounds = image.getBounds ();
-					} else {
-						bounds = image.getBoundsInPixels ();
-					}
-					imageWidth = bounds.width;
+					imageWidth = image.getBounds ().width;
 				}
 				contentX [0] -= imageWidth;
 				contentWidth [0] += imageWidth;
@@ -3176,9 +3162,7 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 				gc.setFont (item.getFont (columnIndex));
 				if ((style & SWT.MIRRORED) != 0) rect.x = getClientWidth () - rect.width - rect.x;
 
-				Rectangle rect2 = DPIUtil.autoScaleDown(rect);
-				// Caveat: rect2 is necessary because GC#setClipping(Rectangle) got broken by bug 446075
-				gc.setClipping(rect2.x, rect2.y, rect2.width, rect2.height);
+				gc.setClipping(rect.x, rect.y, rect.width, rect.height);
 
 				// SWT.PaintItem/SWT.EraseItem often expect that event.y matches
 				// what 'event.item.getBounds()' returns. The workaround is to
@@ -3194,7 +3178,7 @@ void rendererRender (long cell, long cr, long snapshot, long widget, long backgr
 					event.index = columnIndex;
 					event.gc = gc;
 					event.detail = drawState;
-					event.setBounds (DPIUtil.autoScaleDown (eventRect));
+					event.setBounds (eventRect);
 					sendEvent (SWT.PaintItem, event);
 				} finally {
 					Cairo.cairo_translate (cr, 0, y_offset);

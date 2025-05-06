@@ -14,13 +14,14 @@
 package org.eclipse.swt.graphics;
 
 
+import static org.eclipse.swt.internal.image.ImageColorTransformer.DEFAULT_DISABLED_IMAGE_TRANSFORMER;
+
 import java.io.*;
 import java.util.*;
 import java.util.function.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
-import org.eclipse.swt.internal.DPIUtil.*;
 import org.eclipse.swt.internal.cocoa.*;
 import org.eclipse.swt.internal.graphics.*;
 import org.eclipse.swt.internal.image.*;
@@ -436,12 +437,14 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 	long data = rep.bitmapData();
 	C.memmove(data, srcData, srcWidth * srcHeight * 4);
 	if (flag != SWT.IMAGE_COPY) {
-		final int redOffset, greenOffset, blueOffset;
+		final int redOffset, greenOffset, blueOffset, alphaOffset;
 		if (srcBpp == 32 && (srcBitmapFormat & OS.NSAlphaFirstBitmapFormat) == 0) {
 			redOffset = 0;
 			greenOffset = 1;
 			blueOffset = 2;
+			alphaOffset = 3;
 		} else {
+			alphaOffset = 0;
 			redOffset = 1;
 			greenOffset = 2;
 			blueOffset = 3;
@@ -449,16 +452,6 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 		/* Apply transformation */
 		switch (flag) {
 		case SWT.IMAGE_DISABLE: {
-			Color zeroColor = this.device.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-			RGB zeroRGB = zeroColor.getRGB();
-			byte zeroRed = (byte)zeroRGB.red;
-			byte zeroGreen = (byte)zeroRGB.green;
-			byte zeroBlue = (byte)zeroRGB.blue;
-			Color oneColor = this.device.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
-			RGB oneRGB = oneColor.getRGB();
-			byte oneRed = (byte)oneRGB.red;
-			byte oneGreen = (byte)oneRGB.green;
-			byte oneBlue = (byte)oneRGB.blue;
 			byte[] line = new byte[(int)srcBpr];
 			for (int y=0; y<srcHeight; y++) {
 				C.memmove(line, data + (y * srcBpr), srcBpr);
@@ -467,16 +460,12 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 					int red = line[offset+redOffset] & 0xFF;
 					int green = line[offset+greenOffset] & 0xFF;
 					int blue = line[offset+blueOffset] & 0xFF;
-					int intensity = red * red + green * green + blue * blue;
-					if (intensity < 98304) {
-						line[offset+redOffset] = zeroRed;
-						line[offset+greenOffset] = zeroGreen;
-						line[offset+blueOffset] = zeroBlue;
-					} else {
-						line[offset+redOffset] = oneRed;
-						line[offset+greenOffset] = oneGreen;
-						line[offset+blueOffset] = oneBlue;
-					}
+					int alpha = line[offset+alphaOffset] & 0xFF;
+					RGBA result = DEFAULT_DISABLED_IMAGE_TRANSFORMER.adaptPixelValue(red, green, blue, alpha);
+					line[offset+redOffset] = (byte) result.rgb.red;
+					line[offset+greenOffset] = (byte) result.rgb.green;
+					line[offset+blueOffset] = (byte) result.rgb.blue;
+					line[offset+alphaOffset] = (byte) result.alpha;
 					offset += 4;
 				}
 				C.memmove(data + (y * srcBpr), line, srcBpr);
@@ -692,11 +681,18 @@ public Image(Device device, ImageData source, ImageData mask) {
  */
 public Image(Device device, InputStream stream) {
 	super(device);
+	if (stream == null) {
+		SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	}
 	NSAutoreleasePool pool = null;
 	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
 	try {
-		initWithSupplier(zoom -> ImageDataLoader.load(stream, FileFormat.DEFAULT_ZOOM, zoom));
+		byte[] input = stream.readAllBytes();
+		initWithSupplier(zoom -> ImageDataLoader.canLoadAtZoom(new ByteArrayInputStream(input), FileFormat.DEFAULT_ZOOM, zoom),
+				zoom -> ImageDataLoader.load(new ByteArrayInputStream(input), FileFormat.DEFAULT_ZOOM, zoom).element());
 		init();
+	} catch (IOException e) {
+		SWT.error(SWT.ERROR_INVALID_ARGUMENT, e);
 	} finally {
 		if (pool != null) pool.release();
 	}
@@ -741,7 +737,10 @@ public Image(Device device, String filename) {
 	try {
 		if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 		initNative(filename);
-		if (this.handle == null) initWithSupplier(zoom -> ImageDataLoader.load(filename, FileFormat.DEFAULT_ZOOM, zoom));
+		if (this.handle == null) {
+			initWithSupplier(zoom -> ImageDataLoader.canLoadAtZoom(filename, FileFormat.DEFAULT_ZOOM, zoom),
+					zoom -> ImageDataLoader.load(filename, FileFormat.DEFAULT_ZOOM, zoom).element());
+		}
 		init();
 	} finally {
 		if (pool != null) pool.release();
@@ -795,15 +794,13 @@ public Image(Device device, ImageFileNameProvider imageFileNameProvider) {
 			id id = NSImageRep.imageRepWithContentsOfFile(NSString.stringWith(filename2x));
 			NSImageRep rep = new NSImageRep(id);
 			handle.addRepresentation(rep);
-		} else {
+		} else if (ImageDataLoader.canLoadAtZoom(filename, 100, 200)) {
 			// Try to natively scale up the image (e.g. possible if it's an SVG)
-			ElementAtZoom<ImageData> imageData2x = ImageDataLoader.load(filename, 100, 200);
-			if (imageData2x.zoom() == 200) {
-				alphaInfo_200 = new AlphaInfo();
-				NSBitmapImageRep rep = createRepresentation (imageData2x.element(), alphaInfo_200);
-				handle.addRepresentation(rep);
-				rep.release();
-			}
+			ImageData imageData2x = ImageDataLoader.load(filename, 100, 200).element();
+			alphaInfo_200 = new AlphaInfo();
+			NSBitmapImageRep rep = createRepresentation (imageData2x, alphaInfo_200);
+			handle.addRepresentation(rep);
+			rep.release();
 		}
 	} finally {
 		if (pool != null) pool.release();
@@ -906,8 +903,17 @@ public Image(Device device, ImageGcDrawer imageGcDrawer, int width, int height) 
 }
 
 private ImageData drawWithImageGcDrawer(ImageGcDrawer imageGcDrawer, int width, int height, int zoom) {
-	Image image = new Image(device, width, height);
-	GC gc = new GC(image);
+	int gcStyle = imageGcDrawer.getGcStyle();
+	Image image;
+	if ((gcStyle & SWT.TRANSPARENT) != 0) {
+		/* Create a 24 bit image data with alpha channel */
+		final ImageData resultData = new ImageData (width, height, 24, new PaletteData (0xFF, 0xFF00, 0xFF0000));
+		resultData.alphaData = new byte [width * height];
+		image = new Image(device, resultData);
+	} else {
+		image = new Image(device, width, height);
+	}
+	GC gc = new GC(image, gcStyle);
 	try {
 		imageGcDrawer.drawOn(gc, width, height);
 		ImageData imageData = image.getImageData(zoom);
@@ -1484,17 +1490,11 @@ void init(ImageData image) {
 	handle.setCacheMode(OS.NSImageCacheNever);
 }
 
-private void initWithSupplier(Function<Integer, ElementAtZoom<ImageData>> zoomToImageData) {
-	ElementAtZoom<ImageData> imageData = zoomToImageData.apply(DPIUtil.getDeviceZoom());
-	ImageData imageData2x = null;
-	if (imageData.zoom() == 200) {
-		imageData2x = imageData.element();
-	}
-	if (imageData.zoom() != 100) {
-		imageData = zoomToImageData.apply(100);
-	}
-	init(imageData.element());
-	if (imageData2x != null) {
+private void initWithSupplier(Function<Integer, Boolean> canLoadAtZoom, Function<Integer, ImageData> zoomToImageData) {
+	ImageData imageData = zoomToImageData.apply(100);
+	init(imageData);
+	if (canLoadAtZoom.apply(200)) {
+		ImageData imageData2x = zoomToImageData.apply(200);
 		alphaInfo_200 = new AlphaInfo();
 		NSBitmapImageRep rep = createRepresentation (imageData2x, alphaInfo_200);
 		handle.addRepresentation(rep);
@@ -1808,6 +1808,29 @@ public void setBackground(Color color) {
 public String toString () {
 	if (isDisposed()) return "Image {*DISPOSED*}";
 	return "Image {" + handle + "}";
+}
+
+/**
+ * <b>IMPORTANT:</b> This method is not part of the public
+ * API for Image. It is marked public only so that it
+ * can be shared within the packages provided by SWT.
+ *
+ * Draws a scaled image using the GC by another image.
+ *
+ * @param gc the GC to draw on the resulting image
+ * @param original the image which is supposed to be scaled and drawn on the resulting image
+ * @param width the width of the original image
+ * @param height the height of the original image
+ * @param scaleFactor the factor with which the image is supposed to be scaled
+ *
+ * @noreference This method is not intended to be referenced by clients.
+ */
+public static void drawScaled(GC gc, Image original, int width, int height, float scaleFactor) {
+	gc.drawImage (original, 0, 0, DPIUtil.autoScaleDown (width), DPIUtil.autoScaleDown (height),
+			/* E.g. destWidth here is effectively DPIUtil.autoScaleDown (scaledWidth), but avoiding rounding errors.
+			 * Nevertheless, we still have some rounding errors due to the point-based API GC#drawImage(..).
+			 */
+			0, 0, Math.round (DPIUtil.autoScaleDown (width * scaleFactor)), Math.round (DPIUtil.autoScaleDown (height * scaleFactor)));
 }
 
 }

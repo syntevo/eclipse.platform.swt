@@ -14,6 +14,8 @@
 package org.eclipse.swt.graphics;
 
 
+import static org.eclipse.swt.internal.image.ImageColorTransformer.DEFAULT_DISABLED_IMAGE_TRANSFORMER;
+
 import java.io.*;
 import java.util.*;
 
@@ -283,7 +285,7 @@ public Image(Device device, Image srcImage, int flag) {
 	boolean hasAlpha = format == Cairo.CAIRO_FORMAT_ARGB32;
 	surface = Cairo.cairo_image_surface_create(format, width, height);
 	if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-	if (DPIUtil.getDeviceZoom() != currentDeviceZoom && DPIUtil.useCairoAutoScale()) {
+	if (DPIUtil.getDeviceZoom() != currentDeviceZoom) {
 		double scaleFactor = DPIUtil.getDeviceZoom() / 100f;
 		Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 	}
@@ -307,15 +309,30 @@ public Image(Device device, Image srcImage, int flag) {
 				byte[] line = new byte[stride];
 				for (int y=0; y<height; y++) {
 					C.memmove(line, data + (y * stride), stride);
-					for (int x=0, offset=0; x<width; x++, offset += 4) {
+					for (int x = 0, offset = 0; x < width; x++, offset += 4) {
 						int a = line[offset + oa] & 0xFF;
 						int r = line[offset + or] & 0xFF;
 						int g = line[offset + og] & 0xFF;
 						int b = line[offset + ob] & 0xFF;
-						line[offset + oa] = (byte) Math.round((double) a * 0.5);
-						line[offset + or] = (byte) Math.round((double) r * 0.5);
-						line[offset + og] = (byte) Math.round((double) g * 0.5);
-						line[offset + ob] = (byte) Math.round((double) b * 0.5);
+						// The alpha value is embedded into the RGB values as well, so extract it out
+						// of those values for transformation and reapply it afterwards
+						// Note: don't change execution order, e.g., using *= assignment, as this is
+						// integer arithmetics
+						if (hasAlpha && a != 0) {
+							r = r * 255 / a;
+							g = g * 255 / a;
+							b = b * 255 / a;
+						}
+						RGBA result = DEFAULT_DISABLED_IMAGE_TRANSFORMER.adaptPixelValue(r, g, b, a);
+						if (hasAlpha) {
+							result.rgb.red = result.rgb.red * result.alpha / 255;
+							result.rgb.green = result.rgb.green * result.alpha / 255;
+							result.rgb.blue = result.rgb.blue * result.alpha / 255;
+						}
+						line[offset + oa] = (byte) result.alpha;
+						line[offset + or] = (byte) result.rgb.red;
+						line[offset + og] = (byte) result.rgb.green;
+						line[offset + ob] = (byte) result.rgb.blue;
 					}
 					C.memmove(data + (y * stride), line, stride);
 				}
@@ -420,11 +437,14 @@ public Image(Device device, Rectangle bounds) {
  * @see #dispose()
  */
 public Image(Device device, ImageData data) {
+	this(device, DPIUtil.autoScaleUp(device, data), DPIUtil.getDeviceZoom());
+}
+
+private Image(Device device, ImageData data, int zoom) {
 	super(device);
 	if (data == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
-	currentDeviceZoom = DPIUtil.getDeviceZoom();
-	data = DPIUtil.autoScaleUp (device, data);
-	init(data);
+	currentDeviceZoom = zoom;
+	init(data, zoom);
 	init();
 }
 
@@ -678,9 +698,9 @@ public Image(Device device, ImageGcDrawer imageGcDrawer, int width, int height) 
 		SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	}
 	this.imageGcDrawer = imageGcDrawer;
-	currentDeviceZoom = DPIUtil.getDeviceZoom();
+	currentDeviceZoom = 100;
 	ImageData imageData = drawWithImageGcDrawer(width, height, currentDeviceZoom);
-	init (imageData);
+	init (imageData, currentDeviceZoom);
 	init ();
 }
 
@@ -737,19 +757,6 @@ boolean refreshImageForZoom () {
 			init();
 			refreshed = true;
 			currentDeviceZoom = deviceZoomLevel;
-		}
-	} else {
-		if (!DPIUtil.useCairoAutoScale()) {
-			int deviceZoomLevel = deviceZoom;
-			if (deviceZoomLevel != currentDeviceZoom) {
-				ImageData data = getImageDataAtCurrentZoom();
-				destroy ();
-				ImageData resizedData = DPIUtil.scaleImageData(device, data, deviceZoomLevel, currentDeviceZoom);
-				init(resizedData);
-				init();
-				refreshed = true;
-				currentDeviceZoom = deviceZoomLevel;
-			}
 		}
 	}
 	return refreshed;
@@ -809,7 +816,7 @@ void createFromPixbuf(int type, long pixbuf) {
 	// Initialize surface with dimensions received from the pixbuf and set device_scale appropriately
 	surface = Cairo.cairo_image_surface_create(format, pixbufWidth, pixbufHeight);
 	if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-	if (DPIUtil.useCairoAutoScale()) Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
+	Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 
 	long data = Cairo.cairo_image_surface_get_data(surface);
 	int cairoStride = Cairo.cairo_image_surface_get_stride(surface);
@@ -1158,8 +1165,17 @@ public ImageData getImageData (int zoom) {
 }
 
 private ImageData drawWithImageGcDrawer(int width, int height, int zoom) {
-	Image image = new Image(device, width, height);
-	GC gc = new GC(image);
+	int gcStyle = imageGcDrawer.getGcStyle();
+	Image image;
+	if ((gcStyle & SWT.TRANSPARENT) != 0) {
+		/* Create a 24 bit image data with alpha channel */
+		final ImageData resultData = new ImageData(width, height, 24, new PaletteData (0xFF, 0xFF00, 0xFF0000));
+		resultData.alphaData = new byte [width * height];
+		image = new Image(device, resultData, zoom);
+	} else {
+		image = new Image(device, width, height);
+	}
+	GC gc = new GC(image, gcStyle);
 	try {
 		imageGcDrawer.drawOn(gc, width, height);
 		ImageData imageData = image.getImageData(zoom);
@@ -1257,12 +1273,8 @@ void init(int width, int height) {
 	if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	// When we create a blank image we need to set it to 100 in GTK3 as we draw using 100% scale.
 	// Cairo will take care of scaling for us when image needs to be scaled.
-	if (DPIUtil.useCairoAutoScale()) {
-		currentDeviceZoom = 100;
-		Cairo.cairo_surface_set_device_scale(surface, 1f, 1f);
-	} else {
-		currentDeviceZoom = DPIUtil.getDeviceZoom();
-	}
+	currentDeviceZoom = 100;
+	Cairo.cairo_surface_set_device_scale(surface, 1f, 1f);
 	long cairo = Cairo.cairo_create(surface);
 	if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	Cairo.cairo_set_source_rgb(cairo, 1, 1, 1);
@@ -1274,6 +1286,10 @@ void init(int width, int height) {
 }
 
 void init(ImageData image) {
+	init(image, DPIUtil.getDeviceZoom());
+}
+
+private void init(ImageData image, int zoom) {
 	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 
 	PaletteData palette = image.palette;
@@ -1286,7 +1302,7 @@ void init(ImageData image) {
 	int imageDataHeight = image.height;
 
 	// Scale dimensions of Image object to 100% scale factor
-	double scaleFactor = DPIUtil.getDeviceZoom() / 100f;
+	double scaleFactor = zoom / 100f;
 	this.width = (int) Math.round(imageDataWidth / scaleFactor);
 	this.height = (int) Math.round(imageDataHeight / scaleFactor);
 
@@ -1296,7 +1312,7 @@ void init(ImageData image) {
 	// Initialize surface with dimensions received from the ImageData and set device_scale appropriately
 	surface = Cairo.cairo_image_surface_create(format, imageDataWidth, imageDataHeight);
 	if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-	if (DPIUtil.useCairoAutoScale()) Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
+	Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 
 	int stride = Cairo.cairo_image_surface_get_stride(surface);
 	long data = Cairo.cairo_image_surface_get_data(surface);
@@ -1549,6 +1565,29 @@ public String toString () {
 	}
 
 	return "Image {" + surface + "}";
+}
+
+/**
+ * <b>IMPORTANT:</b> This method is not part of the public
+ * API for Image. It is marked public only so that it
+ * can be shared within the packages provided by SWT.
+ *
+ * Draws a scaled image using the GC by another image.
+ *
+ * @param gc the GC to draw on the resulting image
+ * @param original the image which is supposed to be scaled and drawn on the resulting image
+ * @param width the width of the original image
+ * @param height the height of the original image
+ * @param scaleFactor the factor with which the image is supposed to be scaled
+ *
+ * @noreference This method is not intended to be referenced by clients.
+ */
+public static void drawScaled(GC gc, Image original, int width, int height, float scaleFactor) {
+	gc.drawImage (original, 0, 0, DPIUtil.autoScaleDown (width), DPIUtil.autoScaleDown (height),
+			/* E.g. destWidth here is effectively DPIUtil.autoScaleDown (scaledWidth), but avoiding rounding errors.
+			 * Nevertheless, we still have some rounding errors due to the point-based API GC#drawImage(..).
+			 */
+			0, 0, Math.round (DPIUtil.autoScaleDown (width * scaleFactor)), Math.round (DPIUtil.autoScaleDown (height * scaleFactor)));
 }
 
 }

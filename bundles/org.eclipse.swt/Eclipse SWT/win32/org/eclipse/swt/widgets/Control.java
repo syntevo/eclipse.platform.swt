@@ -721,7 +721,7 @@ int defaultBackground () {
 }
 
 long defaultFont() {
-	return display.getSystemFont(getShell().nativeZoom).handle;
+	return SWTFontProvider.getSystemFontHandle(display, getNativeZoom());
 }
 
 int defaultForeground () {
@@ -1315,7 +1315,7 @@ public Font getFont () {
 	if (font != null) return font;
 	long hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 	if (hFont == 0) hFont = defaultFont ();
-	return Font.win32_new (display, hFont, getShell().nativeZoom);
+	return SWTFontProvider.getFont(display, hFont, getNativeZoom());
 }
 
 /**
@@ -1353,10 +1353,15 @@ public Object getLayoutData () {
 }
 
 /**
- * Returns a point describing the receiver's location relative
- * to its parent in points (or its display if its parent is null), unless
- * the receiver is a shell. In this case, the point is
- * relative to the display.
+ * Returns a point describing the receiver's location relative to its parent in
+ * points (or its display if its parent is null), unless the receiver is a
+ * shell. In this case, the point is usually relative to the display.
+ * <p>
+ * <b>Warning:</b> When executing this operation on a shell, it may not yield a
+ * value with the expected meaning on some platforms. For example, executing
+ * this operation on a shell when the environment uses the Wayland protocol, the
+ * result is <b>not</b> a coordinate relative to the display. It will not change
+ * when moving the shell.
  *
  * @return the receiver's location
  *
@@ -1748,14 +1753,18 @@ public long internal_new_GC (GCData data) {
 			}
 		}
 		data.device = display;
-		data.nativeZoom = nativeZoom;
+		data.nativeZoom = getNativeZoom();
 		int foreground = getForegroundPixel ();
 		if (foreground != OS.GetTextColor (hDC)) data.foreground = foreground;
 		Control control = findBackgroundControl ();
 		if (control == null) control = this;
 		int background = control.getBackgroundPixel ();
 		if (background != OS.GetBkColor (hDC)) data.background = background;
-		data.font = font != null ? font : Font.win32_new (display, OS.SendMessage (hwnd, OS.WM_GETFONT, 0, 0));
+		if (font != null) {
+			data.font = font;
+		} else {
+			data.font = SWTFontProvider.getFont(display, OS.SendMessage (hwnd, OS.WM_GETFONT, 0, 0), data.nativeZoom);
+		}
 		data.uiState = (int)OS.SendMessage (hwnd, OS.WM_QUERYUISTATE, 0, 0);
 	}
 	return hDC;
@@ -3333,7 +3342,7 @@ public void setCursor (Cursor cursor) {
 }
 
 void setDefaultFont () {
-	long hFont = display.getSystemFont (getShell().nativeZoom).handle;
+	long hFont = SWTFontProvider.getSystemFontHandle(display, getNativeZoom());
 	OS.SendMessage (handle, OS.WM_SETFONT, hFont, 0);
 }
 
@@ -3435,7 +3444,7 @@ public void setFont (Font font) {
 	Font newFont = font;
 	if (newFont != null) {
 		if (newFont.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		newFont = Font.win32_new(newFont, getShell().nativeZoom);
+		newFont = Font.win32_new(newFont, getNativeZoom());
 	}
 	long hFont = 0;
 	if (newFont != null) {
@@ -3496,11 +3505,14 @@ public void setLayoutData (Object layoutData) {
 }
 
 /**
- * Sets the receiver's location to the point specified by
- * the arguments which are relative to the receiver's
- * parent (or its display if its parent is null), unless
- * the receiver is a shell. In this case, the point is
- * relative to the display.
+ * Sets the receiver's location to the point specified by the arguments which
+ * are relative to the receiver's parent (or its display if its parent is null),
+ * unless the receiver is a shell. In this case, the point is relative to the
+ * display.
+ * <p>
+ * <b>Warning:</b> When executing this operation on a shell, it may not have the
+ * intended effect on some platforms. For example, executing this operation on a
+ * shell when the environment uses the Wayland protocol, nothing will happen.
  *
  * @param x the new x coordinate for the receiver
  * @param y the new y coordinate for the receiver
@@ -3524,11 +3536,14 @@ void setLocationInPixels (int x, int y) {
 }
 
 /**
- * Sets the receiver's location to the point specified by
- * the arguments which are relative to the receiver's
- * parent (or its display if its parent is null), unless
- * the receiver is a shell. In this case, the point is
- * relative to the display.
+ * Sets the receiver's location to the point specified by the argument which
+ * is relative to the receiver's parent (or its display if its parent is null),
+ * unless the receiver is a shell. In this case, the point is relative to the
+ * display.
+ * <p>
+ * <b>Warning:</b> When executing this operation on a shell, it may not have the
+ * intended effect on some platforms. For example, executing this operation on a
+ * shell when the environment uses the Wayland protocol, nothing will happen.
  *
  * @param location the new location for the receiver
  *
@@ -5468,7 +5483,7 @@ LRESULT WM_SETCURSOR (long wParam, long lParam) {
 		if (control == null) return null;
 		Cursor cursor = control.findCursor ();
 		if (cursor != null) {
-			OS.SetCursor (Cursor.win32_getHandle(cursor, getZoom()));
+			OS.SetCursor (Cursor.win32_getHandle(cursor));
 			return LRESULT.ONE;
 		}
 	}
@@ -5866,7 +5881,7 @@ private static void handleDPIChange(Widget widget, int newZoom, float scalingFac
 	if (!(widget instanceof Control control)) {
 		return;
 	}
-	resizeFont(control, control.getShell().nativeZoom);
+	resizeFont(control, control.getNativeZoom());
 
 	Image image = control.backgroundImage;
 	if (image != null) {
@@ -5887,8 +5902,7 @@ private static void resizeFont(Control control, int newZoom) {
 	if (font == null) {
 		long currentFontHandle = OS.SendMessage (control.handle, OS.WM_GETFONT, 0, 0);
 		if (currentFontHandle != 0) {
-			Font newFont  = display.getSystemFont(newZoom);
-			long newFontHandle = newFont.handle;
+			long newFontHandle = SWTFontProvider.getSystemFontHandle(display, newZoom);
 			OS.SendMessage(control.handle, OS.WM_SETFONT, newFontHandle, 1);
 		}
 	} else {
