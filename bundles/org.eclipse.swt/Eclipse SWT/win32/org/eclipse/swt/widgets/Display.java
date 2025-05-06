@@ -385,7 +385,9 @@ public class Display extends Device implements Executor {
 	long hwndMessage, messageProc;
 
 	/* System Resources */
+	@Deprecated(since = "3.126.0")
 	LOGFONT lfSystemFont;
+	@Deprecated(since = "3.126.0")
 	Font systemFont;
 	Image errorImage, infoImage, questionImage, warningIcon;
 	Cursor [] cursors = new Cursor [SWT.CURSOR_HAND + 1];
@@ -543,6 +545,11 @@ public class Display extends Device implements Executor {
 			setDevice (device);
 		};
 	}
+
+	static {
+		CommonWidgetsDPIChangeHandlers.registerCommonHandlers();
+	}
+
 
 /*
 * TEMPORARY CODE.
@@ -1159,7 +1166,7 @@ static long create32bitDIB (long hBitmap, int alpha, byte [] alphaData, int tran
 
 static Image createIcon (Image image) {
 	Device device = image.getDevice ();
-	ImageData data = image.getImageData (DPIUtil.getDeviceZoom ());
+	ImageData data = image.getImageDataAtCurrentZoom();
 	if (data.alpha == -1 && data.alphaData == null) {
 		ImageData mask = data.getTransparencyMask ();
 		return new Image (device, data, mask);
@@ -2152,6 +2159,10 @@ Monitor getMonitor (long hmonitor) {
 	int [] dpiY = new int[1];
 	int result = OS.GetDpiForMonitor (monitor.handle, OS.MDT_EFFECTIVE_DPI, dpiX, dpiY);
 	result = (result == OS.S_OK) ? DPIUtil.mapDPIToZoom (dpiX[0]) : 100;
+	if (result == 0) {
+		System.err.println("***WARNING: GetDpiForMonitor: SWT could not get valid monitor scaling factor.");
+		result = 100;
+	}
 	/*
 	 * Always return true monitor zoom value as fetched from native, else will lead
 	 * to scaling issue on OS Win8.1 and above, for more details refer bug 537614.
@@ -2451,19 +2462,21 @@ public Cursor getSystemCursor (int id) {
  */
 @Override
 public Font getSystemFont () {
+	return getSystemFont(getPrimaryMonitor().getZoom());
+}
+
+Font getSystemFont (int zoom) {
 	checkDevice ();
-	if (systemFont != null) return systemFont;
-	long hFont = 0;
-	NONCLIENTMETRICS info = new NONCLIENTMETRICS ();
-	info.cbSize = NONCLIENTMETRICS.sizeof;
-	if (OS.SystemParametersInfo (OS.SPI_GETNONCLIENTMETRICS, 0, info, 0)) {
-		LOGFONT logFont = info.lfMessageFont;
-		hFont = OS.CreateFontIndirect (logFont);
-		lfSystemFont = hFont != 0 ? logFont : null;
+	Font systemFont = SWTFontProvider.getSystemFont(this, zoom);
+	if (this.systemFont == null) {
+		// fill the deprecated fields for backwards compatibility
+		this.systemFont = systemFont;
+		if (systemFont != null) {
+			this.lfSystemFont = systemFont.getFontData()[0].data;
+		}
 	}
-	if (hFont == 0) hFont = OS.GetStockObject (OS.DEFAULT_GUI_FONT);
-	if (hFont == 0) hFont = OS.GetStockObject (OS.SYSTEM_FONT);
-	return systemFont = Font.win32_new (this, hFont);
+
+	return systemFont;
 }
 
 /**
@@ -3823,10 +3836,8 @@ void releaseDisplay () {
 	windowProc = 0;
 
 	/* Release the System fonts */
-	if (systemFont != null) systemFont.dispose ();
 	systemFont = null;
 	lfSystemFont = null;
-
 	/* Release the System Images */
 	if (errorImage != null) errorImage.dispose ();
 	if (infoImage != null) infoImage.dispose ();

@@ -195,7 +195,7 @@ public Optional<String> openDialog () {
 	directoryPath = null;
 	panel = NSOpenPanel.openPanel();
 	if (panel == null) {
-		return null;
+		return Optional.empty();
 	}
 
 	callback_performKeyEquivalent = new Callback(this, "_performKeyEquivalent", 3);

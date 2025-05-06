@@ -50,6 +50,7 @@ import org.junit.Test;
  *
  * @see org.eclipse.swt.graphics.Image
  */
+@SuppressWarnings("restriction")
 public class Test_org_eclipse_swt_graphics_Image {
 ImageFileNameProvider imageFileNameProvider = zoom -> {
 	String fileName;
@@ -873,6 +874,14 @@ void getImageData_int(int zoom) {
 	ImageData imageDataAtZoom = image.getImageData(zoom);
 	image.dispose();
 	Rectangle boundsAtZoom = new Rectangle(0, 0, imageDataAtZoom.width, imageDataAtZoom.height);
+	assertEquals(":a: Size of ImageData returned from Image.getImageData(int) method doesn't return matches with bounds in Pixel values.", scaleBounds(bounds, zoom, 100), boundsAtZoom);
+
+	// creates second bitmap image and compare size of imageData
+	image = new Image(display, bounds);
+	imageDataAtZoom = image.getImageData(zoom);
+	boundsAtZoom = new Rectangle(0, 0, imageDataAtZoom.width, imageDataAtZoom.height);
+	bounds = image.getBounds();
+	image.dispose();
 	assertEquals(":a: Size of ImageData returned from Image.getImageData(int) method doesn't return matches with bounds in Pixel values.", scaleBounds(bounds, zoom, 100), boundsAtZoom);
 
 	// create icon image and compare size of imageData

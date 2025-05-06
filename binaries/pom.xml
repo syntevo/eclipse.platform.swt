@@ -19,7 +19,7 @@
 	<parent>
 		<groupId>eclipse.platform.swt</groupId>
 		<artifactId>eclipse.platform.swt</artifactId>
-		<version>4.32.0-SNAPSHOT</version>
+		<version>4.33.0-SNAPSHOT</version>
 	</parent>
 
 	<groupId>org.eclipse.swt</groupId>
@@ -44,6 +44,25 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.surefire</groupId>
+						<artifactId>surefire-junit-platform</artifactId>
+						<version>3.2.5</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<id>execute-tests</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-apitools-plugin</artifactId>
