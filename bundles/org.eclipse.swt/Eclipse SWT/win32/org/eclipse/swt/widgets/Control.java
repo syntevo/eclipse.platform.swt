@@ -2229,13 +2229,11 @@ public boolean print (GC gc) {
 	int flags = OS.RDW_UPDATENOW | OS.RDW_ALLCHILDREN;
 	OS.RedrawWindow (topHandle, null, 0, flags);
 	int printWindowFlags = 0;
-	if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN8_1) {
-		/*
-		 * Undocumented flag in windows, which also allows the capturing
-		 * of GPU-drawn areas, e.g. an embedded Edge WebView2.
-		 */
-		printWindowFlags |= OS.PW_RENDERFULLCONTENT;
-	}
+	/*
+	 * Undocumented flag in windows, which also allows the capturing
+	 * of GPU-drawn areas, e.g. an embedded Edge WebView2.
+	 */
+	printWindowFlags |= OS.PW_RENDERFULLCONTENT;
 	printWidget (topHandle, hdc, gc, printWindowFlags);
 	if (gdipGraphics != 0) {
 		OS.RestoreDC(hdc, state);
@@ -3449,7 +3447,7 @@ public void setFont (Font font) {
 	long hFont = 0;
 	if (newFont != null) {
 		if (newFont.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		hFont = newFont.handle;
+		hFont = Font.win32_getHandle(newFont);
 	}
 	this.font = newFont;
 	if (hFont == 0) hFont = defaultFont ();
@@ -5483,7 +5481,7 @@ LRESULT WM_SETCURSOR (long wParam, long lParam) {
 		if (control == null) return null;
 		Cursor cursor = control.findCursor ();
 		if (cursor != null) {
-			OS.SetCursor (Cursor.win32_getHandle(cursor));
+			OS.SetCursor (Cursor.win32_getHandle(cursor, getNativeZoom()));
 			return LRESULT.ONE;
 		}
 	}

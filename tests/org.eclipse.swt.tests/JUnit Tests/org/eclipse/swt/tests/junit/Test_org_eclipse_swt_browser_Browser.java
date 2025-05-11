@@ -1141,6 +1141,7 @@ public void test_setText() {
  */
 @Test
 public void test_setTextContainingScript_applicationLayerProgressListenerMustSeeUpToDateDom() {
+	assumeFalse("Toggling on Edge since I20250216-1800, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1843", isEdge);
 	AtomicBoolean completed = new AtomicBoolean();
 	browser.addProgressListener(ProgressListener.completedAdapter(event -> {
 		String script = """
@@ -1742,6 +1743,18 @@ public void test_getText() {
 
 @Test
 public void test_getText_html() {
+	String testString = "<html><head></head><body>hello<b>World</b></body></html>";
+	getText_helper(testString, testString);
+}
+
+/**
+ * Ensure getText() works even if consumer-level scripting is disabled. Needed
+ * on platforms where getText() implementation is JavaScript-based, e.g. Edge:
+ * https://github.com/eclipse-platform/eclipse.platform.swt/issues/2029
+ */
+@Test
+public void test_getText_javscriptDisabled() {
+	browser.setJavascriptEnabled(false);
 	String testString = "<html><head></head><body>hello<b>World</b></body></html>";
 	getText_helper(testString, testString);
 }

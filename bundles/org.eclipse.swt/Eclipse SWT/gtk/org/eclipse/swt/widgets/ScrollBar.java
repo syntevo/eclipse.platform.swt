@@ -289,11 +289,6 @@ public int getSelection () {
  */
 public Point getSize () {
 	checkWidget ();
-	return getSizeInPixels ();
-}
-
-Point getSizeInPixels () {
-	checkWidget ();
 	if (handle == 0) return new Point (0,0);
 	GtkRequisition requisition = new GtkRequisition ();
 	gtk_widget_get_preferred_size (handle, requisition);
@@ -331,11 +326,6 @@ public int getThumb () {
  * @since 3.6
  */
 public Rectangle getThumbBounds() {
-	checkWidget();
-	return getThumbBoundsInPixels();
-}
-
-Rectangle getThumbBoundsInPixels() {
 	checkWidget();
 
 	int[] slider_start = new int[1], slider_end = new int[1];
@@ -401,11 +391,6 @@ Rectangle getThumbBoundsInPixels() {
  */
 public Rectangle getThumbTrackBounds () {
 	checkWidget ();
-	return getThumbTrackBoundsInPixels();
-}
-
-Rectangle getThumbTrackBoundsInPixels () {
-	checkWidget();
 	int x = 0, y = 0, width, height;
 
 	/*
