@@ -68,6 +68,11 @@
 			<locationURI>SWT_HOST_PLUGIN/Eclipse%20SWT%20Browser</locationURI>
 		</link>
 		<link>
+			<name>Eclipse SWT Controls</name>
+			<type>2</type>
+			<locationURI>SWT_HOST_PLUGIN/Eclipse%20SWT%20Controls</locationURI>
+		</link>
+		<link>
 			<name>Eclipse SWT Custom Widgets</name>
 			<type>2</type>
 			<locationURI>SWT_HOST_PLUGIN/Eclipse%20SWT%20Custom%20Widgets</locationURI>
