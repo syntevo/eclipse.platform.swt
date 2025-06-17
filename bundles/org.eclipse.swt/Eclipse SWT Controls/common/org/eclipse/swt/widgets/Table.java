@@ -172,9 +172,7 @@ public class Table extends CustomComposite {
 
 	private Color headerForegroundColor;
 
-	private boolean ctrlPressed;
 	private boolean hasMouseEntered;
-
 
 	private int virtualItemCount;
 
@@ -350,15 +348,9 @@ public class Table extends CustomComposite {
 
 	private void onKeyDown(Event event) {
 		// TODO implement all keyboard keys
-		if (event.keyCode == SWT.CTRL) {
-			this.ctrlPressed = true;
-		}
 	}
 
 	private void onKeyUp(Event event) {
-		if (event.keyCode == SWT.CTRL) {
-			this.ctrlPressed = false;
-		}
 	}
 
 	private void onResize() {
@@ -437,7 +429,7 @@ public class Table extends CustomComposite {
 
 				Rectangle b = it.getBounds();
 				if (b.contains(p)) {
-					if ((style & SWT.MULTI) == 0 || !ctrlPressed) {
+					if ((style & SWT.MULTI) == 0 || (e.stateMask & SWT.MOD1) == 0) {
 						selectedTableItems.clear();
 						selectedTableItems.add(it);
 					} else {
