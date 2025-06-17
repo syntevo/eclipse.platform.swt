@@ -367,30 +367,11 @@ public class Table extends CustomComposite {
 	}
 
 	void updateScrollBarWithTextSize() {
-		if (!isVisible()) return;
-
-		Rectangle ca = getClientArea();
-
-		// remove column height, columns must be ignored for the scrolling.
-		int colHeight = getColumnHeight();
-		ca.y += colHeight;
-		ca.height -= colHeight;
-
-		Point tableSize = computeDefaultSize();
-
-		if (verticalBar != null && getItemCount() > 0) {
-			int thumb = ca.height / getItemHeight() - 1;
-			verticalBar.setThumb(thumb);
-			verticalBar.setMaximum(getItemCount());
-			verticalBar.setMinimum(0);
-			verticalBar.setVisible(getItemCount() > thumb);
-			verticalBar.setIncrement(1);
-			verticalBar.setPageIncrement(thumb);
-		}
-
-		ca = getClientArea();
+		updateVerticalScrollBar();
 
 		if (horizontalBar != null) {
+			Point tableSize = computeDefaultSize();
+			Rectangle ca = getClientArea();
 			horizontalBar.setMaximum(getTotalColumnWidth() + 10);
 			horizontalBar.setMinimum(0);
 			horizontalBar.setThumb(ca.width);
@@ -398,8 +379,25 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	private int getColumnHeight() {
-		return columnsHandler.getSize().y;
+	private void updateVerticalScrollBar() {
+		if (verticalBar == null) {
+			return;
+		}
+
+		Rectangle ca = getClientArea();
+		int caHeight = ca.height - getHeaderHeight();
+
+		final int itemHeight = Math.max(1, getItemHeight());
+		final int fullyVisibleItems = caHeight / itemHeight;
+
+		final int itemCount = getItemCount();
+		if (itemCount > fullyVisibleItems) {
+			verticalBar.setVisible(true);
+			verticalBar.setValues(topIndex, 0, itemCount + 1, fullyVisibleItems, 1, fullyVisibleItems);
+		} else {
+			verticalBar.setVisible(false);
+			verticalBar.setValues(0, 0, 0, 1, 1, 1);
+		}
 	}
 
 	@Override
@@ -2395,6 +2393,7 @@ public class Table extends CustomComposite {
 				redraw();
 			}
 
+			updateVerticalScrollBar();
 			return;
 		}
 
