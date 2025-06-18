@@ -34,23 +34,23 @@ public class TableItemRenderer {
 		this.item = tableItem;
 	}
 
-	void doPaint(GC gc) {
+	void doPaint(GC gc, int index) {
 		Rectangle b = item.getBounds();
 
 		Color bgBefore = gc.getBackground();
-		Table parent = getParent();
+		final Table parent = getParent();
 		final boolean paintItemEvent = parent.hooks(SWT.PaintItem);
 
-		if (getParent().selectedTableItems.contains(item)) {
+		if (parent.isSelected(index)) {
 			this.selected = true;
 
 			gc.setBackground(Table.SELECTION_COLOR);
 			gc.fillRectangle(b);
 			gc.drawRectangle(new Rectangle(b.x, b.y, b.width - 1, b.height - 1));
 			gc.drawRectangle(b);
-		} else if (getParent().mouseHoverElement == item) {
+		} else if (parent.mouseHoverElement == item) {
 			this.hovered = true;
-			gc.setBackground(getParent().getDisplay().getSystemColor(SWT.COLOR_YELLOW));
+			gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
 			gc.fillRectangle(b);
 		} else {
 			this.selected = false;
@@ -78,7 +78,7 @@ public class TableItemRenderer {
 						gc.setBackground(Table.SELECTION_COLOR);
 						gc.fillRectangle(b);
 					} else if (this.hovered) {
-						gc.setBackground(getParent().getDisplay().getSystemColor(SWT.COLOR_YELLOW));
+						gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
 						gc.fillRectangle(b);
 					}
 

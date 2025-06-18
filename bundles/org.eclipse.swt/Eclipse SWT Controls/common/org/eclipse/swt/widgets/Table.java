@@ -117,8 +117,7 @@ public class Table extends CustomComposite {
 
 	private final List<TableItem> itemsList = new ArrayList<>();
 	private final TreeMap<Integer, TableItem> virtualItemsList = new TreeMap<>();
-	TreeSet<TableItem> selectedTableItems = new TreeSet<>(
-			(o1, o2) -> Integer.compare(indexOf(o1), indexOf(o2)));
+	private final ListLikeModel selectionModel;
 	// TODO implement focusHandling
 	private TableItem focusItem;
 	Item mouseHoverElement;
@@ -127,7 +126,6 @@ public class Table extends CustomComposite {
 	private final TableColumnsHandler columnsHandler = new TableColumnsHandler(this);
 	private final TableItemsHandler itemsHandler = new TableItemsHandler(this);
 
-	int customCount;
 	TableItem currentItem;
 	TableColumn sortColumn;
 	Rectangle focusRect;
@@ -157,7 +155,6 @@ public class Table extends CustomComposite {
 
 	private Accessible acc;
 	private AccessibleAdapter accAdapter;
-	private int topIndex;
 
 	private boolean headerVisible;
 
@@ -218,6 +215,8 @@ public class Table extends CustomComposite {
 	 */
 	public Table(Composite parent, int style) {
 		super(parent, checkStyle(style));
+
+		selectionModel = new ListLikeModel((style & SWT.SINGLE) != 0);
 
 		renderer = new DefaultTableRenderer(this);
 
@@ -354,8 +353,18 @@ public class Table extends CustomComposite {
 	}
 
 	private void onResize() {
-		updateScrollBarWithTextSize();
-		redraw();
+		if (ignoreResize) {
+			return;
+		}
+
+		ignoreResize = true;
+		try {
+			updateScrollBarWithTextSize();
+			redraw();
+		}
+		finally {
+			ignoreResize = false;
+		}
 	}
 
 	void updateScrollBarWithTextSize() {
@@ -385,7 +394,7 @@ public class Table extends CustomComposite {
 		final int itemCount = getItemCount();
 		if (itemCount > fullyVisibleItems) {
 			verticalBar.setVisible(true);
-			verticalBar.setValues(topIndex, 0, itemCount + 1, fullyVisibleItems, 1, fullyVisibleItems);
+			verticalBar.setValues(selectionModel.getTopIndex(), 0, itemCount + 1, fullyVisibleItems, 1, fullyVisibleItems);
 		} else {
 			verticalBar.setVisible(false);
 			verticalBar.setValues(0, 0, 0, 1, 1, 1);
@@ -422,46 +431,34 @@ public class Table extends CustomComposite {
 
 		Point p = new Point(e.x, e.y);
 
-		if (!columnsHandler.handleMouseDown(e)
-		    && itemsHandler.getItemsClientArea().contains(e.x, e.y)) {
-			for (int i = getTopIndex(); i <= itemsHandler.getLastVisibleElementIndex(); i++) {
-				TableItem it = getItem(i);
+		if (columnsHandler.handleMouseDown(e)
+		    || !itemsHandler.getItemsClientArea().contains(e.x, e.y)) {
+			return;
+		}
 
-				Rectangle b = it.getBounds();
-				if (b.contains(p)) {
-					if ((style & SWT.MULTI) == 0 || (e.stateMask & SWT.MOD1) == 0) {
-						selectedTableItems.clear();
-						selectedTableItems.add(it);
-					} else {
-						if (selectedTableItems.contains(it)) {
-							selectedTableItems.remove(it);
-						} else {
-							selectedTableItems.add(it);
-						}
-					}
+		for (int i = getTopIndex(); i <= itemsHandler.getLastVisibleElementIndex(); i++) {
+			TableItem it = getItem(i);
+
+			Rectangle b = it.getBounds();
+			if (b.contains(p)) {
+				if ((style & SWT.MULTI) == 0 || (e.stateMask & SWT.MOD1) == 0) {
+					selectionModel.setSelection(i);
 				} else {
-					if (it.isInCheckArea(p)) {
-						it.toggleCheck();
-					}
+					selectionModel.toggleSelection(i);
+				}
+			} else {
+				if (it.isInCheckArea(p)) {
+					it.toggleCheck();
 				}
 			}
-			redraw();
 		}
-	}
-
-	private void handleSelection() {
+		redraw();
 		sendSelectionEvent(SWT.Selection);
 	}
 
 	private void onMouseUp(Event e) {
 		if (columnsHandler.getColumnsBounds().contains(e.x, e.y) || columnsHandler.isColumnResizeActive()) {
 			columnsHandler.handleMouseUp(e);
-		}
-
-		if ((e.stateMask & SWT.BUTTON1) != 0) {
-			handleSelection();
-		} else {
-			redraw();
 		}
 	}
 
@@ -893,13 +890,14 @@ public class Table extends CustomComposite {
 				itemsList.add(item);
 			}
 
+			selectionModel.setCount(itemsList.size());
+
+			final int topIndex = selectionModel.getTopIndex();
 			if (index < topIndex) {
 				for (int i = 0; i < index; i++) {
 					itemsList.get(i).clearCache();
 				}
-			}
-
-			if (index >= topIndex) {
+			} else {
 				for (int i = index; i < itemsList.size(); i++) {
 					itemsList.get(i).clearCache();
 				}
@@ -909,7 +907,7 @@ public class Table extends CustomComposite {
 		if (!isVirtual()) {
 			updateScrollBarWithTextSize();
 		}
-		if ((index >= getTopIndex() && index <= itemsHandler.getLastVisibleElementIndex())) {
+		if (index >= getTopIndex() && index <= itemsHandler.getLastVisibleElementIndex()) {
 			redraw();
 		}
 	}
@@ -947,13 +945,9 @@ public class Table extends CustomComposite {
 		if (indices == null) error(SWT.ERROR_NULL_ARGUMENT);
 		if (indices.length == 0) return;
 
-		Set<TableItem> s = new HashSet<>();
-		for (int i : indices) {
-			if (i >= 0 && i < itemsList.size()) {
-				s.add(itemsList.get(i));
-			}
+		if (selectionModel.deselect(indices)) {
+			redraw();
 		}
-		selectedTableItems.removeAll(s);
 	}
 
 	/**
@@ -1029,11 +1023,18 @@ public class Table extends CustomComposite {
 	public void deselectAll() {
 		checkWidget();
 
-		selectedTableItems.clear();
+		selectionModel.clearSelection();
 		redraw();
 	}
 
 	void destroyItem(TableItem item) {
+		final int index = indexOf(item);
+		if (index < 0) {
+			return;
+		}
+
+		selectionModel.remove(index);
+
 		if (!isVirtual()) {
 			itemsList.remove(item);
 		}
@@ -1505,7 +1506,13 @@ public class Table extends CustomComposite {
 	 */
 	public TableItem[] getSelection() {
 		checkWidget();
-		return selectedTableItems.toArray(new TableItem[0]);
+		final int[] selectionIndices = selectionModel.getSelectionIndices();
+		final TableItem[] tableItems = new TableItem[selectionIndices.length];
+		for (int i = 0; i < selectionIndices.length; i++) {
+			final int index = selectionIndices[i];
+			tableItems[i] = _getItem(index);
+		}
+		return tableItems;
 	}
 
 	/**
@@ -1523,7 +1530,7 @@ public class Table extends CustomComposite {
 	 */
 	public int getSelectionCount() {
 		checkWidget();
-		return selectedTableItems.size();
+		return selectionModel.selectionCount();
 	}
 
 	/**
@@ -1543,8 +1550,7 @@ public class Table extends CustomComposite {
 	public int getSelectionIndex() {
 		checkWidget();
 
-		if (selectedTableItems.isEmpty()) return -1;
-		return indexOf(selectedTableItems.first());
+		return selectionModel.getSelectionIndex();
 	}
 
 	/**
@@ -1582,7 +1588,7 @@ public class Table extends CustomComposite {
 	 */
 	public int[] getSelectionIndices() {
 		checkWidget();
-		return indicesOf(selectedTableItems.toArray(new TableItem[0]));
+		return selectionModel.getSelectionIndices();
 	}
 
 	/**
@@ -1653,7 +1659,7 @@ public class Table extends CustomComposite {
 	 */
 	public int getTopIndex() {
 		checkWidget();
-		return topIndex;
+		return selectionModel.getTopIndex();
 	}
 
 	private boolean hasChildren() {
@@ -1718,8 +1724,8 @@ public class Table extends CustomComposite {
 	 */
 	public int indexOf(TableItem item) {
 		checkWidget();
-
 		if (item == null) error(SWT.ERROR_NULL_ARGUMENT);
+
 		if (isVirtual()) {
 			for (Map.Entry<Integer, TableItem> e : virtualItemsList.entrySet()) {
 				if (item.equals(e.getValue())) {
@@ -1729,7 +1735,6 @@ public class Table extends CustomComposite {
 			return -1;
 		}
 		return itemsList.indexOf(item);
-
 	}
 
 	public int[] indicesOf(TableItem[] items) {
@@ -1769,12 +1774,7 @@ public class Table extends CustomComposite {
 	 *                         </ul>
 	 */
 	public boolean isSelected(int index) {
-		for (TableItem it : selectedTableItems) {
-			if (indexOf(it) == index) {
-				return true;
-			}
-		}
-		return false;
+		return selectionModel.isSelected(index);
 	}
 
 	/**
@@ -1968,29 +1968,11 @@ public class Table extends CustomComposite {
 	 */
 	public void select(int[] indices) {
 		checkWidget();
-
 		if (indices == null) error(SWT.ERROR_NULL_ARGUMENT);
 
-		if ((style & SWT.SINGLE) != 0) {
-			if (indices.length > 1) return;
-			selectedTableItems.clear();
+		if (selectionModel.select(indices)) {
+			redraw();
 		}
-
-		for (int index : indices) {
-			if (index < 0 || index >= getItemCount()) {
-				continue;
-			}
-
-			TableItem it = getItem(index);
-			if (it != null) {
-				selectedTableItems.add(it);
-
-				if ((style & SWT.SINGLE) != 0) {
-					break;
-				}
-			}
-		}
-
 	}
 
 	boolean hasItems() {
@@ -2048,17 +2030,11 @@ public class Table extends CustomComposite {
 	 */
 	public void select(int index) {
 		checkWidget();
-
 		if (index < 0 || index >= getItemCount()) return;
 
-		if ((style & SWT.SINGLE) != 0) {
-			selectedTableItems.clear();
+		if (selectionModel.select(new int[] {index})) {
+			redraw();
 		}
-
-		TableItem selected = getItem(index);
-		if (selectedTableItems.contains(selected)) return;
-
-		selectedTableItems.add(getItem(index));
 	}
 
 	/**
@@ -2109,13 +2085,9 @@ public class Table extends CustomComposite {
 			indices[i - start] = i;
 		}
 
-		if ((style & SWT.SINGLE) != 0) {
-			selectedTableItems.clear();
-			selectedTableItems.add(itemsList.get(indices[0]));
-			return;
+		if (selectionModel.select(indices)) {
+			redraw();
 		}
-
-		select(indices);
 	}
 
 	/**
@@ -2369,6 +2341,10 @@ public class Table extends CustomComposite {
 
 		count = Math.max(0, count);
 		if (isVirtual()) {
+			if (count == virtualItemCount) {
+				return;
+			}
+
 			boolean redraw = count > virtualItemCount;
 			this.virtualItemCount = count;
 
@@ -2380,6 +2356,8 @@ public class Table extends CustomComposite {
 					break;
 				}
 			}
+
+			selectionModel.setCount(count);
 
 			if (redraw) {
 				redraw();
@@ -2531,9 +2509,9 @@ public class Table extends CustomComposite {
 		if (length == 0 || ((style & SWT.SINGLE) != 0 && length > 1)) return;
 
 		Set<Integer> set = new TreeSet<>((o1, o2) -> o2 - o1);
-
+		final int count = isVirtual() ? virtualItemCount : itemsList.size();
 		for (int i : indices) {
-			if (i >= 0 && i < itemsList.size()) {
+			if (i >= 0 && i < count) {
 				set.add(i);
 			}
 		}
@@ -2789,11 +2767,11 @@ public class Table extends CustomComposite {
 	public void setTopIndex(int index) {
 		checkWidget();
 
-		if (index == topIndex) return;
+		if (index == selectionModel.getTopIndex()) return;
 
 		final int itemCount = getItemCount();
 		if (itemCount == 0) {
-			topIndex = 0;
+			selectionModel.setTopIndex(0);
 			return;
 		}
 
@@ -2801,14 +2779,14 @@ public class Table extends CustomComposite {
 			index = itemCount - 1;
 		}
 
-		topIndex = index;
+		setTopIndex(index);
 
 		if (mouseHoverElement instanceof TableItem) {
 			mouseHoverElement = null;
 		}
 
 		if (verticalBar != null) {
-			verticalBar.setSelection(topIndex);
+			verticalBar.setSelection(index);
 		}
 		redraw();
 	}
@@ -2840,12 +2818,11 @@ public class Table extends CustomComposite {
 	 */
 	public void showColumn(TableColumn column) {
 		checkWidget();
-
-		if (!isVisible()) return;
-
 		if (column == null) error(SWT.ERROR_NULL_ARGUMENT);
 		if (column.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		if (column.getParent() != this) return;
+		if (column.getParent() != this) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (!isVisible()) return;
+
 		int index = indexOf(column);
 		if (0 > index || index >= getColumnCount()) return;
 
@@ -2926,14 +2903,13 @@ public class Table extends CustomComposite {
 	public void showSelection() {
 		checkWidget();
 
-		if (selectedTableItems.isEmpty()) return;
 		// TODO: check whether it is always the first selected element, which should be
 		// visible.
 
-		TableItem first = selectedTableItems.first();
-
-		int index = indexOf(first);
-		showItem(index);
+		final int index = selectionModel.getSelectionIndex();
+		if (index >= 0) {
+			showItem(index);
+		}
 	}
 
 	/* public */ void sort() {

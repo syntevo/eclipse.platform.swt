@@ -113,8 +113,74 @@ public class TableItem extends Item {
 		this(parent, style, checkNull(parent).getItemCount(), true);
 
 		initialize();
-		this._addListener(style, null);
+		_addListener(style, null);
+	}
 
+	/**
+	 * Constructs a new instance of this class given its parent (which must be a
+	 * <code>Table</code>), a style value describing its behavior and appearance,
+	 * and the index at which to place it in the items maintained by its parent.
+	 * <p>
+	 * The style value is either one of the style constants defined in class
+	 * <code>SWT</code> which is applicable to instances of this class, or must be
+	 * built by <em>bitwise OR</em>'ing together (that is, using the
+	 * <code>int</code> "|" operator) two or more of those <code>SWT</code> style
+	 * constants. The class description lists the style constants that are
+	 * applicable to the class. Style bits are also inherited from superclasses.
+	 * </p>
+	 *
+	 * @param parent a composite control which will be the parent of the new
+	 *               instance (cannot be null)
+	 * @param style  the style of control to construct
+	 * @param index  the zero-relative index to store the receiver in its parent
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the parent
+	 *                                     is null</li>
+	 *                                     <li>ERROR_INVALID_RANGE - if the index is
+	 *                                     not between 0 and the number of elements
+	 *                                     in the parent (inclusive)</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     parent</li>
+	 *                                     <li>ERROR_INVALID_SUBCLASS - if this
+	 *                                     class is not an allowed subclass</li>
+	 *                                     </ul>
+	 *
+	 * @see SWT
+	 * @see Widget#checkSubclass
+	 * @see Widget#getStyle
+	 */
+	public TableItem(Table parent, int style, int index) {
+		this(parent, style, index, true);
+	}
+
+	private TableItem(Table parent, int style, int index, boolean create) {
+		super(parent, style);
+
+		if (index < 0 || index > parent.getItemCount()) error(SWT.ERROR_INVALID_RANGE);
+
+		this.parent = parent;
+		if (create) {
+			parent.createItem(this, index);
+		}
+	}
+
+	@Override
+	protected void checkSubclass() {
+		if (!isValidSubclass()) {
+			error(SWT.ERROR_INVALID_SUBCLASS);
+		}
+	}
+
+	@Override
+	void destroyWidget() {
+		parent.destroyItem(this);
+		releaseHandle();
 	}
 
 	private void initialize() {
@@ -171,11 +237,12 @@ public class TableItem extends Item {
 			return;
 		}
 
-		doPaint(event.gc);
+		final int i = parent.indexOf(this);
+		doPaint(event.gc, i);
 	}
 
-	void doPaint(GC gc) {
-		renderer.doPaint(gc);
+	void doPaint(GC gc, int index) {
+		renderer.doPaint(gc, index);
 	}
 
 	private boolean isVisible() {
@@ -261,69 +328,9 @@ public class TableItem extends Item {
 		}
 	}
 
-	/**
-	 * Constructs a new instance of this class given its parent (which must be a
-	 * <code>Table</code>), a style value describing its behavior and appearance,
-	 * and the index at which to place it in the items maintained by its parent.
-	 * <p>
-	 * The style value is either one of the style constants defined in class
-	 * <code>SWT</code> which is applicable to instances of this class, or must be
-	 * built by <em>bitwise OR</em>'ing together (that is, using the
-	 * <code>int</code> "|" operator) two or more of those <code>SWT</code> style
-	 * constants. The class description lists the style constants that are
-	 * applicable to the class. Style bits are also inherited from superclasses.
-	 * </p>
-	 *
-	 * @param parent a composite control which will be the parent of the new
-	 *               instance (cannot be null)
-	 * @param style  the style of control to construct
-	 * @param index  the zero-relative index to store the receiver in its parent
-	 *
-	 * @exception IllegalArgumentException
-	 *                                     <ul>
-	 *                                     <li>ERROR_NULL_ARGUMENT - if the parent
-	 *                                     is null</li>
-	 *                                     <li>ERROR_INVALID_RANGE - if the index is
-	 *                                     not between 0 and the number of elements
-	 *                                     in the parent (inclusive)</li>
-	 *                                     </ul>
-	 * @exception SWTException
-	 *                                     <ul>
-	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
-	 *                                     called from the thread that created the
-	 *                                     parent</li>
-	 *                                     <li>ERROR_INVALID_SUBCLASS - if this
-	 *                                     class is not an allowed subclass</li>
-	 *                                     </ul>
-	 *
-	 * @see SWT
-	 * @see Widget#checkSubclass
-	 * @see Widget#getStyle
-	 */
-	public TableItem(Table parent, int style, int index) {
-		this(parent, style, index, true);
-	}
-
-	TableItem(Table parent, int style, int index, boolean create) {
-		super(parent, style);
-
-		if (index < 0 || index > parent.getItemCount()) error(SWT.ERROR_INVALID_RANGE);
-
-		this.parent = parent;
-		if (create) {
-			parent.createItem(this, index);
-		}
-	}
-
 	static Table checkNull(Table control) {
 		if (control == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 		return control;
-	}
-
-	@Override
-	protected void checkSubclass() {
-		if (!isValidSubclass())
-			error(SWT.ERROR_INVALID_SUBCLASS);
 	}
 
 	void clear() {
@@ -342,12 +349,6 @@ public class TableItem extends Item {
 		if ((parent.style & SWT.VIRTUAL) != 0) {
 			cached = false;
 		}
-	}
-
-	@Override
-	void destroyWidget() {
-		parent.destroyItem(this);
-		releaseHandle();
 	}
 
 	/**
@@ -785,7 +786,6 @@ public class TableItem extends Item {
 		}
 
 		return renderer.getImageBounds(index);
-
 	}
 
 	/**

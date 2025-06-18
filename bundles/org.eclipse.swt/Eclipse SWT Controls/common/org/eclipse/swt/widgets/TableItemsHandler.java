@@ -81,7 +81,7 @@ class TableItemsHandler {
 				table.checkData(item, i, false);
 			}
 
-			item.doPaint(gc);
+			item.doPaint(gc, i);
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > itemsArea.y + itemsArea.height) {
@@ -162,29 +162,31 @@ class TableItemsHandler {
 	}
 
 	public void handleDoubleClick(Event event) {
-		var ica = getItemsClientArea();
+		Rectangle ica = getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
 
 		Point p = new Point(event.x, event.y);
-		if (ica.contains(p)) {
-			for (int i = table.getTopIndex(); i < Math.min(this.lastVisibleElementIndex + ITEMS_OVERLAY,
-					table.getItemCount()); i++) {
-				var it = table.getItem(i);
-				if (it.getBounds().contains(p)) {
-					Event e = new Event();
-					e.item = it;
-					e.type = SWT.DefaultSelection;
-					e.count = event.count;
-					e.button = event.button;
-					e.doit = event.doit;
-					e.stateMask = event.stateMask;
-					e.time = event.time;
-					e.x = event.x;
-					e.y = event.y;
+		if (!ica.contains(p)) {
+			return;
+		}
 
-					table.postEvent(SWT.DefaultSelection, e);
-					return;
-				}
+		final int max = Math.min(lastVisibleElementIndex + ITEMS_OVERLAY, table.getItemCount());
+		for (int i = table.getTopIndex(); i < max; i++) {
+			TableItem it = table.getItem(i);
+			if (it.getBounds().contains(p)) {
+				Event e = new Event();
+				e.item = it;
+				e.type = SWT.DefaultSelection;
+				e.count = event.count;
+				e.button = event.button;
+				e.doit = event.doit;
+				e.stateMask = event.stateMask;
+				e.time = event.time;
+				e.x = event.x;
+				e.y = event.y;
+
+				table.postEvent(SWT.DefaultSelection, e);
+				return;
 			}
 		}
 	}
