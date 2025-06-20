@@ -1830,4 +1830,3 @@ public static void drawScaled(GC gc, Image original, int width, int height, floa
 }
 
 }
-
