@@ -609,7 +609,12 @@ void bringToTop (boolean force) {
 	}
 	if ((xFocus || (style & SWT.ON_TOP) != 0)) {
 		if (OS.isX11()) {
-			long gdkDisplay = GDK.gdk_window_get_display(gdkResource);
+			long gdkDisplay;
+			if (GTK.GTK4) {
+				gdkDisplay = GDK.gdk_surface_get_display(gdkResource);
+			} else {
+				gdkDisplay = GDK.gdk_window_get_display(gdkResource);
+			}
 			long xDisplay = GDK.gdk_x11_display_get_xdisplay(gdkDisplay);
 			long xWindow;
 			if (GTK.GTK4) {
@@ -2586,7 +2591,7 @@ public void setMenuBar (Menu menu) {
 
 	if (menuBar != null) {
 		long menuHandle = menuBar.handle;
-		GTK.gtk_widget_hide (menuHandle);
+		gtk_widget_hide (menuHandle);
 
 		if (!GTK.GTK4) {
 			destroyAccelGroup();
@@ -2595,7 +2600,7 @@ public void setMenuBar (Menu menu) {
 	menuBar = menu;
 	if (menuBar != null) {
 		long menuHandle = menu.handle;
-		GTK.gtk_widget_show (menuHandle);
+		gtk_widget_show (menuHandle);
 
 		if (!GTK.GTK4) {
 			createAccelGroup();
@@ -2616,7 +2621,7 @@ public void setMinimized (boolean minimized) {
 	if (this.minimized == minimized) return;
 	super.setMinimized (minimized);
 	if(!GTK.gtk_widget_get_visible(shellHandle)) {
-		GTK.gtk_widget_show(shellHandle);
+		gtk_widget_show(shellHandle);
 	}
 	if (minimized) {
 		if (GTK.GTK4) {
@@ -2929,13 +2934,13 @@ public void setVisible (boolean visible) {
 			int [] init_width = new int[1], init_height = new int[1];
 			GTK3.gtk_window_get_size(shellHandle, init_width, init_height);
 			GTK3.gtk_window_resize(shellHandle, 1, 1);
-			GTK.gtk_widget_show (shellHandle);
+			gtk_widget_show (shellHandle);
 			GTK3.gtk_window_resize(shellHandle, init_width[0], init_height[0]);
 			resizeBounds (init_width[0], init_height[0], false);
 			oldWidth = init_width[0];
 			oldHeight = init_height[0];
 		} else {
-			GTK.gtk_widget_show (shellHandle);
+			gtk_widget_show (shellHandle);
 		}
 		/**
 		 *  Feature in GTK: This handles grabbing the keyboard focus from a SWT.ON_TOP window
@@ -3005,7 +3010,7 @@ public void setVisible (boolean visible) {
 	} else {
 		fixActiveShell ();
 		checkAndUngrabFocus();
-		GTK.gtk_widget_hide (shellHandle);
+		gtk_widget_hide (shellHandle);
 		sendEvent (SWT.Hide);
 	}
 }
@@ -3064,9 +3069,9 @@ void showWidget () {
 		GTK3.gtk_container_add (shellHandle, vboxHandle);
 	}
 
-	if (scrolledHandle != 0) GTK.gtk_widget_show (scrolledHandle);
-	if (handle != 0) GTK.gtk_widget_show (handle);
-	if (vboxHandle != 0) GTK.gtk_widget_show (vboxHandle);
+	if (scrolledHandle != 0) gtk_widget_show (scrolledHandle);
+	if (handle != 0) gtk_widget_show (handle);
+	if (vboxHandle != 0) gtk_widget_show (vboxHandle);
 }
 
 @Override
@@ -3104,7 +3109,7 @@ long sizeAllocateProc (long handle, long arg0, long user_data) {
 
 @Override
 long sizeRequestProc (long handle, long arg0, long user_data) {
-	GTK.gtk_widget_hide (handle);
+	gtk_widget_hide (handle);
 	return 0;
 }
 
@@ -3232,12 +3237,12 @@ void updateMinimized (boolean minimized) {
 			if (minimized) {
 				if (shells[i].isVisible ()) {
 					shells[i].showWithParent = true;
-					GTK.gtk_widget_hide(shells[i].shellHandle);
+					gtk_widget_hide(shells[i].shellHandle);
 				}
 			} else {
 				if (shells[i].showWithParent) {
 					shells[i].showWithParent = false;
-					GTK.gtk_widget_show(shells[i].shellHandle);
+					gtk_widget_show(shells[i].shellHandle);
 				}
 			}
 		}
@@ -3319,7 +3324,7 @@ public void dispose () {
 	if (popupChild != null && popupChild.shellHandle != 0 && !popupChild.isDisposed()) {
 		popupChild.dispose();
 	}
-	GTK.gtk_widget_hide (shellHandle);
+	gtk_widget_hide (shellHandle);
 	super.dispose ();
 }
 

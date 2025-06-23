@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -119,6 +120,7 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceII() {
 	image.dispose();
 }
 
+@SuppressWarnings("removal")
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_Rectangle() {
 	Image image;
@@ -153,6 +155,31 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_gra
 	image.dispose();
 
 	image = new Image(display, bounds);
+	image.dispose();
+}
+
+@Test
+public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_int_int() {
+	Image image;
+	IllegalArgumentException e;
+
+	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, -1, 10));
+	assertSWTProblem("Incorrect exception thrown for width < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+
+	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 0, 10));
+	assertSWTProblem("Incorrect exception thrown for width == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+
+	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, -1));
+	assertSWTProblem("Incorrect exception thrown for height < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+
+	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, 0));
+	assertSWTProblem("Incorrect exception thrown for height == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+
+	// valid images
+	image = new Image(null, 10, 10);
+	image.dispose();
+
+	image = new Image(display, 10, 10);
 	image.dispose();
 }
 
@@ -412,6 +439,23 @@ public void test_ConstructorLorg_eclipse_swt_graphics_Device_ImageGcDrawer() {
 }
 
 @Test
+public void test_ConstructorLorg_eclipse_swt_graphics_DeviceImageI() throws IOException {
+	byte[] bytes = Files.readAllBytes(Path.of(getPath("collapseall.png")));
+	Image sourceImage = new Image(display, new ByteArrayInputStream(bytes));
+	Image copiedImage = new Image(display, sourceImage, SWT.IMAGE_COPY);
+	Image targetImage = new Image(display, 1, 1);
+	GC gc = new GC(targetImage);
+	gc.drawImage(sourceImage, 0, 0);
+	gc.drawImage(targetImage, 0, 0);
+
+	assertEquals(0, imageDataComparator().compare(sourceImage.getImageData(), copiedImage.getImageData()));
+
+	sourceImage.dispose();
+	copiedImage.dispose();
+	targetImage.dispose();
+}
+
+@Test
 public void test_equalsLjava_lang_Object() {
 	Image image = null;
 	Image image1 = null;
@@ -521,7 +565,7 @@ public void test_getBounds() {
 	image.dispose();
 	assertEquals(bounds, bounds1);
 
-	image = new Image(display, bounds);
+	image = new Image(display, bounds.width, bounds.height);
 	bounds1 = image.getBounds();
 	image.dispose();
 	assertEquals(bounds, bounds1);
@@ -693,7 +737,7 @@ void getImageData_int(int zoom) {
 	assertEquals(":a: Size of ImageData returned from Image.getImageData(int) method doesn't return matches with bounds in Pixel values.", scaleBounds(bounds, zoom, 100), boundsAtZoom);
 
 	// creates second bitmap image and compare size of imageData
-	image = new Image(display, bounds);
+	image = new Image(display, bounds.width, bounds.height);
 	imageDataAtZoom = image.getImageData(zoom);
 	boundsAtZoom = new Rectangle(0, 0, imageDataAtZoom.width, imageDataAtZoom.height);
 	bounds = image.getBounds();
