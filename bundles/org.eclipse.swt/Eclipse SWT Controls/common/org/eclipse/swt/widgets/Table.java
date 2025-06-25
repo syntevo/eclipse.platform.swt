@@ -344,36 +344,37 @@ public class Table extends CustomComposite {
 		}
 
 		final boolean shiftPressed = (event.stateMask & SWT.SHIFT) != 0;
+		final boolean ctrlOrCmdPressed = (event.stateMask & SWT.MOD1) != 0;
 		switch (event.keyCode) {
 			case SWT.HOME -> {
-				selectionModel.moveSelectionAbsolute(0, shiftPressed);
+				selectionModel.moveSelectionAbsolute(0, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
 			case SWT.END -> {
-				selectionModel.moveSelectionAbsolute(itemCount - 1, shiftPressed);
+				selectionModel.moveSelectionAbsolute(itemCount - 1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
 			case SWT.ARROW_UP -> {
-				selectionModel.moveSelectionRelative(-1, shiftPressed);
+				selectionModel.moveSelectionRelative(-1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
 			case SWT.ARROW_DOWN -> {
-				selectionModel.moveSelectionRelative(1, shiftPressed);
+				selectionModel.moveSelectionRelative(1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
 			case SWT.PAGE_UP -> {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
-				selectionModel.moveSelectionRelative(-amount, shiftPressed);
+				selectionModel.moveSelectionRelative(-amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
 			case SWT.PAGE_DOWN -> {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
-				selectionModel.moveSelectionRelative(amount, shiftPressed);
+				selectionModel.moveSelectionRelative(amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
 			}
@@ -494,20 +495,38 @@ public class Table extends CustomComposite {
 			TableItem it = getItem(i);
 
 			Rectangle b = it.getBounds();
+			if (it.isInCheckArea(p)) {
+				it.toggleCheck();
+				break;
+			}
 			if (b.contains(p)) {
-				if ((style & SWT.MULTI) == 0 || (e.stateMask & SWT.MOD1) == 0) {
-					selectionModel.setSelection(i);
-				} else {
-					selectionModel.toggleSelection(i);
-				}
-			} else {
-				if (it.isInCheckArea(p)) {
-					it.toggleCheck();
-				}
+				final boolean shiftPressed = (e.stateMask & SWT.SHIFT) != 0;
+				final boolean ctrlOrCmdPressed = (e.stateMask & SWT.MOD1) != 0;
+				clickAtRow(i, shiftPressed, ctrlOrCmdPressed);
+				break;
 			}
 		}
 		redraw();
 		sendSelectionEvent(SWT.Selection);
+	}
+
+	private void clickAtRow(int index, boolean shiftPressed, boolean ctrlOrCmdPressed) {
+		final boolean multiSelection = (style & SWT.MULTI) != 0;
+		if (multiSelection) {
+			if (ctrlOrCmdPressed) {
+				selectionModel.toggleSelection(index);
+				return;
+			}
+			if (shiftPressed) {
+				final int anchor = selectionModel.getAnchor();
+				if (anchor >= 0) {
+					selectionModel.selectRangeTo(index);
+					return;
+				}
+			}
+		}
+
+		selectionModel.setSelection(index);
 	}
 
 	private void onMouseUp(Event e) {
