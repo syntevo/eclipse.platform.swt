@@ -37,6 +37,11 @@ public class TableItemRenderer {
 	void doPaint(GC gc, int index, boolean paintItemEvent) {
 		Rectangle itemBounds = item.getBounds();
 
+/*
+		gc.setBackground(new Color(255, (index & 1) == 0 ? 255 : 128, 128));
+		gc.fillRectangle(itemBounds.x + index & 1, itemBounds.y, itemBounds.width, itemBounds.height);
+
+*/
 		final Table parent = getParent();
 
 		if (parent.isSelected(index)) {

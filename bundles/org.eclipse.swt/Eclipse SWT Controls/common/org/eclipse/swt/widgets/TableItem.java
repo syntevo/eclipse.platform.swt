@@ -407,7 +407,7 @@ public class TableItem extends Item {
 	 * @since 3.2
 	 */
 	public Rectangle getBounds() {
-		var full = getFullBounds();
+		Rectangle full = getFullBounds();
 
 		int width = full.width;
 		int x = full.x;
@@ -418,13 +418,11 @@ public class TableItem extends Item {
 		}
 
 		if (getParent().columnsExist()) {
-			width = width - shift;
+			width -= shift;
 			width = Math.max(0, width);
-			x += shift;
-		} else {
-			x += shift;
 		}
 
+		x += shift;
 		return new Rectangle(x, full.y, width, full.height);
 	}
 

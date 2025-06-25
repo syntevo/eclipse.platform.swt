@@ -162,8 +162,6 @@ public class Table extends CustomComposite {
 
 	private Color headerForegroundColor;
 
-	private boolean hasMouseEntered;
-
 	private int virtualItemCount;
 
 	/**
@@ -231,7 +229,6 @@ public class Table extends CustomComposite {
 			case SWT.KeyDown -> onKeyDown(event);
 			case SWT.KeyUp -> onKeyUp(event);
 			case SWT.MouseMove -> onMouseMove(event);
-			case SWT.MouseEnter -> onMouseEnter();
 			case SWT.MouseExit -> onMouseExit();
 			case SWT.MouseDoubleClick -> onDoubleClick(event);
 			}
@@ -240,6 +237,7 @@ public class Table extends CustomComposite {
 		addListener(SWT.KeyDown, listener);
 		addListener(SWT.KeyUp, listener);
 		addListener(SWT.MouseMove, listener);
+		addListener(SWT.MouseExit, listener);
 		addListener(SWT.MouseDown, listener);
 		addListener(SWT.MouseUp, listener);
 		addListener(SWT.Paint, listener);
@@ -264,16 +262,11 @@ public class Table extends CustomComposite {
 		itemsHandler.handleDoubleClick(event);
 	}
 
-	private void onMouseEnter() {
-		if (!hasMouseEntered) {
-			hasMouseEntered = true;
+	private void onMouseExit() {
+		if (mouseHoverElement != null) {
+			mouseHoverElement = null;
 			redraw();
 		}
-	}
-
-	private void onMouseExit() {
-		hasMouseEntered = false;
-		redraw();
 	}
 
 	private void onMouseMove(Event event) {
@@ -424,9 +417,10 @@ public class Table extends CustomComposite {
 		updateVerticalScrollBar();
 
 		if (horizontalBar != null) {
-			Point tableSize = computeDefaultSize();
+			Point tableSize = getPreferredSize();
 			Rectangle ca = getClientArea();
-			horizontalBar.setMaximum(getTotalColumnWidth() + 10);
+			// +1 for the closing vertical line of the table header
+			horizontalBar.setMaximum(tableSize.x + 1);
 			horizontalBar.setMinimum(0);
 			horizontalBar.setThumb(ca.width);
 			horizontalBar.setVisible(tableSize.x > ca.width);
@@ -438,16 +432,12 @@ public class Table extends CustomComposite {
 			return;
 		}
 
-		Rectangle ca = getClientArea();
-		int caHeight = ca.height - getHeaderHeight();
-
-		final int itemHeight = Math.max(1, getItemHeight());
-		final int fullyVisibleItems = caHeight / itemHeight;
+		final int fullyVisibleItemCount = getFullyVisibleItemCount();
 
 		final int itemCount = getItemCount();
-		if (itemCount > fullyVisibleItems) {
+		if (itemCount > fullyVisibleItemCount) {
 			verticalBar.setVisible(true);
-			verticalBar.setValues(selectionModel.getTopIndex(), 0, itemCount + 1, fullyVisibleItems, 1, fullyVisibleItems);
+			verticalBar.setValues(selectionModel.getTopIndex(), 0, itemCount, fullyVisibleItemCount, 1, fullyVisibleItemCount);
 		} else {
 			verticalBar.setVisible(false);
 			verticalBar.setValues(0, 0, 0, 1, 1, 1);
@@ -823,23 +813,18 @@ public class Table extends CustomComposite {
 	public Point computeSize(int wHint, int hHint, boolean changed) {
 		checkWidget();
 
-		Point defaultSize = computeDefaultSize();
+		Point defaultSize = getPreferredSize();
 		int width = wHint == SWT.DEFAULT ? defaultSize.x : wHint;
 		int height = hHint == SWT.DEFAULT ? defaultSize.y : hHint;
 		return new Point(width, height);
 	}
 
-	private Point computeDefaultSize() {
+	private Point getPreferredSize() {
 		Point columnsSize = columnsHandler.getSize();
 		Point itemsArea = itemsHandler.getSize();
 
-		final int scrollbarWidth = 0;
-		int width = columnsSize.x + scrollbarWidth;
-		if (!columnsExist()) {
-			width = itemsArea.x + scrollbarWidth;
-		}
-
-		return new Point(width, columnsSize.y + itemsArea.y + scrollbarWidth);
+		int width = columnsExist() ? columnsSize.x : itemsArea.x;
+		return new Point(width, columnsSize.y + itemsArea.y);
 	}
 
 	void createHeaderToolTips() {

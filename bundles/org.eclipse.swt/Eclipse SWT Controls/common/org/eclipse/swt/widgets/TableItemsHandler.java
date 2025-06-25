@@ -102,14 +102,14 @@ class TableItemsHandler {
 	}
 
 	public Rectangle getItemsClientArea() {
-		var ca = table.getClientArea();
-		var columns = table.getColumnsArea();
+		Rectangle ca = table.getClientArea();
+		Rectangle columns = table.getColumnsArea();
 
 		return new Rectangle(0, columns.y + columns.height + 1, ca.width, ca.height - columns.height);
 	}
 
 	public void handleMouseMove(Event event) {
-		var ica = getItemsClientArea();
+		Rectangle ica = getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
 
 		var mouseHoverElement = table.mouseHoverElement;
