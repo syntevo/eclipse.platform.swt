@@ -63,8 +63,6 @@ class TableItemsHandler {
 	public void paint(GC gc) {
 		Rectangle itemsArea = getItemsClientArea();
 
-		Color fgBef = gc.getForeground();
-
 		this.lastVisibleElementIndex = -1;
 
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
@@ -86,8 +84,6 @@ class TableItemsHandler {
 		if (this.lastVisibleElementIndex == -1) {
 			this.lastVisibleElementIndex = table.getItemCount() - 1;
 		}
-
-		gc.setForeground(fgBef);
 	}
 
 	public Point getSize() {
