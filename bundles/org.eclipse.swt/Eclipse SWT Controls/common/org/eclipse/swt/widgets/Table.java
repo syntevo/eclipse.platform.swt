@@ -102,6 +102,7 @@ public class Table extends CustomComposite {
 	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
 
 	static final Color SELECTION_COLOR = new Color(224, 238, 254);
+	static final Color HOVER_COLOR = new Color(234, 244, 255);
 
 	static final int TABLE_INITIAL_RIGHT_SHIFT = 3;
 	static final int TABLE_CHECKBOX_RIGHT_SHIFT = 35;
@@ -2270,6 +2271,10 @@ public class Table extends CustomComposite {
 
 	void setCheckboxImageList(int width, int height, boolean fixScroll) {
 		logNotImplemented();
+	}
+
+	boolean isFocusRow(int index) {
+		return selectionModel.getCurrent() == index;
 	}
 
 	void setFocusIndex(int index) {

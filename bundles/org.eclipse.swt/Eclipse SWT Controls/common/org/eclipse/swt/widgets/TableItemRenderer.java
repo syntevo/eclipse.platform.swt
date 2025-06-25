@@ -35,29 +35,32 @@ public class TableItemRenderer {
 	}
 
 	public void doPaint(GC gc, int index, boolean paintItemEvent) {
-		final Table parent = getParent();
+		final Table table = getParent();
 
 		Rectangle itemBounds = item.getBounds();
-		if (parent.isSelected(index)) {
+		if (table.isSelected(index)) {
 			this.selected = true;
 
 			gc.setBackground(Table.SELECTION_COLOR);
 			gc.fillRectangle(itemBounds);
-			gc.drawRectangle(new Rectangle(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1));
-		} else if (parent.mouseHoverElement == item) {
+		} else if (table.mouseHoverElement == item) {
 			this.hovered = true;
-			gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
+			gc.setBackground(Table.HOVER_COLOR);
 			gc.fillRectangle(itemBounds);
 		} else {
 			this.selected = false;
 			this.hovered = false;
 		}
 
-		if ((parent.getStyle() & SWT.CHECK) != 0) {
+		if (table.isFocusRow(index)) {
+			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
+		}
+
+		if ((table.getStyle() & SWT.CHECK) != 0) {
 			drawCheckbox(gc);
 		}
 
-		final int columnCount = parent.getColumnCount();
+		final int columnCount = table.getColumnCount();
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
 				if (paintItemEvent) {
@@ -69,18 +72,18 @@ public class TableItemRenderer {
 					event.x = itemBounds.x;
 					event.y = itemBounds.y;
 					// TODO MeasureItem should happen in the bounds calculation logic...
-					parent.sendEvent(SWT.MeasureItem, event);
-					parent.sendEvent(SWT.EraseItem, event);
+					table.sendEvent(SWT.MeasureItem, event);
+					table.sendEvent(SWT.EraseItem, event);
 
 					if (this.selected) {
 						gc.setBackground(Table.SELECTION_COLOR);
 						gc.fillRectangle(itemBounds);
 					} else if (this.hovered) {
-						gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
+						gc.setBackground(table.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
 						gc.fillRectangle(itemBounds);
 					}
 
-					parent.sendEvent(SWT.PaintItem, event);
+					table.sendEvent(SWT.PaintItem, event);
 				} else {
 					drawItemCell(gc, i);
 				}
