@@ -234,7 +234,7 @@ public class Table extends CustomComposite {
 			case SWT.FocusOut -> onFocusOut();
 			case SWT.Traverse -> onTraverse(event);
 			case SWT.Selection -> onSelection(event);
-			case SWT.V_SCROLL, SWT.H_SCROLL, SWT.MouseWheel -> onScrollBar();
+			case SWT.MouseWheel -> onScrollBar();
 			case SWT.KeyDown -> onKeyDown(event);
 			case SWT.KeyUp -> onKeyUp(event);
 			case SWT.MouseMove -> onMouseMove(event);
@@ -251,14 +251,9 @@ public class Table extends CustomComposite {
 		addListener(SWT.MouseUp, listener);
 		addListener(SWT.Paint, listener);
 		addListener(SWT.Resize, listener);
-		addListener(SWT.KeyDown, listener);
 		addListener(SWT.FocusIn, listener);
 		addListener(SWT.FocusOut, listener);
 		addListener(SWT.Traverse, listener);
-		addListener(SWT.Selection, listener);
-		addListener(SWT.V_SCROLL, listener);
-		addListener(SWT.H_SCROLL, listener);
-		addListener(SWT.SCROLL_LINE, listener);
 		addListener(SWT.MouseWheel, listener);
 		addListener(SWT.MouseDoubleClick, listener);
 
@@ -346,7 +341,72 @@ public class Table extends CustomComposite {
 	}
 
 	private void onKeyDown(Event event) {
-		// TODO implement all keyboard keys
+		final int itemCount = getItemCount();
+		if (itemCount == 0) {
+			return;
+		}
+
+		final boolean shiftPressed = (event.stateMask & SWT.SHIFT) != 0;
+		switch (event.keyCode) {
+			case SWT.HOME -> {
+				selectionModel.moveSelectionAbsolute(0, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+			case SWT.END -> {
+				selectionModel.moveSelectionAbsolute(itemCount - 1, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+			case SWT.ARROW_UP -> {
+				selectionModel.moveSelectionRelative(-1, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+			case SWT.ARROW_DOWN -> {
+				selectionModel.moveSelectionRelative(1, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+			case SWT.PAGE_UP -> {
+				final int amount = Math.max(1, getFullyVisibleItemCount());
+				selectionModel.moveSelectionRelative(-amount, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+			case SWT.PAGE_DOWN -> {
+				final int amount = Math.max(1, getFullyVisibleItemCount());
+				selectionModel.moveSelectionRelative(amount, shiftPressed);
+				scrollIntoView();
+				redraw();
+			}
+		}
+	}
+
+	private void scrollIntoView() {
+		final int current = selectionModel.getCurrent();
+		if (current < 0) {
+			return;
+		}
+		final int topIndex = selectionModel.getTopIndex();
+		final int fullyVisibleItemCount = getFullyVisibleItemCount();
+		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
+		final int lastFullyVisibleItem = fullyVisibleItemCount + topIndex;
+		if (current < topIndex + margin) {
+			selectionModel.setTopIndex(Math.max(0, current - margin));
+		} else if (current > lastFullyVisibleItem - margin) {
+			selectionModel.setTopIndex(Math.min(current - fullyVisibleItemCount + margin,
+					selectionModel.getCount() - fullyVisibleItemCount));
+		}
+	}
+
+	private int getFullyVisibleItemCount() {
+		int height = getClientArea().height;
+		if (getHeaderVisible()) {
+			height -= getHeaderHeight();
+		}
+		final int itemHeight = getItemHeight();
+		return Math.max(0, height / itemHeight);
 	}
 
 	private void onKeyUp(Event event) {
@@ -1421,11 +1481,10 @@ public class Table extends CustomComposite {
 	public int getItemHeight() {
 		checkWidget();
 
-		if (!itemsList.isEmpty()) {
-			return itemsList.get(getTopIndex()).getBounds().height;
-		}
-
-		return TableItemRenderer.guessItemHeight(this);
+		final int height = itemsList.isEmpty()
+				? TableItemRenderer.guessItemHeight(this)
+				: itemsList.get(selectionModel.getTopIndex()).getBounds().height;
+		return Math.max(1, height);
 	}
 
 	/**

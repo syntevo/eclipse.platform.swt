@@ -14,11 +14,15 @@ public final class ListLikeModel {
 	private final boolean singleSelection;
 
 	private int topIndex;
-	private int current;
+	private int current = -1;
 	private int count;
 
 	public ListLikeModel(boolean singleSelection) {
 		this.singleSelection = singleSelection;
+	}
+
+	public int getCount() {
+		return count;
 	}
 
 	public void setCount(int count) {
@@ -30,6 +34,28 @@ public final class ListLikeModel {
 			selection.removeIf(i -> i >= count);
 		}
 		this.count = count;
+	}
+
+	public void remove(int index) {
+		if (count == 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+		if (index < current) {
+			current--;
+		}
+		// todo update selection
+		count--;
+	}
+
+	public int getCurrent() {
+		return current;
+	}
+
+	public int getTopIndex() {
+		return topIndex;
+	}
+
+	public void setTopIndex(int topIndex) {
+		checkIndex(topIndex);
+		this.topIndex = topIndex;
 	}
 
 	public void setSelection(int i) {
@@ -83,6 +109,22 @@ public final class ListLikeModel {
 		return changed;
 	}
 
+	public void select(int fromInclusive, int toInclusive, boolean select) {
+		fromInclusive = Math.max(fromInclusive, 0);
+		toInclusive = Math.min(toInclusive, count - 1);
+		if (fromInclusive > toInclusive) {
+			return;
+		}
+
+		for (int i = fromInclusive; i <= toInclusive; i++) {
+			if (select) {
+				selection.add(i);
+			} else {
+				selection.remove(i);
+			}
+		}
+	}
+
 	public void clearSelection() {
 		selection.clear();
 	}
@@ -115,21 +157,35 @@ public final class ListLikeModel {
 		return selection.contains(index);
 	}
 
-	public void remove(int index) {
-		if (count == 0) SWT.error(SWT.ERROR_UNSPECIFIED);
-		if (index < current) {
-			current--;
+	public void moveSelectionAbsolute(int target, boolean shiftPressed) {
+		if (count == 0) {
+			return;
 		}
-		count--;
+
+		if (shiftPressed) {
+			final int from = Math.min(current, target);
+			final int to = Math.max(current, target);
+			select(from, to, true);
+		} else {
+			setSelection(target);
+		}
+		current = target;
 	}
 
-	public int getTopIndex() {
-		return topIndex;
-	}
+	public void moveSelectionRelative(int direction, boolean shiftPressed) {
+		if (count == 0 || direction == 0) {
+			return;
+		}
 
-	public void setTopIndex(int topIndex) {
-		checkIndex(topIndex);
-		this.topIndex = topIndex;
+		final int target;
+		if (current < 0) {
+			target = topIndex;
+		} else {
+			target = direction < 0
+					? Math.max(current + direction, 0)
+					: Math.min(current + direction, count - 1);
+		}
+		moveSelectionAbsolute(target, shiftPressed);
 	}
 
 	private boolean isOutOfBounds(int index) {

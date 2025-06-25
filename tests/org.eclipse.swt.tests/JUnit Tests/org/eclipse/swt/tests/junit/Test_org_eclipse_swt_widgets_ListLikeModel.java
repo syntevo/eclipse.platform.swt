@@ -1,7 +1,6 @@
 package org.eclipse.swt.tests.junit;
 
 import org.eclipse.swt.SWTError;
-import org.eclipse.swt.SWTException;
 import org.eclipse.swt.widgets.ListLikeModel;
 import org.junit.Assert;
 import org.junit.Test;
