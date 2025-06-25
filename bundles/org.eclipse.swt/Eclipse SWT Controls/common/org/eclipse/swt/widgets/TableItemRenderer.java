@@ -27,69 +27,68 @@ public class TableItemRenderer {
 
 	private final Map<Integer, Point> computedCellSizes = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellTextBounds = new HashMap<>();
-	private Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
+	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
 	private Point computedSize;
 
 	public TableItemRenderer(TableItem tableItem) {
 		this.item = tableItem;
 	}
 
-	void doPaint(GC gc, int index) {
-		Rectangle b = item.getBounds();
+	void doPaint(GC gc, int index, boolean paintItemEvent) {
+		Rectangle itemBounds = item.getBounds();
 
-		Color bgBefore = gc.getBackground();
 		final Table parent = getParent();
-		final boolean paintItemEvent = parent.hooks(SWT.PaintItem);
 
 		if (parent.isSelected(index)) {
 			this.selected = true;
 
 			gc.setBackground(Table.SELECTION_COLOR);
-			gc.fillRectangle(b);
-			gc.drawRectangle(new Rectangle(b.x, b.y, b.width - 1, b.height - 1));
+			gc.fillRectangle(itemBounds);
+			gc.drawRectangle(new Rectangle(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1));
 		} else if (parent.mouseHoverElement == item) {
 			this.hovered = true;
 			gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
-			gc.fillRectangle(b);
+			gc.fillRectangle(itemBounds);
 		} else {
 			this.selected = false;
 			this.hovered = false;
 		}
 
-		drawCheckbox(gc);
+		if ((parent.getStyle() & SWT.CHECK) != 0) {
+			drawCheckbox(gc);
+		}
 
-		if (parent.columnsExist()) {
-			for (int i = 0; i < parent.getColumnCount(); i++) {
-
+		final int columnCount = parent.getColumnCount();
+		if (columnCount > 0) {
+			for (int i = 0; i < columnCount; i++) {
 				if (paintItemEvent) {
-					b = item.getBounds(i);
+					itemBounds = item.getBounds(i);
 					Event event = new Event();
 					event.item = item;
 					event.index = i;
 					event.gc = gc;
-					event.x = b.x;
-					event.y = b.y;
+					event.x = itemBounds.x;
+					event.y = itemBounds.y;
 					// TODO MeasureItem should happen in the bounds calculation logic...
 					parent.sendEvent(SWT.MeasureItem, event);
 					parent.sendEvent(SWT.EraseItem, event);
 
 					if (this.selected) {
 						gc.setBackground(Table.SELECTION_COLOR);
-						gc.fillRectangle(b);
+						gc.fillRectangle(itemBounds);
 					} else if (this.hovered) {
 						gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
-						gc.fillRectangle(b);
+						gc.fillRectangle(itemBounds);
 					}
 
 					parent.sendEvent(SWT.PaintItem, event);
-				} else
-					drawItemCell(gc, i, paintItemEvent);
+				} else {
+					drawItemCell(gc, i);
+				}
 			}
 		} else {
-			drawItem(gc, paintItemEvent);
+			drawItem(gc, paintItemEvent, itemBounds);
 		}
-
-		gc.setBackground(bgBefore);
 	}
 
 	private Table getParent() {
@@ -97,10 +96,7 @@ public class TableItemRenderer {
 	}
 
 	private void drawCheckbox(GC gc) {
-		if ((getParent().getStyle() & SWT.CHECK) == 0)
-			return;
-
-		var itemBounds = item.getFullBounds();
+		Rectangle itemBounds = item.getFullBounds();
 
 		this.checkboxBounds = new Rectangle(itemBounds.x + 5, itemBounds.y + 3, 20, 20);
 
@@ -113,49 +109,49 @@ public class TableItemRenderer {
 		}
 	}
 
-	private void drawItemCell(GC gc, int columnIndex, boolean paintItemEvent) {
-		var parent = item.getParent();
-		var b = getBounds(columnIndex);
+	private void drawItemCell(GC gc, int columnIndex) {
+		Rectangle b = getBounds(columnIndex);
 		gc.setClipping(b);
+		try {
+			Color prevBG = gc.getBackground();
+			Color bgCell = item.getBackground(columnIndex);
 
-		var prevBG = gc.getBackground();
-		var bgCell = item.getBackground(columnIndex);
+			if (bgCell != null && !this.selected && !this.hovered) {
+				gc.setBackground(bgCell);
+				gc.fillRectangle(b);
+			}
 
-		if (bgCell != null && !this.selected && !this.hovered) {
-			gc.setBackground(bgCell);
-			gc.fillRectangle(b);
+			int currentWidthPosition = b.x + leftMargin;
+
+			int xPosition = currentWidthPosition;
+			int yPosition = b.y + topMargin;
+
+			Image image = item.getImage(columnIndex);
+			if (image != null) {
+				gc.drawImage(image, xPosition, yPosition);
+				currentWidthPosition += image.getBounds().width + GAP;
+			}
+
+			Color prevFG = gc.getForeground();
+			Color fgCol = item.getForeground(columnIndex);
+			if (fgCol != null && !this.selected && !this.hovered) {
+				gc.setForeground(fgCol);
+			}
+
+			gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
+
+			gc.setForeground(prevFG);
+			gc.setBackground(prevBG);
+		} finally {
+			gc.setClipping((Rectangle) null);
 		}
-
-		int currentWidthPosition = b.x + leftMargin;
-
-		int xPosition = currentWidthPosition;
-		int yPosition = b.y + topMargin;
-
-		var image = item.getImage(columnIndex);
-		if (image != null) {
-			gc.drawImage(image, xPosition, yPosition);
-			currentWidthPosition += image.getBounds().width + GAP;
-		}
-
-		var prevFG = gc.getForeground();
-		var fgCol = item.getForeground(columnIndex);
-		if (fgCol != null && !this.selected && !this.hovered) {
-			gc.setForeground(fgCol);
-		}
-
-		gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
-
-		gc.setForeground(prevFG);
-		gc.setBackground(prevBG);
-		gc.setClipping((Rectangle) null);
 	}
 
 	private Rectangle getBounds(int columnIndex) {
 		return item.getBounds(columnIndex);
 	}
 
-	private void drawItem(GC gc, boolean paintItemEvent) {
-		Rectangle bounds = getBounds();
+	private void drawItem(GC gc, boolean paintItemEvent, Rectangle bounds) {
 		gc.setClipping(bounds);
 
 		try {

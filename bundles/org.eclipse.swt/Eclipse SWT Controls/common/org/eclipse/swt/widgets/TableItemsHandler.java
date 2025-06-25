@@ -65,6 +65,12 @@ class TableItemsHandler {
 
 		this.lastVisibleElementIndex = -1;
 
+		final boolean paintItemEvent = table.hooks(SWT.PaintItem);
+
+		final Color background = table.getBackground();
+		gc.setBackground(background);
+		gc.fillRectangle(itemsArea);
+
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
 
@@ -72,7 +78,8 @@ class TableItemsHandler {
 				table.checkData(item, i, false);
 			}
 
-			item.doPaint(gc, i);
+			gc.setBackground(background);
+			item.doPaint(gc, i, paintItemEvent);
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > itemsArea.y + itemsArea.height) {

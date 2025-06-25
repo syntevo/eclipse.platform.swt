@@ -615,13 +615,14 @@ public class Table extends CustomComposite {
 		if ((style & SWT.NO_SCROLL) == 0) {
 			style |= SWT.H_SCROLL | SWT.V_SCROLL;
 		}
+		style |= SWT.NO_BACKGROUND;
 		return checkBits(style, SWT.SINGLE, SWT.MULTI, 0, 0, 0, 0);
 	}
 
 	@Override
 	void checkBuffered() {
 		super.checkBuffered();
-		style |= SWT.DOUBLE_BUFFERED;
+//		style |= SWT.DOUBLE_BUFFERED;
 	}
 
 	boolean checkData(TableItem item, boolean redraw) {

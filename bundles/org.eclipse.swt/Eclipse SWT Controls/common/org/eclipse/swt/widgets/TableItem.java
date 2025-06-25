@@ -189,7 +189,6 @@ public class TableItem extends Item {
 			case SWT.Dispose -> onDispose(event);
 			case SWT.MouseDown -> onMouseDown(event);
 			case SWT.MouseUp -> onMouseUp(event);
-			case SWT.Paint -> onPaint(event);
 			case SWT.Resize -> onResize();
 			case SWT.FocusIn -> onFocusIn();
 			case SWT.FocusOut -> onFocusOut();
@@ -202,7 +201,6 @@ public class TableItem extends Item {
 		addListener(SWT.Dispose, listener);
 		addListener(SWT.MouseDown, listener);
 		addListener(SWT.MouseUp, listener);
-		addListener(SWT.Paint, listener);
 		addListener(SWT.Resize, listener);
 		addListener(SWT.KeyDown, listener);
 		addListener(SWT.KeyUp, listener);
@@ -232,21 +230,8 @@ public class TableItem extends Item {
 		initializeAccessible();
 	}
 
-	private void onPaint(Event event) {
-		if (!isVisible()) {
-			return;
-		}
-
-		final int i = parent.indexOf(this);
-		doPaint(event.gc, i);
-	}
-
-	void doPaint(GC gc, int index) {
-		renderer.doPaint(gc, index);
-	}
-
-	private boolean isVisible() {
-		return true;
+	void doPaint(GC gc, int index, boolean paintItemEvent) {
+		renderer.doPaint(gc, index, paintItemEvent);
 	}
 
 	void initializeAccessible() {
