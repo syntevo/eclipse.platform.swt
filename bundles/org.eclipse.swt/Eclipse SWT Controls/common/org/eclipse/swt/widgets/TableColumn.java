@@ -16,7 +16,6 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.internal.*;
 
 /**
  * Instances of this class represent a column in a table widget.
@@ -52,8 +51,6 @@ public class TableColumn extends Item {
 	private int height = -1;
 
 	private Integer horizontalShiftAtCalculation;
-
-	private TableColumnRenderer renderer = new TableColumnRenderer(this);
 
 	/**
 	 * Constructs a new instance of this class given its parent (which must be a
@@ -399,9 +396,9 @@ public class TableColumn extends Item {
 	public void pack() {
 		checkWidget();
 
-		Point p = renderer.computeSize();
+		Point p = parent.computeSize(this);
 		this.setWidth(p.x);
-		this.setHeight(p.y);
+		this.height = p.y;
 
 		getParent().redraw();
 	}
@@ -669,15 +666,6 @@ public class TableColumn extends Item {
 		height = -1;
 	}
 
-	private void setHeight(int height) {
-		checkWidget();
-		if (height < 0) return;
-		int index = parent.indexOf(this);
-		if (index == -1) return;
-
-		this.height = height;
-	}
-
 	void updateToolTip(int index) {
 		Table.logNotImplemented();
 	}
@@ -693,18 +681,14 @@ public class TableColumn extends Item {
 	}
 
 	private void calculateLocation() {
-		var index = getParent().indexOf(this);
+		int index = getParent().indexOf(this);
 		if (index == 0) {
 			this.horizontalShiftAtCalculation = getParent().getHorizontalBar().getSelection();
 			this.location = new Point(-horizontalShiftAtCalculation, 0);
 		} else {
-			var prevBounds = getParent().getColumn(index - 1).getBounds();
+			Rectangle prevBounds = getParent().getColumn(index - 1).getBounds();
 			this.location = new Point(prevBounds.x + prevBounds.width, prevBounds.y);
 		}
-	}
-
-	void paint(GC gc) {
-		renderer.doPaint(gc);
 	}
 
 	Rectangle getBounds() {
@@ -715,7 +699,7 @@ public class TableColumn extends Item {
 		return new Rectangle(l.x, l.y, width, height);
 	}
 
-	public void redraw() {
+	void redraw() {
 		Rectangle b = getBounds();
 		getParent().redraw(b.x, b.y, b.width, b.height, true);
 	}

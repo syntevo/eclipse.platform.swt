@@ -2866,7 +2866,7 @@ public class Table extends CustomComposite {
 
 		Rectangle ca = getClientArea();
 
-		int horShift = column.getBounds().x;
+		int horShift = column.getLocation().x;
 		if (ca.x < horShift && ca.x + ca.width > horShift) return;
 
 		final ScrollBar horizontalBar = getHorizontalBar();
@@ -2995,5 +2995,9 @@ public class Table extends CustomComposite {
 
 	TableItemsHandler getItemsHandler() {
 		return itemsHandler;
+	}
+
+	Point computeSize(TableColumn column) {
+		return renderer.computeSize(column);
 	}
 }

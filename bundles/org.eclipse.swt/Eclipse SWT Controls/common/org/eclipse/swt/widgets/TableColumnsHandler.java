@@ -47,21 +47,6 @@ final class TableColumnsHandler {
 		}
 	}
 
-	public void paint(GC gc) {
-		if (!table.getHeaderVisible()) return;
-
-		Rectangle ca = table.getClientArea();
-		gc.fillRectangle(ca);
-
-		for (TableColumn c : table.getColumns()) {
-			if (!c.getBounds().intersects(ca)) {
-				continue;
-			}
-
-			c.paint(gc);
-		}
-	}
-
 	public Point getSize() {
 		if (this.computedSize == null || !Table.USE_CACHES) {
 			calculateColumnsPositions();

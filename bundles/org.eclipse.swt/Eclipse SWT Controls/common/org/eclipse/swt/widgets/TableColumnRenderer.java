@@ -1,51 +1,48 @@
 package org.eclipse.swt.widgets;
 
-import org.eclipse.swt.*;
-import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 
 public class TableColumnRenderer {
 
 	/** Left and right margins */
-	private static final int DEFAULT_MARGIN = 6;
+	private static final int HEADER_MARGIN_X = 6;
 
 	/** up margin */
-	private static final int DEFAULT_MARGIN_UP = 3;
+	private static final int HEADER_MARGIN_Y = 3;
 
 	/** down margin */
 	private static final int DEFAULT_MARGIN_DOWN = 1;
 
-	/** border width */
-	private static final int DEFAULT_BORDER_WIDTH = 1;
-
-	private final TableColumn column;
-
-	public TableColumnRenderer(TableColumn tableColumn) {
-		this.column = tableColumn;
+	public TableColumnRenderer() {
 	}
 
-	void doPaint(GC gc) {
+	public void doPaint(TableColumn column, GC gc, int height) {
 		Rectangle b = column.getBounds();
-		gc.drawRectangle(b);
+		final int separatorX = b.x + b.width;
+		gc.drawLine(separatorX, HEADER_MARGIN_Y,
+				separatorX, height - HEADER_MARGIN_Y);
 
-		int xPosition = b.x + DEFAULT_MARGIN + DEFAULT_BORDER_WIDTH;
-		int yPosition = b.y + DEFAULT_MARGIN_UP + DEFAULT_BORDER_WIDTH;
+		int xPosition = b.x + HEADER_MARGIN_X;
+		int yPosition = b.y + HEADER_MARGIN_Y;
 		gc.drawText(column.getText(), xPosition, yPosition);
 	}
 
 	static int guessColumnHeight(TableColumn column) {
 		int textHeight = Table.guessTextHeight(column.getParent());
-		return textHeight + DEFAULT_MARGIN_UP + DEFAULT_MARGIN_DOWN;
+		return textHeight + 2 * HEADER_MARGIN_Y;
 	}
 
-	Point computeSize() {
-		final GC gc = new GC(getParent());
+	public Point computeSize(TableColumn column, Table parent) {
+		final GC gc = new GC(parent);
 		try {
-			int colIndex = getParent().indexOf(column);
+			int colIndex = parent.indexOf(column);
 			Point fin = new Point(0, 0);
 			int width = 0;
-			final TableItem[] items = getParent().getItems();
+			final TableItem[] items = parent.getItems();
 			if (items != null) {
-				final boolean virtual = getParent().isVirtual();
+				final boolean virtual = parent.isVirtual();
 				for (TableItem item : items) {
 					if (virtual && !item.cached) {
 						continue;
@@ -57,15 +54,11 @@ public class TableColumnRenderer {
 			}
 
 			Point headerExt = gc.textExtent(column.getText());
-			fin.x = Math.max(headerExt.x + 2 * DEFAULT_MARGIN + 2 * DEFAULT_BORDER_WIDTH, width);
-			fin.y = Math.max(headerExt.y + DEFAULT_MARGIN_UP + DEFAULT_MARGIN_DOWN + 2 * DEFAULT_BORDER_WIDTH, 10);
+			fin.x = Math.max(headerExt.x + 2 * HEADER_MARGIN_X, width);
+			fin.y = Math.max(headerExt.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
 			return fin;
 		} finally {
 			gc.dispose();
 		}
-	}
-
-	private Table getParent() {
-		return column.getParent();
 	}
 }

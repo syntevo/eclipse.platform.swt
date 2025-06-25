@@ -34,16 +34,10 @@ public class TableItemRenderer {
 		this.item = tableItem;
 	}
 
-	void doPaint(GC gc, int index, boolean paintItemEvent) {
-		Rectangle itemBounds = item.getBounds();
-
-/*
-		gc.setBackground(new Color(255, (index & 1) == 0 ? 255 : 128, 128));
-		gc.fillRectangle(itemBounds.x + index & 1, itemBounds.y, itemBounds.width, itemBounds.height);
-
-*/
+	public void doPaint(GC gc, int index, boolean paintItemEvent) {
 		final Table parent = getParent();
 
+		Rectangle itemBounds = item.getBounds();
 		if (parent.isSelected(index)) {
 			this.selected = true;
 

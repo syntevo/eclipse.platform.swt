@@ -4,8 +4,15 @@ import org.eclipse.swt.graphics.*;
 
 public class DefaultTableRenderer extends TableRenderer {
 
+	private final TableColumnRenderer renderer = new TableColumnRenderer();
+
 	protected DefaultTableRenderer(Table table) {
 		super(table);
+	}
+
+	@Override
+	public Point computeSize(TableColumn column) {
+		return renderer.computeSize(column, table);
 	}
 
 	@Override
@@ -15,7 +22,29 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		table.updateScrollBarWithTextSize();
 
-		table.getColumnsHandler().paint(gc);
+		gc.fillRectangle(ca);
+
+		paintHeader(gc);
 		table.getItemsHandler().paint(gc);
+	}
+
+	private void paintHeader(GC gc) {
+		if (!table.getHeaderVisible()) return;
+
+		Rectangle ca = table.getClientArea();
+		final int height = table.getHeaderHeight();
+		gc.drawLine(0, height, ca.width, height);
+
+		for (TableColumn c : table.getColumns()) {
+			if (!c.getBounds().intersects(ca)) {
+				continue;
+			}
+
+			paintColumnHeader(gc, c, height);
+		}
+	}
+
+	private void paintColumnHeader(GC gc, TableColumn c, int height) {
+		renderer.doPaint(c, gc, height);
 	}
 }
