@@ -156,54 +156,52 @@ public class TableItemRenderer {
 	}
 
 	private void drawItem(GC gc, boolean paintItemEvent) {
-
-		var b = getBounds();
-		gc.setClipping(b);
+		Rectangle bounds = getBounds();
+		gc.setClipping(bounds);
 
 		try {
-
 			final Table parent = getParent();
 			if (paintItemEvent) {
 				Event event = new Event();
 				event.item = item;
 				event.index = 0;
 				event.gc = gc;
-				event.x = b.x;
-				event.y = b.y;
+				event.x = bounds.x;
+				event.y = bounds.y;
 				parent.sendEvent(SWT.MeasureItem, event);
 				parent.sendEvent(SWT.EraseItem, event);
 				parent.sendEvent(SWT.PaintItem, event);
 				return;
 			}
 
-			var prevBG = gc.getBackground();
-			var bgCol = item.getBackground();
-			if (bgCol != null && !this.selected && !this.hovered) {
-				gc.setBackground(bgCol);
-				gc.fillRectangle(b);
+			Color prevBgColor = gc.getBackground();
+			Color bgColor = item.getBackground();
+			if (bgColor != null && !this.selected && !this.hovered) {
+				gc.setBackground(bgColor);
+				gc.fillRectangle(bounds);
 			}
 
-			int currentWidthPosition = b.x + leftMargin;
+			int currentWidthPosition = bounds.x + leftMargin;
 
 			int xPosition = currentWidthPosition;
-			int yPosition = b.y + topMargin;
+			int yPosition = bounds.y + topMargin;
 
-			var image = item.getImage();
+			Image image = item.getImage();
 			if (image != null) {
 				gc.drawImage(image, xPosition, yPosition);
 				currentWidthPosition += image.getBounds().width + GAP;
 			}
 
-			var prevFG = gc.getForeground();
-			var fgCol = item.getForeground();
+			Color prevFG = gc.getForeground();
+			Color fgCol = item.getForeground();
 			if (fgCol != null && !this.selected && !this.hovered) {
 				gc.setForeground(fgCol);
 			}
 
-			gc.drawText(item.getText(), currentWidthPosition, b.y + topMargin);
+			gc.drawText(item.getText(), currentWidthPosition, bounds.y + topMargin);
 
 			gc.setForeground(prevFG);
-			gc.setBackground(prevBG);
+			gc.setBackground(prevBgColor);
 		} finally {
 			gc.setClipping((Rectangle) null);
 		}

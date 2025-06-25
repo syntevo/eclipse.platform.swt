@@ -24,7 +24,7 @@ public class TableColumnRenderer {
 	}
 
 	void doPaint(GC gc) {
-		var b = column.getBounds();
+		Rectangle b = column.getBounds();
 		gc.drawRectangle(b);
 
 		int xPosition = b.x + DEFAULT_MARGIN + DEFAULT_BORDER_WIDTH;
@@ -33,7 +33,7 @@ public class TableColumnRenderer {
 	}
 
 	static int guessColumnHeight(TableColumn column) {
-		var textHeight = Table.guessTextHeight(column.getParent());
+		int textHeight = Table.guessTextHeight(column.getParent());
 		return textHeight + DEFAULT_MARGIN_UP + DEFAULT_MARGIN_DOWN;
 	}
 

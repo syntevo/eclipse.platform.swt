@@ -61,14 +61,14 @@ class TableItemsHandler {
 	}
 
 	public void paint(GC gc) {
-		var itemsArea = getItemsClientArea();
+		Rectangle itemsArea = getItemsClientArea();
 
-		var fgBef = gc.getForeground();
+		Color fgBef = gc.getForeground();
 
 		this.lastVisibleElementIndex = -1;
 
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
-			var item = table.getItem(i);
+			TableItem item = table.getItem(i);
 
 			if (table.isVirtual()) {
 				table.checkData(item, i, false);

@@ -10,7 +10,7 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	@Override
 	public void paint(GC gc) {
-		var ca = table.getClientArea();
+		Rectangle ca = table.getClientArea();
 		if (ca.width == 0 || ca.height == 0) return;
 
 		table.updateScrollBarWithTextSize();
