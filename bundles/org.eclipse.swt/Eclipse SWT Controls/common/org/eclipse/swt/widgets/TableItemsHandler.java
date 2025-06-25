@@ -112,7 +112,7 @@ class TableItemsHandler {
 		Rectangle ica = getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
 
-		var mouseHoverElement = table.mouseHoverElement;
+		Item mouseHoverElement = table.mouseHoverElement;
 		if (!ica.contains(event.x, event.y)) {
 			if (mouseHoverElement instanceof TableItem ti) {
 				table.mouseHoverElement = null;
@@ -133,18 +133,21 @@ class TableItemsHandler {
 			item.redraw();
 		}
 
-		var items = table.getItems();
+		if ((event.stateMask & SWT.BUTTON_MASK) != 0) {
+			return;
+		}
+
+		TableItem[] items = table.getItems();
 		int topIndex = table.getTopIndex();
 		if (items != null) {
 			for (int i = topIndex; i < Math.min(this.lastVisibleElementIndex + ITEMS_OVERLAY,
 					table.getItemCount()); i++) {
-				var item = table.getItem(i);
+				TableItem item = table.getItem(i);
 				if (item.getBounds().contains(p)) {
 					table.mouseHoverElement = item;
 					item.redraw();
 					return;
 				}
-
 			}
 		}
 	}
