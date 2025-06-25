@@ -29,8 +29,9 @@ public static void main (String [] args) {
 	Display display = new Display ();
 	Shell shell = new Shell (display);
 	shell.setText("Snippet 106");
-	shell.setLayout (new RowLayout (SWT.VERTICAL));
+	shell.setLayout (new GridLayout ());
 	final Table table = new Table (shell, SWT.BORDER | SWT.MULTI);
+	table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 	table.setHeaderVisible (true);
 	for (int i=0; i<4; i++) {
 		TableColumn column = new TableColumn (table, SWT.NONE);
@@ -46,6 +47,7 @@ public static void main (String [] args) {
 	for (TableColumn col : columns)
 		col.pack ();
 	Button button = new Button (shell, SWT.PUSH);
+	button.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
 	final int index = 1;
 	button.setText ("Insert Column " + index + "a");
 	button.addListener (SWT.Selection, e -> {
