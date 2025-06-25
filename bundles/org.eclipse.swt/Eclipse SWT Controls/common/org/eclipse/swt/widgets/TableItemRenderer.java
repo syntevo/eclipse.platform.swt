@@ -47,7 +47,6 @@ public class TableItemRenderer {
 			gc.setBackground(Table.SELECTION_COLOR);
 			gc.fillRectangle(b);
 			gc.drawRectangle(new Rectangle(b.x, b.y, b.width - 1, b.height - 1));
-			gc.drawRectangle(b);
 		} else if (parent.mouseHoverElement == item) {
 			this.hovered = true;
 			gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_YELLOW));
