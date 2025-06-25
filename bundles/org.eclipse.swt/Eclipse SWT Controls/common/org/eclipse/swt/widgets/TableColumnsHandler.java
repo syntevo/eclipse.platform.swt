@@ -51,6 +51,7 @@ final class TableColumnsHandler {
 		if (!table.getHeaderVisible()) return;
 
 		Rectangle ca = table.getClientArea();
+		gc.fillRectangle(ca);
 
 		for (TableColumn c : table.getColumns()) {
 			if (!c.getBounds().intersects(ca)) {
