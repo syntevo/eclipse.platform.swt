@@ -310,9 +310,20 @@ public class Table extends CustomComposite {
 			setTopIndex(verticalBar.getSelection());
 		}
 
+		updateColumnsX();
 		// TODO also the scrollbars will be handled here
 
 		redraw();
+	}
+
+	void updateColumnsX() {
+		int x = -horizontalBar.getSelection();
+		final int[] columnOrder = getColumnOrder();
+		for (int i : columnOrder) {
+			final TableColumn column = columnsList.get(i);
+			column.setX(x);
+			x += column.getWidth();
+		}
 	}
 
 	private void onTraverse(Event event) {
@@ -523,7 +534,17 @@ public class Table extends CustomComposite {
 			return;
 		}
 
+		updateColumnsX();
 		renderer.paint(event.gc);
+	}
+
+	void redrawColumnHeader(TableColumn column) {
+		if (!getHeaderVisible()) {
+			return;
+		}
+		int width = column.getWidth();
+		int height = getHeaderHeight();
+		redraw(column.getX(), 0, width, height, true);
 	}
 
 	public boolean columnsExist() {
@@ -2866,7 +2887,8 @@ public class Table extends CustomComposite {
 
 		Rectangle ca = getClientArea();
 
-		int horShift = column.getLocation().x;
+		updateColumnsX();
+		int horShift = column.getX();
 		if (ca.x < horShift && ca.x + ca.width > horShift) return;
 
 		final ScrollBar horizontalBar = getHorizontalBar();

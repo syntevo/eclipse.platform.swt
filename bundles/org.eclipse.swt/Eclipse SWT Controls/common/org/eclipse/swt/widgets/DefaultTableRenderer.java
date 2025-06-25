@@ -36,7 +36,10 @@ public class DefaultTableRenderer extends TableRenderer {
 		gc.drawLine(0, height, ca.width, height);
 
 		for (TableColumn c : table.getColumns()) {
-			if (!c.getBounds().intersects(ca)) {
+			final int x = c.getX();
+			final int width = c.getWidth();
+			if (x + width < ca.x
+					|| x >= ca.x + ca.width) {
 				continue;
 			}
 

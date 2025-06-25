@@ -542,13 +542,13 @@ public class TableItem extends Item {
 		}
 
 		var b = getBounds();
-		var column = parent.getColumn(index).getBounds();
+		final TableColumn column = parent.getColumn(index);
 
 		int y = b.y;
 		int height = b.height;
 
-		int width = column.width;
-		int x = column.x;
+		int width = column.getWidth();
+		int x = column.getX();
 
 		if (index == 0) {
 			int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;

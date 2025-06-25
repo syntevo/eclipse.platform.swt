@@ -45,7 +45,7 @@ public class TableColumn extends Item {
 	private boolean resizable, moveable;
 	private String toolTipText;
 
-	private Point location;
+	private int x;
 
 	private int width = -1;
 	private int height = -1;
@@ -654,53 +654,23 @@ public class TableColumn extends Item {
 
 		if (index < parent.getColumnCount() - 1) {
 			for (int i = index + 1; i < parent.getColumnCount(); i++) {
-				parent.getColumn(i).clearCache();
+				TableColumn column = parent.getColumn(i);
+				column.height = -1;
 			}
 		}
 
-		redraw();
-	}
-
-	private void clearCache() {
-		location = null;
-		height = -1;
+		parent.redrawColumnHeader(this);
 	}
 
 	void updateToolTip(int index) {
 		Table.logNotImplemented();
 	}
 
-	Point getLocation() {
-		int horizontalShift = getParent().getHorizontalBar().getSelection();
-		if (this.location == null || this.horizontalShiftAtCalculation == null
-				|| this.horizontalShiftAtCalculation != horizontalShift) {
-			calculateLocation();
-		}
-
-		return this.location;
+	int getX() {
+		return x;
 	}
 
-	private void calculateLocation() {
-		int index = getParent().indexOf(this);
-		if (index == 0) {
-			this.horizontalShiftAtCalculation = getParent().getHorizontalBar().getSelection();
-			this.location = new Point(-horizontalShiftAtCalculation, 0);
-		} else {
-			Rectangle prevBounds = getParent().getColumn(index - 1).getBounds();
-			this.location = new Point(prevBounds.x + prevBounds.width, prevBounds.y);
-		}
-	}
-
-	Rectangle getBounds() {
-		Point l = getLocation();
-		int width = getWidth();
-		int height = getHeight();
-
-		return new Rectangle(l.x, l.y, width, height);
-	}
-
-	void redraw() {
-		Rectangle b = getBounds();
-		getParent().redraw(b.x, b.y, b.width, b.height, true);
+	void setX(int x) {
+		this.x = x;
 	}
 }

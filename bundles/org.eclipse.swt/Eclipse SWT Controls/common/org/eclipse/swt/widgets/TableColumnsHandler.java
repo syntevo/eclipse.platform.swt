@@ -68,7 +68,7 @@ final class TableColumnsHandler {
 
 		if (this.columnResizeActive != -1) {
 			TableColumn c = table.getColumn(this.columnResizeActive);
-			int x = c.getBounds().x;
+			int x = c.getX();
 			c.setWidth(event.x - x);
 			table.redraw();
 			return;
@@ -80,11 +80,10 @@ final class TableColumnsHandler {
 		}
 		else {
 			table.setCursor(null);
-			if (!columnsArea.contains(event.x, event.y)) {
-				if (table.mouseHoverElement instanceof TableColumn ti) {
-					table.mouseHoverElement = null;
-					ti.redraw();
-				}
+			if (!columnsArea.contains(event.x, event.y)
+					&& table.mouseHoverElement instanceof TableColumn c) {
+				table.mouseHoverElement = null;
+				table.redrawColumnHeader(c);
 			}
 
 			// TODO highlight columns if mouse over...
@@ -102,8 +101,9 @@ final class TableColumnsHandler {
 		}
 
 		for (TableColumn c : columns) {
-			final Rectangle bounds = c.getBounds();
-			if (Math.abs(bounds.x + bounds.width - x) < 5) {
+			final int columnX = c.getX();
+			final int columnWidth = c.getWidth();
+			if (Math.abs(columnX + columnWidth - x) < 5) {
 				return table.indexOf(c);
 			}
 		}

@@ -2,7 +2,6 @@ package org.eclipse.swt.widgets;
 
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 
 public class TableColumnRenderer {
 
@@ -19,13 +18,13 @@ public class TableColumnRenderer {
 	}
 
 	public void doPaint(TableColumn column, GC gc, int height) {
-		Rectangle b = column.getBounds();
-		final int separatorX = b.x + b.width;
+		final int x = column.getX();
+		final int separatorX = x + column.getWidth();
 		gc.drawLine(separatorX, HEADER_MARGIN_Y,
 				separatorX, height - HEADER_MARGIN_Y);
 
-		int xPosition = b.x + HEADER_MARGIN_X;
-		int yPosition = b.y + HEADER_MARGIN_Y;
+		int xPosition = x + HEADER_MARGIN_X;
+		int yPosition = HEADER_MARGIN_Y;
 		gc.drawText(column.getText(), xPosition, yPosition);
 	}
 
