@@ -2838,7 +2838,7 @@ public class Table extends CustomComposite {
 			index = itemCount - 1;
 		}
 
-		setTopIndex(index);
+		selectionModel.setTopIndex(index);
 
 		if (mouseHoverElement instanceof TableItem) {
 			mouseHoverElement = null;
