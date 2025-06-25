@@ -94,13 +94,6 @@ public class Table extends CustomComposite {
 
 	static final boolean USE_CACHES = true; // default true
 
-	static final boolean FILL_AREAS = false; // complete columns and items area: default false
-	static final boolean FILL_TEXT_AREAS = false; // fill areas where texts will be written: default false
-	static final boolean FILL_IMAGE_AREAS = false; // fill areas where images will be drawn: default false
-
-	static final boolean DRAW_IMAGES = true; // draw the images of table items: default true
-	static final boolean DRAW_TEXTS = true; // draw the texts of table items/colums: default true
-
 	static final boolean LOG_NOT_IMPLEMENTED = false; // write to console, if method calls are not implemented: default
 														// false
 

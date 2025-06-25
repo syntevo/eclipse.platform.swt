@@ -29,19 +29,7 @@ public class TableColumnRenderer {
 
 		int xPosition = b.x + DEFAULT_MARGIN + DEFAULT_BORDER_WIDTH;
 		int yPosition = b.y + DEFAULT_MARGIN_UP + DEFAULT_BORDER_WIDTH;
-
-		if (Table.FILL_TEXT_AREAS) {
-			var pBG = gc.getBackground();
-			gc.setBackground(column.getParent().getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-			var textSize = column.getParent().computeTextExtent(column.getText());
-			var rec = new Rectangle(xPosition, yPosition, textSize.x, textSize.y);
-			gc.fillRectangle(rec);
-			gc.setBackground(pBG);
-		}
-
-		if (Table.DRAW_TEXTS) {
-			gc.drawText(column.getText(), xPosition, yPosition);
-		}
+		gc.drawText(column.getText(), xPosition, yPosition);
 	}
 
 	static int guessColumnHeight(TableColumn column) {

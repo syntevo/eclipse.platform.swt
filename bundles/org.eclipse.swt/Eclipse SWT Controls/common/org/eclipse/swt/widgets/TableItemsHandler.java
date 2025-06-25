@@ -63,13 +63,6 @@ class TableItemsHandler {
 	public void paint(GC gc) {
 		var itemsArea = getItemsClientArea();
 
-		if (Table.FILL_AREAS) {
-			var prev = gc.getBackground();
-			gc.setBackground(table.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-			gc.fillRectangle(itemsArea);
-			gc.setBackground(prev);
-		}
-
 		var fgBef = gc.getForeground();
 
 		this.lastVisibleElementIndex = -1;

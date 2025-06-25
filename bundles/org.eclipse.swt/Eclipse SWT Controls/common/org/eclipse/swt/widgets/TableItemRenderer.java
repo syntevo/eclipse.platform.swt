@@ -134,20 +134,7 @@ public class TableItemRenderer {
 
 		var image = item.getImage(columnIndex);
 		if (image != null) {
-			if (Table.FILL_IMAGE_AREAS) {
-				var pBG = gc.getBackground();
-
-				gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_RED));
-				var imgB = image.getBounds();
-				var rec = new Rectangle(imgB.x + xPosition, imgB.y + yPosition, imgB.width, imgB.height);
-				gc.fillRectangle(rec);
-
-				gc.setBackground(pBG);
-			}
-
-			if (Table.DRAW_IMAGES) {
-				gc.drawImage(image, xPosition, yPosition);
-			}
+			gc.drawImage(image, xPosition, yPosition);
 			currentWidthPosition += image.getBounds().width + GAP;
 		}
 
@@ -157,21 +144,7 @@ public class TableItemRenderer {
 			gc.setForeground(fgCol);
 		}
 
-		xPosition = currentWidthPosition;
-		yPosition = b.y + topMargin;
-
-		if (Table.FILL_TEXT_AREAS) {
-			var pBG = gc.getBackground();
-			gc.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-			var textSize = parent.computeTextExtent(item.getText(columnIndex));
-			var rec = new Rectangle(xPosition, yPosition, textSize.x, textSize.y);
-			gc.fillRectangle(rec);
-			gc.setBackground(pBG);
-		}
-
-		if (Table.DRAW_TEXTS) {
-			gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
-		}
+		gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
 
 		gc.setForeground(prevFG);
 		gc.setBackground(prevBG);
@@ -217,18 +190,7 @@ public class TableItemRenderer {
 
 			var image = item.getImage();
 			if (image != null) {
-				if (Table.FILL_IMAGE_AREAS) {
-					var pBG = gc.getBackground();
-					gc.setBackground(getParent().getDisplay().getSystemColor(SWT.COLOR_RED));
-					var imgB = item.getImage().getBounds();
-					var rec = new Rectangle(imgB.x + xPosition, imgB.y + yPosition, imgB.width, imgB.height);
-					gc.fillRectangle(rec);
-					gc.setBackground(pBG);
-				}
-
-				if (Table.DRAW_IMAGES) {
-					gc.drawImage(image, xPosition, yPosition);
-				}
+				gc.drawImage(image, xPosition, yPosition);
 				currentWidthPosition += image.getBounds().width + GAP;
 			}
 
@@ -238,21 +200,7 @@ public class TableItemRenderer {
 				gc.setForeground(fgCol);
 			}
 
-			xPosition = currentWidthPosition;
-			yPosition = b.y + topMargin;
-
-			if (Table.FILL_TEXT_AREAS) {
-				var pBG = gc.getBackground();
-				gc.setBackground(getParent().getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-				var textSize = getParent().computeTextExtent(item.getText());
-				var rec = new Rectangle(xPosition, yPosition, textSize.x, textSize.y);
-				gc.fillRectangle(rec);
-				gc.setBackground(pBG);
-			}
-
-			if (Table.DRAW_TEXTS) {
-				gc.drawText(item.getText(), currentWidthPosition, b.y + topMargin);
-			}
+			gc.drawText(item.getText(), currentWidthPosition, b.y + topMargin);
 
 			gc.setForeground(prevFG);
 			gc.setBackground(prevBG);

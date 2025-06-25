@@ -52,15 +52,6 @@ final class TableColumnsHandler {
 
 		Rectangle ca = table.getClientArea();
 
-		if (Table.FILL_AREAS) {
-			Color prev = gc.getBackground();
-			gc.setBackground(table.getDisplay().getSystemColor(SWT.COLOR_CYAN));
-			gc.fillRectangle(columnsArea);
-			gc.setBackground(prev);
-		}
-
-		Color fgBef = gc.getForeground();
-
 		for (TableColumn c : table.getColumns()) {
 			if (!c.getBounds().intersects(ca)) {
 				continue;
@@ -68,8 +59,6 @@ final class TableColumnsHandler {
 
 			c.paint(gc);
 		}
-
-		gc.setForeground(fgBef);
 	}
 
 	public Point getSize() {
