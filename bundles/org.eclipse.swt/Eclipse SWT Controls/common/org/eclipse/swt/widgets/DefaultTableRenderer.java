@@ -63,32 +63,40 @@ public class DefaultTableRenderer extends TableRenderer {
 	private void paintHeader(GC gc) {
 		if (!table.getHeaderVisible()) return;
 
+		final Color textColor = gc.getForeground();
+		final Color lineColor = new Color(192, 192, 192);
+
 		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
+		gc.setForeground(lineColor);
 		gc.drawLine(0, 0, ca.width, 0);
 		gc.drawLine(0, height, ca.width, height);
 
-		for (TableColumn c : table.getColumns()) {
-			final int x = c.getX();
-			final int width = c.getWidth();
+		final TableColumn[] columns = table.getColumns();
+		for (int i = 0; i < columns.length; i++) {
+			TableColumn column = columns[i];
+			final int x = column.getX();
+			final int width = column.getWidth();
 			if (x + width < ca.x
 					|| x >= ca.x + ca.width) {
+				columns[i] = null;
 				continue;
 			}
 
-			paintColumnHeader(gc, c, height);
+			final int separatorX = x + width;
+			gc.drawLine(separatorX, HEADER_MARGIN_Y,
+					separatorX, height - HEADER_MARGIN_Y);
 		}
-	}
 
-	private void paintColumnHeader(GC gc, TableColumn column, int height) {
-		final int x = column.getX();
-		final int separatorX = x + column.getWidth();
-		gc.drawLine(separatorX, HEADER_MARGIN_Y,
-				separatorX, height - HEADER_MARGIN_Y);
+		gc.setForeground(textColor);
+		for (TableColumn column : columns) {
+			if (column == null) {
+				continue;
+			}
 
-		int xPosition = x + HEADER_MARGIN_X;
-		int yPosition = HEADER_MARGIN_Y;
-		gc.drawText(column.getText(), xPosition, yPosition);
-
+			int xPosition = column.getX() + HEADER_MARGIN_X;
+			int yPosition = HEADER_MARGIN_Y;
+			gc.drawText(column.getText(), xPosition, yPosition);
+		}
 	}
 }
