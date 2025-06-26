@@ -13,14 +13,19 @@
  *******************************************************************************/
 package org.eclipse.swt.widgets;
 
-import java.util.*;
-import java.util.stream.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.DPIUtil;
 
-import org.eclipse.swt.*;
-import org.eclipse.swt.accessibility.*;
-import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.internal.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Instances of this class represent a selectable user interface object that
@@ -43,9 +48,6 @@ import org.eclipse.swt.internal.*;
  */
 public class TableItem extends Item {
 
-	/** border width */
-	static final int DEFAULT_BORDER_WIDTH = 1;
-
 	Table parent;
 	String[] strings;
 	Image[] images;
@@ -60,15 +62,6 @@ public class TableItem extends Item {
 
 	private Point location;
 	private Rectangle bounds;
-
-
-	// TODO implement alignment
-	/** the alignment. Either CENTER, RIGHT, LEFT. Default is LEFT */
-	private int align = SWT.LEFT;
-
-	// TODO implement accessibility
-	private Accessible acc;
-	private AccessibleAdapter accAdapter;
 
 	private int itemIndex = -2;
 
@@ -112,7 +105,6 @@ public class TableItem extends Item {
 	public TableItem(Table parent, int style) {
 		this(parent, style, checkNull(parent).getItemCount(), true);
 
-		initialize();
 		_addListener(style, null);
 	}
 
@@ -183,134 +175,8 @@ public class TableItem extends Item {
 		releaseHandle();
 	}
 
-	private void initialize() {
-		final Listener listener = event -> {
-			switch (event.type) {
-			case SWT.Dispose -> onDispose(event);
-			case SWT.MouseDown -> onMouseDown(event);
-			case SWT.MouseUp -> onMouseUp(event);
-			case SWT.Resize -> onResize();
-			case SWT.FocusIn -> onFocusIn();
-			case SWT.FocusOut -> onFocusOut();
-			case SWT.Traverse -> onTraverse(event);
-			case SWT.Selection -> onSelection(event);
-			case SWT.KeyDown -> onKeyPressed(event);
-			case SWT.KeyUp -> onKeyReleased(event);
-			}
-		};
-		addListener(SWT.Dispose, listener);
-		addListener(SWT.MouseDown, listener);
-		addListener(SWT.MouseUp, listener);
-		addListener(SWT.Resize, listener);
-		addListener(SWT.KeyDown, listener);
-		addListener(SWT.KeyUp, listener);
-		addListener(SWT.FocusIn, listener);
-		addListener(SWT.FocusOut, listener);
-		addListener(SWT.Traverse, listener);
-		addListener(SWT.Selection, listener);
-
-		addTypedListener(new MouseTrackAdapter() {
-			private boolean hasMouseEntered;
-
-			@Override
-			public void mouseEnter(MouseEvent e) {
-				if (!hasMouseEntered) {
-					hasMouseEntered = true;
-					redraw();
-				}
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
-				hasMouseEntered = false;
-				redraw();
-			}
-		}, SWT.MouseEnter, SWT.MouseExit);
-
-		initializeAccessible();
-	}
-
 	void doPaint(GC gc, int index, boolean paintItemEvent) {
 		renderer.doPaint(gc, index, paintItemEvent);
-	}
-
-	void initializeAccessible() {
-		acc = getAccessible();
-
-		accAdapter = new AccessibleAdapter() {
-			@Override
-			public void getName(AccessibleEvent e) {
-
-				e.result = "text";
-			}
-
-			@Override
-			public void getHelp(AccessibleEvent e) {
-				e.result = getToolTipText();
-			}
-
-			@Override
-			public void getKeyboardShortcut(AccessibleEvent e) {
-			}
-		};
-		// TODO: handle accessibility
-		// acc.addAccessibleListener(accAdapter);
-		// addListener(SWT.FocusIn, event -> acc.setFocus(ACC.CHILDID_SELF));
-	}
-
-	private Accessible getAccessible() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private String getToolTipText() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private void onSelection(Event event) {
-		redraw();
-	}
-
-	private void onTraverse(Event event) {
-	}
-
-	private void onFocusIn() {
-		redraw();
-	}
-
-	private void onFocusOut() {
-		redraw();
-	}
-
-	private void onKeyPressed(Event event) {
-	}
-
-	private void onKeyReleased(Event event) {
-	}
-
-	private void onResize() {
-		redraw();
-	}
-
-	private void onDispose(Event event) {
-		this.dispose();
-	}
-
-	private void onMouseDown(Event e) {
-		redraw();
-	}
-
-	private void handleSelection() {
-		sendSelectionEvent(SWT.Selection);
-	}
-
-	private void onMouseUp(Event e) {
-		if ((e.stateMask & SWT.BUTTON1) != 0) {
-			handleSelection();
-		} else {
-			redraw();
-		}
 	}
 
 	static Table checkNull(Table control) {
@@ -903,17 +769,17 @@ public class TableItem extends Item {
 	}
 
 	void redraw(int column, boolean drawText, boolean drawImage) {
-		if (!getParent().isVisible()) return;
+		if (!parent.isVisible()) return;
 
-		var index = getItemIndex();
-		final int topIndex = getParent().getTopIndex();
-		if (index < topIndex || index > getParent().getLastVisibleIndex()) return;
+		int index = getItemIndex();
+		final int topIndex = parent.getTopIndex();
+		if (index < topIndex || index > parent.getLastVisibleIndex()) return;
 
 		if (topIndex == topIndexAtCalculation && location != null) {
 			Rectangle b = getBounds();
-			getParent().redraw(b.x, b.y, b.width, b.height, true);
+			parent.redraw(b.x, b.y, b.width, b.height, true);
 		} else {
-			getParent().redraw();
+			parent.redraw();
 		}
 	}
 

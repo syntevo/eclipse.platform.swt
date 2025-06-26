@@ -21,6 +21,7 @@ public class TableItemRenderer {
 	private static final int bottomMargin = DEFAULT_MARGIN_UP_DOWN;
 
 	private final TableItem item;
+
 	private boolean selected;
 	private boolean hovered;
 	Rectangle checkboxBounds;
@@ -204,10 +205,6 @@ public class TableItemRenderer {
 		}
 	}
 
-	private Rectangle getBounds() {
-		return item.getBounds();
-	}
-
 	public Point computeCellSize(int colIndex) {
 		final Point cellSize = computedCellSizes.get(colIndex);
 		if (cellSize != null) {
@@ -251,39 +248,17 @@ public class TableItemRenderer {
 		return p;
 	}
 
-	/**
-	 *
-	 * TODO: The text extent calls cause da drastic performance decrease with skija.
-	 * This should be improved: no height calculations, just use the default height
-	 * from textMetrics. And check for multiple lines of text.
-	 *
-	 */
 	Point computeSize(boolean changed) {
 		if (!changed && this.computedSize != null) {
 			return computedSize;
 		}
 
-		int lineHeight = 0;
-		int imageHeight = 0;
+		final Table parent = getParent();
 
 		int width = leftMargin + rightMargin;
 
-		// guess the line height for the text. Currently only support for one line
-
-		lineHeight = guessItemHeight(getParent());
-
-//		if (text != null && !text.isEmpty()) {
-//			Point textExtent = computeTextExtent();
-//			lineHeight = textExtent.y;
-//			width += textExtent.x;
-//		}
-//
-//		if (getParent().getColumnCount() > 0) {
-//			for (int c = 0; c < getParent().getColumnCount(); c++) {
-//				Point textExtent = computeTextExtent(c);
-//				lineHeight = Math.max(lineHeight, textExtent.y);
-//			}
-//		}
+		int lineHeight = guessItemHeight(parent);
+		int imageHeight = 0;
 
 		if (item.images != null) {
 			for (var i : item.images) {
@@ -292,11 +267,6 @@ public class TableItemRenderer {
 				}
 				Rectangle imageBounds = i.getBounds();
 				imageHeight = Math.max(imageBounds.height, imageHeight);
-//				width += imageBounds.width;
-//
-//				if (text != null)
-//					width += GAP;
-
 			}
 		} else if (item.image != null) {
 			Rectangle imageBounds = item.image.getBounds();
@@ -309,10 +279,10 @@ public class TableItemRenderer {
 
 		int height = topMargin + Math.max(lineHeight, imageHeight) + bottomMargin;
 
-		if (getParent().getColumnCount() > 0) {
-			width = getParent().getTotalColumnWidth();
+		if (parent.getColumnCount() > 0) {
+			width = parent.getTotalColumnWidth();
 		} else {
-			Point textExtent = getParent().computeTextExtent(item.getText());
+			Point textExtent = parent.computeTextExtent(item.getText());
 			lineHeight = textExtent.y;
 			width += textExtent.x;
 		}
@@ -335,30 +305,26 @@ public class TableItemRenderer {
 	}
 
 	public Rectangle getTextBounds(int index) {
-
-		if (internalComputedCellTextBounds.get(index) == null)
+		if (internalComputedCellTextBounds.get(index) == null) {
 			computeCellSize(index);
+		}
 
-		var internal = internalComputedCellTextBounds.get(index);
-
-		var outer = getBounds(index);
-
+		Rectangle internal = internalComputedCellTextBounds.get(index);
+		Rectangle outer = getBounds(index);
 		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
-
 	}
 
 	public Rectangle getImageBounds(int index) {
-
-		if (item.getImage(index) == null)
+		if (item.getImage(index) == null) {
 			return new Rectangle(0, 0, 0, 0);
+		}
 
-		if (internalComputedCellImage.get(index) == null)
+		if (internalComputedCellImage.get(index) == null) {
 			computeCellSize(index);
+		}
 
-		var internal = internalComputedCellImage.get(index);
-
-		var outer = getBounds(index);
-
+		Rectangle internal = internalComputedCellImage.get(index);
+		Rectangle outer = getBounds(index);
 		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
 	}
 }
