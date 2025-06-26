@@ -39,22 +39,26 @@ public class TableItemRenderer {
 		final Table table = getParent();
 
 		Rectangle itemBounds = item.getBounds();
+		this.selected = false;
+		this.hovered = false;
+		int detail = SWT.BACKGROUND | SWT.FOREGROUND;
 		if (table.isSelected(index)) {
 			this.selected = true;
+			detail |= SWT.SELECTED;
 
 			gc.setBackground(Table.SELECTION_COLOR);
 			gc.fillRectangle(itemBounds);
-		} else if (table.mouseHoverElement == item) {
+		}
+
+		if (table.mouseHoverElement == item) {
 			this.hovered = true;
+			detail |= SWT.HOT;
 			gc.setBackground(Table.HOVER_COLOR);
 			gc.fillRectangle(itemBounds);
-		} else {
-			this.selected = false;
-			this.hovered = false;
 		}
 
 		if (table.isFocusRow(index)) {
-			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
+			detail |= SWT.FOCUSED;
 		}
 
 		if ((table.getStyle() & SWT.CHECK) != 0) {
@@ -65,9 +69,12 @@ public class TableItemRenderer {
 		final Color foreground = gc.getForeground();
 
 		final int columnCount = table.getColumnCount();
+		boolean drawFocusRect = false;
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
-				drawCell(i, gc);
+				if (drawCell(i, detail, gc)) {
+					drawFocusRect = true;
+				}
 				gc.setBackground(background);
 				gc.setForeground(foreground);
 			}
@@ -75,6 +82,10 @@ public class TableItemRenderer {
 			drawItem(gc, paintItemEvent, itemBounds);
 			gc.setBackground(background);
 			gc.setForeground(foreground);
+		}
+
+		if (drawFocusRect) {
+			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
 		}
 	}
 
@@ -96,7 +107,7 @@ public class TableItemRenderer {
 		}
 	}
 
-	private void drawCell(int columnIndex, GC gc) {
+	private boolean drawCell(int columnIndex, int detailDefault, GC gc) {
 		final Table table = getParent();
 
 		Color background = gc.getBackground();
@@ -113,14 +124,13 @@ public class TableItemRenderer {
 			// TODO MeasureItem should happen in the bounds calculation logic...
 			table.sendEvent(SWT.MeasureItem, event);
 
-			event.detail = SWT.BACKGROUND | SWT.FOREGROUND;
-			if (this.hovered) {
-				event.detail |= SWT.HOT;
-			}
-			if (this.selected) {
-				event.detail |= SWT.SELECTED;
-			}
+			event.detail = detailDefault;
 			table.sendEvent(SWT.EraseItem, event);
+
+			if (!event.doit) {
+				event.detail = 0;
+			}
+			event.detail &= detailDefault;
 
 			if ((event.detail & SWT.BACKGROUND) != 0) {
 				if ((event.detail & SWT.SELECTED) != 0) {
@@ -152,7 +162,9 @@ public class TableItemRenderer {
 
 				gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
 			}
+
 			table.sendEvent(SWT.PaintItem, event);
+			return (event.detail & SWT.FOCUSED) != 0;
 		} finally {
 			gc.setClipping((Rectangle) null);
 		}
