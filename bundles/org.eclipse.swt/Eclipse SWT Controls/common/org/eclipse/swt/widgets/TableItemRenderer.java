@@ -330,7 +330,7 @@ public class TableItemRenderer {
 	}
 
 	public static int guessItemHeight(Table table) {
-		int textHeight = Table.guessTextHeight(table);
+		int textHeight = table.guessTextHeight();
 		return textHeight + topMargin + bottomMargin;
 	}
 

@@ -43,7 +43,7 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	@Override
 	public int guessColumnHeight(TableColumn column) {
-		int textHeight = Table.guessTextHeight(column.getParent());
+		int textHeight = table.guessTextHeight();
 		return textHeight + 2 * HEADER_MARGIN_Y;
 	}
 

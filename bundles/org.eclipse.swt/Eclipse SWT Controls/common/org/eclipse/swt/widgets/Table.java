@@ -3016,10 +3016,10 @@ public class Table extends CustomComposite {
 	}
 
 	// TODO move this heuristic somewhere else.
-	static int guessTextHeight(Table table) {
-		final GC gc = new GC(table);
+	int guessTextHeight() {
+		final GC gc = new GC(this);
 		try {
-			gc.setFont(table.getFont());
+			gc.setFont(getFont());
 			return gc.getFontMetrics().getHeight();
 		} finally {
 			gc.dispose();
