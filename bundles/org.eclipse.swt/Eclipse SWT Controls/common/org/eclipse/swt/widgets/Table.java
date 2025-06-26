@@ -855,8 +855,9 @@ public class Table extends CustomComposite {
 		checkWidget();
 
 		Point defaultSize = getPreferredSize();
-		int width = wHint == SWT.DEFAULT ? defaultSize.x : wHint;
-		int height = hHint == SWT.DEFAULT ? defaultSize.y : hHint;
+		final Rectangle rectangle = computeTrim(0, 0, defaultSize.x, defaultSize.y);
+		int width = wHint == SWT.DEFAULT ? rectangle.width : wHint;
+		int height = hHint == SWT.DEFAULT ? rectangle.height : hHint;
 		return new Point(width, height);
 	}
 
