@@ -7,6 +7,8 @@ public abstract class TableRenderer {
 
 	public abstract Point computeSize(TableColumn column);
 
+	public abstract int guessColumnHeight(TableColumn column);
+
 	public abstract void paint(GC gc);
 
 	protected final Table table;

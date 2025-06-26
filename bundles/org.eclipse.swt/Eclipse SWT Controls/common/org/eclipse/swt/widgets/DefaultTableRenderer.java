@@ -4,7 +4,9 @@ import org.eclipse.swt.graphics.*;
 
 public class DefaultTableRenderer extends TableRenderer {
 
-	private final TableColumnRenderer renderer = new TableColumnRenderer();
+	private static final int HEADER_MARGIN_X = 6;
+	private static final int HEADER_MARGIN_Y = 3;
+	private static final int DEFAULT_MARGIN_DOWN = 1;
 
 	protected DefaultTableRenderer(Table table) {
 		super(table);
@@ -12,7 +14,37 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	@Override
 	public Point computeSize(TableColumn column) {
-		return renderer.computeSize(column, table);
+		final GC gc = new GC(table);
+		try {
+			int colIndex = table.indexOf(column);
+			Point fin = new Point(0, 0);
+			int width = 0;
+			final TableItem[] items = table.getItems();
+			if (items != null) {
+				final boolean virtual = table.isVirtual();
+				for (TableItem item : items) {
+					if (virtual && !item.cached) {
+						continue;
+					}
+					Point p = item.computeCellSize(colIndex);
+					width = Math.max(width, p.x);
+					item.clearCache();
+				}
+			}
+
+			Point headerExt = gc.textExtent(column.getText());
+			fin.x = Math.max(headerExt.x + 2 * HEADER_MARGIN_X, width);
+			fin.y = Math.max(headerExt.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
+			return fin;
+		} finally {
+			gc.dispose();
+		}
+	}
+
+	@Override
+	public int guessColumnHeight(TableColumn column) {
+		int textHeight = Table.guessTextHeight(column.getParent());
+		return textHeight + 2 * HEADER_MARGIN_Y;
 	}
 
 	@Override
@@ -33,6 +65,7 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
+		gc.drawLine(0, 0, ca.width, 0);
 		gc.drawLine(0, height, ca.width, height);
 
 		for (TableColumn c : table.getColumns()) {
@@ -47,7 +80,15 @@ public class DefaultTableRenderer extends TableRenderer {
 		}
 	}
 
-	private void paintColumnHeader(GC gc, TableColumn c, int height) {
-		renderer.doPaint(c, gc, height);
+	private void paintColumnHeader(GC gc, TableColumn column, int height) {
+		final int x = column.getX();
+		final int separatorX = x + column.getWidth();
+		gc.drawLine(separatorX, HEADER_MARGIN_Y,
+				separatorX, height - HEADER_MARGIN_Y);
+
+		int xPosition = x + HEADER_MARGIN_X;
+		int yPosition = HEADER_MARGIN_Y;
+		gc.drawText(column.getText(), xPosition, yPosition);
+
 	}
 }

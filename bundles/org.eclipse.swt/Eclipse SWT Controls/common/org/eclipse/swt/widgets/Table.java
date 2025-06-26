@@ -3046,4 +3046,8 @@ public class Table extends CustomComposite {
 	Point computeSize(TableColumn column) {
 		return renderer.computeSize(column);
 	}
+
+	int guessColumnHeight(TableColumn column) {
+		return renderer.guessColumnHeight(column);
+	}
 }
