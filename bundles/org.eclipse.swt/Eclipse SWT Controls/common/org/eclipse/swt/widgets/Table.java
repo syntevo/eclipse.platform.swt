@@ -399,7 +399,7 @@ public class Table extends CustomComposite {
 
 	private int getFullyVisibleItemCount() {
 		int height = getClientArea().height;
-		if (getHeaderVisible()) {
+		if (headerVisible) {
 			height -= getHeaderHeight();
 		}
 		final int itemHeight = getItemHeight();
@@ -534,7 +534,7 @@ public class Table extends CustomComposite {
 	}
 
 	private void onMouseUp(Event e) {
-		if (columnsHandler.getColumnsBounds().contains(e.x, e.y) || columnsHandler.isColumnResizeActive()) {
+		if (columnsHandler.getHeaderBounds().contains(e.x, e.y) || columnsHandler.isColumnResizeActive()) {
 			columnsHandler.handleMouseUp(e);
 		}
 	}
@@ -553,10 +553,6 @@ public class Table extends CustomComposite {
 	}
 
 	private void onPaint(Event event) {
-		if (!isVisible()) {
-			return;
-		}
-
 		updateColumnsX();
 		renderer.paint(event.gc);
 	}
@@ -865,11 +861,15 @@ public class Table extends CustomComposite {
 	}
 
 	private Point getPreferredSize() {
-		Point columnsSize = columnsHandler.getSize();
+		Point headerSize = columnsHandler.getSize();
 		Point itemsArea = itemsHandler.getSize();
 
-		int width = columnsExist() ? columnsSize.x : itemsArea.x;
-		return new Point(width, columnsSize.y + itemsArea.y);
+		int width = Math.max(headerSize.x, itemsArea.x);
+		int height = itemsArea.y;
+		if (headerVisible) {
+			height += headerSize.y;
+		}
+		return new Point(width, height);
 	}
 
 	void createHeaderToolTips() {
@@ -1364,7 +1364,7 @@ public class Table extends CustomComposite {
 	public int getHeaderHeight() {
 		checkWidget();
 
-		return columnsHandler.getSize().y;
+		return headerVisible ? columnsHandler.getSize().y : 0;
 	}
 
 	/**
@@ -1639,8 +1639,8 @@ public class Table extends CustomComposite {
 	/**
 	 * @return rectangle which contains all visible columns of the table
 	 */
-	Rectangle getColumnsArea() {
-		return columnsHandler.getColumnsBounds();
+	Rectangle getHeaderBounds() {
+		return columnsHandler.getHeaderBounds();
 	}
 
 	/**
@@ -1834,11 +1834,6 @@ public class Table extends CustomComposite {
 
 	boolean isCustomToolTip() {
 		return hooks(SWT.MeasureItem);
-	}
-
-	boolean isOptimizedRedraw() {
-		if ((style & SWT.H_SCROLL) == 0 || (style & SWT.V_SCROLL) == 0) return false;
-		return !hasChildren() && !hooks(SWT.Paint) && !filters(SWT.Paint) && !customHeaderDrawing();
 	}
 
 	/**
@@ -2536,9 +2531,9 @@ public class Table extends CustomComposite {
 	}
 
 	Point getTopIndexItemPosition() {
-		Rectangle columns = getColumnsArea();
+		Rectangle columns = getHeaderBounds();
 		int gridLineSize = TableItemsHandler.getGridSize(this);
-		int initialHeightPosition = columns.y + columns.height + 1;
+		int initialHeightPosition = headerVisible ? columns.height : 0;
 
 		return new Point(columns.x, initialHeightPosition + gridLineSize);
 	}

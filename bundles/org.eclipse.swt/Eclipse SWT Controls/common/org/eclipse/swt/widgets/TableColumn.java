@@ -371,8 +371,6 @@ public class TableColumn extends Item {
 	}
 
 	int getHeight() {
-		checkWidget();
-
 		if (height == -1) {
 			this.height = parent.guessColumnHeight(this);
 		}

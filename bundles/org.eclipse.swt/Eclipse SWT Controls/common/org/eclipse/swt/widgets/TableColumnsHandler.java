@@ -7,8 +7,7 @@ final class TableColumnsHandler {
 
 	private final Table table;
 
-	private Rectangle columnsArea;
-	private Point computedSize;
+	private Rectangle cachedHeaderBounds;
 	private int columnResizePossible = -1;
 	private int columnResizeActive = -1;
 
@@ -17,19 +16,19 @@ final class TableColumnsHandler {
 	}
 
 	public Point getSize() {
-		if (this.computedSize == null) {
+		if (cachedHeaderBounds == null) {
 			calculateBounds();
 		}
 
-		return this.computedSize;
+		return new Point(cachedHeaderBounds.width, cachedHeaderBounds.height);
 	}
 
-	public Rectangle getColumnsBounds() {
-		if (columnsArea == null) {
+	public Rectangle getHeaderBounds() {
+		if (cachedHeaderBounds == null) {
 			calculateBounds();
 		}
 
-		return columnsArea;
+		return new Rectangle(cachedHeaderBounds.x, cachedHeaderBounds.y, cachedHeaderBounds.width, cachedHeaderBounds.height);
 	}
 
 	private void calculateBounds() {
@@ -40,28 +39,19 @@ final class TableColumnsHandler {
 		}
 
 		int width = 0;
-		int headerHeight = 0;
+		int headerHeight = 1;
 		for (TableColumn c : table.getColumns()) {
 			width += c.getWidth();
 			headerHeight = Math.max(c.getHeight(), headerHeight);
 		}
 
-		this.columnsArea = new Rectangle(-horizontalShift, 0, width, headerHeight);
-
-		this.computedSize = new Point(width, headerHeight);
-
-		if (table.getHeaderVisible()) {
-			this.computedSize.y = Math.max(1, this.computedSize.y);
-		} else {
-			this.columnsArea.height = 0;
-			this.computedSize.y = 0;
-		}
+		this.cachedHeaderBounds = new Rectangle(-horizontalShift, 0, width, headerHeight);
 	}
 
 	public void handleMouseMove(Event event) {
-		if (columnsArea == null) return;
+		if (cachedHeaderBounds == null) return;
 
-		if (this.columnResizeActive != -1) {
+		if (this.columnResizeActive >= 0) {
 			TableColumn c = table.getColumn(this.columnResizeActive);
 			int x = c.getX();
 			c.setWidth(event.x - x);
@@ -69,13 +59,16 @@ final class TableColumnsHandler {
 			return;
 		}
 
-		this.columnResizePossible = mouseIsOnColumnSide(event.x, event.y);
+		if (isInHeader(event.y, cachedHeaderBounds)) {
+			this.columnResizePossible = mouseIsOnColumnSide(event.x);
+		}
+
 		if (columnResizePossible >= 0) {
 			table.setCursor(table.getDisplay().getSystemCursor(SWT.CURSOR_SIZEWE));
 		}
 		else {
 			table.setCursor(null);
-			if (!columnsArea.contains(event.x, event.y)
+			if (!cachedHeaderBounds.contains(event.x, event.y)
 					&& table.mouseHoverElement instanceof TableColumn c) {
 				table.mouseHoverElement = null;
 				table.redrawColumnHeader(c);
@@ -85,16 +78,8 @@ final class TableColumnsHandler {
 		}
 	}
 
-	private int mouseIsOnColumnSide(int x, int y) {
-		if (!isInHeader(y)) {
-			return -1;
-		}
-
+	private int mouseIsOnColumnSide(int x) {
 		final TableColumn[] columns = table.getColumns();
-		if (columns == null) {
-			return -1;
-		}
-
 		for (TableColumn c : columns) {
 			final int columnX = c.getX();
 			final int columnWidth = c.getWidth();
@@ -110,9 +95,10 @@ final class TableColumnsHandler {
 	}
 
 	public boolean handleMouseDown(Event event) {
-		if (columnsArea == null) return false;
+		if (!table.getHeaderVisible()) return false;
+		if (cachedHeaderBounds == null) return false;
+		if (!isInHeader(event.y, cachedHeaderBounds)) return false;
 		if (event.button != 1) return false;
-		if (!isInHeader(event.y)) return false;
 
 		if (event.count > 1) {
 			TableColumn column = table.getColumn(this.columnResizePossible);
@@ -125,8 +111,8 @@ final class TableColumnsHandler {
 		return true;
 	}
 
-	private boolean isInHeader(int y) {
-		return y < columnsArea.y + columnsArea.height;
+	private static boolean isInHeader(int y, Rectangle headerBounds) {
+		return y < headerBounds.y + headerBounds.height;
 	}
 
 	public void handleMouseUp(Event e) {
@@ -135,7 +121,6 @@ final class TableColumnsHandler {
 	}
 
 	public void clearCache() {
-		columnsArea = null;
-		computedSize = null;
+		cachedHeaderBounds = null;
 	}
 }

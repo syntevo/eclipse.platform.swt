@@ -29,7 +29,7 @@ class TableItemsHandler {
 		}
 
 		var items = table.getItems();
-		var columns = table.getColumnsArea();
+		final int headerWidth = table.getHeaderBounds().width;
 
 		int gridLineSize = getGridSize(table);
 
@@ -37,7 +37,7 @@ class TableItemsHandler {
 		int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
 
 		if (table.columnsExist()) {
-			width = columns.width;
+			width = headerWidth;
 		} else {
 			for (int i = 0; i < items.length; i++) {
 				var it = items[i];
@@ -103,9 +103,8 @@ class TableItemsHandler {
 
 	public Rectangle getItemsClientArea() {
 		Rectangle ca = table.getClientArea();
-		Rectangle columns = table.getColumnsArea();
-
-		return new Rectangle(0, columns.y + columns.height + 1, ca.width, ca.height - columns.height);
+		final int headerHeight = table.getHeaderHeight();
+		return new Rectangle(0, headerHeight + 1, ca.width, ca.height - headerHeight);
 	}
 
 	public void handleMouseMove(Event event) {

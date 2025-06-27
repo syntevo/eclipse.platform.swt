@@ -56,13 +56,13 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		gc.fillRectangle(ca);
 
-		paintHeader(gc);
+		if (table.getHeaderVisible()) {
+			paintHeader(gc);
+		}
 		table.getItemsHandler().paint(gc);
 	}
 
 	private void paintHeader(GC gc) {
-		if (!table.getHeaderVisible()) return;
-
 		final Color textColor = gc.getForeground();
 		final Color lineColor = new Color(192, 192, 192);
 
