@@ -113,13 +113,7 @@ public class TableItemRenderer {
 
 		gc.setClipping(bounds);
 		try {
-			Event event = new Event();
-			event.item = item;
-			event.index = columnIndex;
-			event.gc = gc;
-			event.setBounds(bounds);
-			// TODO MeasureItem should happen in the bounds calculation logic...
-			table.sendEvent(SWT.MeasureItem, event);
+			Event event = table.sendMeasureItem(item, columnIndex, gc, bounds);
 
 			event.detail = detailDefault;
 			table.sendEvent(SWT.EraseItem, event);
@@ -206,7 +200,11 @@ public class TableItemRenderer {
 			width += GAP;
 		}
 
-		Point size = table.sendMeasureItem(item, colIndex, gc, width, height);
+		final Rectangle bounds = item.getBounds(colIndex);
+		bounds.width = width;
+		bounds.height = height;
+		Event event = table.sendMeasureItem(item, colIndex, gc, bounds);
+		final Point size = new Point(event.width, event.height);
 
 		computedCellSizes.put(colIndex, size);
 
