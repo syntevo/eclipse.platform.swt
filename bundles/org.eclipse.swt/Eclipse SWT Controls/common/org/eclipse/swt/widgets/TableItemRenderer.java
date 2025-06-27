@@ -206,24 +206,11 @@ public class TableItemRenderer {
 			width += GAP;
 		}
 
-		if (table.hooks(SWT.MeasureItem)) {
-			final Event event = new Event();
-			event.widget = table;
-			event.item = item;
-			event.gc = gc;
-			event.index = colIndex;
-			event.width = width;
-			event.height = height;
-			table.sendEvent(SWT.MeasureItem, event);
-			width = event.width;
-			height = event.height;
-		}
+		Point size = table.sendMeasureItem(item, colIndex, gc, width, height);
 
-		Point p = new Point(width, height);
+		computedCellSizes.put(colIndex, size);
 
-		computedCellSizes.put(colIndex, p);
-
-		return p;
+		return size;
 	}
 
 	Point computeSize(boolean changed) {

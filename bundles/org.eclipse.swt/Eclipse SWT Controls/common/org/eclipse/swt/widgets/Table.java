@@ -3058,4 +3058,20 @@ public class Table extends CustomComposite {
 	int guessColumnHeight(TableColumn column) {
 		return renderer.guessColumnHeight(column);
 	}
+
+	Point sendMeasureItem(TableItem item, int index, GC gc, int width, int height) {
+		if (!hooks(SWT.MeasureItem)) {
+			return new Point(width, height);
+		}
+
+		final Event event = new Event();
+		event.widget = this;
+		event.item = item;
+		event.gc = gc;
+		event.index = index;
+		event.width = width;
+		event.height = height;
+		sendEvent(SWT.MeasureItem, event);
+		return new Point(event.width, event.height);
+	}
 }
