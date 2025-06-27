@@ -7,23 +7,12 @@ import org.eclipse.swt.graphics.*;
 
 public class TableItemRenderer {
 
-	/** Gap between icon and text */
 	private static final int GAP = 3;
-	/** Left and right margins */
-	private static final int DEFAULT_MARGIN = 3;
-	/** Left and right margins */
-	private static final int DEFAULT_MARGIN_UP_DOWN = 2;
-	/** a string inserted in the middle of text that has been shortened */
-
-	private static final int leftMargin = 3;
-	private static final int rightMargin = DEFAULT_MARGIN;
-	private static final int topMargin = DEFAULT_MARGIN_UP_DOWN;
-	private static final int bottomMargin = DEFAULT_MARGIN_UP_DOWN;
+	private static final int MARGIN_X = 3;
+	private static final int MARGIN_Y = 2;
 
 	private final TableItem item;
 
-	private boolean selected;
-	private boolean hovered;
 	Rectangle checkboxBounds;
 
 	private final Map<Integer, Point> computedCellSizes = new HashMap<>();
@@ -39,27 +28,7 @@ public class TableItemRenderer {
 		final Table table = getParent();
 
 		Rectangle itemBounds = item.getBounds();
-		this.selected = false;
-		this.hovered = false;
-		int detail = SWT.BACKGROUND | SWT.FOREGROUND;
-		if (table.isSelected(index)) {
-			this.selected = true;
-			detail |= SWT.SELECTED;
-
-			gc.setBackground(Table.SELECTION_COLOR);
-			gc.fillRectangle(itemBounds);
-		}
-
-		if (table.mouseHoverElement == item) {
-			this.hovered = true;
-			detail |= SWT.HOT;
-			gc.setBackground(Table.HOVER_COLOR);
-			gc.fillRectangle(itemBounds);
-		}
-
-		if (table.isFocusRow(index)) {
-			detail |= SWT.FOCUSED;
-		}
+		final int detail = prepareEventDetail(index, table);
 
 		if ((table.getStyle() & SWT.CHECK) != 0) {
 			drawCheckbox(gc);
@@ -72,17 +41,19 @@ public class TableItemRenderer {
 		boolean drawFocusRect = false;
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
+				gc.setBackground(background);
+				gc.setForeground(foreground);
 				Rectangle cellBounds = item.getBounds(i);
+
 				if (drawCell(i, detail, cellBounds, gc)) {
 					drawFocusRect = true;
 				}
-				gc.setBackground(background);
-				gc.setForeground(foreground);
 			}
 		} else {
-			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 			gc.setBackground(background);
 			gc.setForeground(foreground);
+
+			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 		}
 
 		if (drawFocusRect) {
@@ -92,6 +63,22 @@ public class TableItemRenderer {
 
 	private Table getParent() {
 		return item.getParent();
+	}
+
+	private int prepareEventDetail(int index, Table table) {
+		int detail = SWT.BACKGROUND | SWT.FOREGROUND;
+		if (table.isSelected(index)) {
+			detail |= SWT.SELECTED;
+		}
+
+		if (table.mouseHoverElement == item) {
+			detail |= SWT.HOT;
+		}
+
+		if (table.isFocusRow(index)) {
+			detail |= SWT.FOCUSED;
+		}
+		return detail;
 	}
 
 	private void drawCheckbox(GC gc) {
@@ -133,10 +120,10 @@ public class TableItemRenderer {
 			}
 
 			if ((event.detail & SWT.FOREGROUND) != 0) {
-				int currentWidthPosition = bounds.x + leftMargin;
+				int currentWidthPosition = bounds.x + MARGIN_X;
 
 				int xPosition = currentWidthPosition;
-				int yPosition = bounds.y + topMargin;
+				int yPosition = bounds.y + MARGIN_Y;
 
 				Image image = item.getImage(columnIndex);
 				if (image != null) {
@@ -149,7 +136,7 @@ public class TableItemRenderer {
 					gc.setForeground(foreground);
 				}
 
-				gc.drawText(item.getText(columnIndex), currentWidthPosition, bounds.y + topMargin);
+				gc.drawText(item.getText(columnIndex), currentWidthPosition, bounds.y + MARGIN_Y);
 			}
 
 			table.sendEvent(SWT.PaintItem, event);
@@ -159,23 +146,19 @@ public class TableItemRenderer {
 		}
 	}
 
-	private Rectangle getBounds(int columnIndex) {
-		return item.getBounds(columnIndex);
-	}
-
 	public Point computeCellSize(int colIndex, GC gc) {
 		final Point cellSize = computedCellSizes.get(colIndex);
 		if (cellSize != null) {
 			return cellSize;
 		}
 
-		int height = topMargin + bottomMargin;
-		int width = leftMargin + rightMargin;
+		int height = MARGIN_Y + MARGIN_Y;
+		int width = MARGIN_X + MARGIN_X;
 
 		Image image = item.getImage(colIndex);
 		if (image != null) {
 			final Rectangle bounds = image.getBounds();
-			Rectangle rec = new Rectangle(width, topMargin, bounds.width, bounds.height);
+			Rectangle rec = new Rectangle(width, MARGIN_Y, bounds.width, bounds.height);
 			internalComputedCellImage.put(colIndex, rec);
 			height += bounds.height;
 			width += bounds.width;
@@ -187,7 +170,7 @@ public class TableItemRenderer {
 		if (text != null) {
 			Point size = table.computeTextExtent(text);
 
-			Rectangle rec = new Rectangle(width, topMargin, size.x, size.y);
+			Rectangle rec = new Rectangle(width, MARGIN_Y, size.x, size.y);
 			internalComputedCellTextBounds.put(colIndex, rec);
 
 			width += size.x;
@@ -218,7 +201,7 @@ public class TableItemRenderer {
 
 		final Table parent = getParent();
 
-		int width = leftMargin + rightMargin;
+		int width = MARGIN_X + MARGIN_X;
 
 		int lineHeight = guessItemHeight(parent);
 		int imageHeight = 0;
@@ -240,7 +223,7 @@ public class TableItemRenderer {
 			}
 		}
 
-		int height = topMargin + Math.max(lineHeight, imageHeight) + bottomMargin;
+		int height = MARGIN_Y + Math.max(lineHeight, imageHeight) + MARGIN_Y;
 
 		if (parent.getColumnCount() > 0) {
 			width = parent.getTotalColumnWidth();
@@ -264,7 +247,7 @@ public class TableItemRenderer {
 
 	public static int guessItemHeight(Table table) {
 		int textHeight = table.guessTextHeight();
-		return textHeight + topMargin + bottomMargin;
+		return textHeight + MARGIN_Y + MARGIN_Y;
 	}
 
 	public Rectangle getTextBounds(int index, GC gc) {
@@ -273,7 +256,7 @@ public class TableItemRenderer {
 		}
 
 		Rectangle internal = internalComputedCellTextBounds.get(index);
-		Rectangle outer = getBounds(index);
+		Rectangle outer = item.getBounds(index);
 		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
 	}
 
@@ -287,7 +270,7 @@ public class TableItemRenderer {
 		}
 
 		Rectangle internal = internalComputedCellImage.get(index);
-		Rectangle outer = getBounds(index);
+		Rectangle outer = item.getBounds(index);
 		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
 	}
 }
