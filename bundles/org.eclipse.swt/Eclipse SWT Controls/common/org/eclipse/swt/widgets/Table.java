@@ -92,8 +92,6 @@ public class Table extends CustomComposite {
 
 // ------------------------------------------------------------
 
-	static final boolean USE_CACHES = true; // default true
-
 	static final boolean LOG_NOT_IMPLEMENTED = false; // write to console, if method calls are not implemented: default
 														// false
 

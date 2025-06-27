@@ -310,7 +310,7 @@ public class TableItem extends Item {
 	 * @return the full Rectangle including a checkbox and initial pixels.
 	 */
 	public Rectangle getFullBounds() {
-		if (topIndexAtCalculation == getParent().getTopIndex() && bounds != null && Table.USE_CACHES) {
+		if (topIndexAtCalculation == getParent().getTopIndex() && bounds != null) {
 			return bounds;
 		}
 

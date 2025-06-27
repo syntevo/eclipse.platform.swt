@@ -17,7 +17,7 @@ final class TableColumnsHandler {
 	}
 
 	public Point getSize() {
-		if (this.computedSize == null || !Table.USE_CACHES) {
+		if (this.computedSize == null) {
 			calculateBounds();
 		}
 
@@ -25,7 +25,7 @@ final class TableColumnsHandler {
 	}
 
 	public Rectangle getColumnsBounds() {
-		if (columnsArea == null || !Table.USE_CACHES) {
+		if (columnsArea == null) {
 			calculateBounds();
 		}
 
