@@ -659,7 +659,7 @@ public class TableColumn extends Item {
 			}
 		}
 
-		parent.redrawColumnHeader(this);
+		parent.redraw();
 	}
 
 	void updateToolTip(int index) {

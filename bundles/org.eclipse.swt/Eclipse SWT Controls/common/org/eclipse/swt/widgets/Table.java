@@ -427,6 +427,11 @@ public class Table extends CustomComposite {
 	}
 
 	void updateScrollBarWithTextSize() {
+		final Point size = getSize();
+		if (size.x == 0 || size.y == 0) {
+			return;
+		}
+
 		updateVerticalScrollBar();
 
 		if (horizontalBar != null) {

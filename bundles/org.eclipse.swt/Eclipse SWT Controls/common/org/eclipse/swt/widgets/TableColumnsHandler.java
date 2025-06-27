@@ -16,40 +16,9 @@ final class TableColumnsHandler {
 		this.table = table;
 	}
 
-	private void calculateColumnsPositions() {
-		boolean drawColumns = table.columnsExist();
-
-		int tableColumnsHeight = 0;
-		int width = 0;
-		this.columnsArea = new Rectangle(0, 0, 0, 0);
-
-		int horizontalShift = 0;
-		if (table.getHorizontalBar() != null) {
-			horizontalShift = table.getHorizontalBar().getSelection();
-		}
-
-		if (drawColumns) {
-			for (TableColumn c : table.getColumns()) {
-				width += c.getWidth();
-				tableColumnsHeight = Math.max(c.getHeight(), tableColumnsHeight);
-			}
-
-			this.columnsArea = new Rectangle(-horizontalShift, 0, width, tableColumnsHeight);
-		}
-
-		this.computedSize = new Point(width, tableColumnsHeight);
-
-		if (table.getHeaderVisible()) {
-			this.computedSize.y = Math.max(1, this.computedSize.y);
-		} else {
-			this.columnsArea.height = 0;
-			this.computedSize.y = 0;
-		}
-	}
-
 	public Point getSize() {
 		if (this.computedSize == null || !Table.USE_CACHES) {
-			calculateColumnsPositions();
+			calculateBounds();
 		}
 
 		return this.computedSize;
@@ -57,10 +26,36 @@ final class TableColumnsHandler {
 
 	public Rectangle getColumnsBounds() {
 		if (columnsArea == null || !Table.USE_CACHES) {
-			calculateColumnsPositions();
+			calculateBounds();
 		}
 
 		return columnsArea;
+	}
+
+	private void calculateBounds() {
+		int horizontalShift = 0;
+		final ScrollBar horizontalBar = table.getHorizontalBar();
+		if (horizontalBar != null) {
+			horizontalShift = horizontalBar.getSelection();
+		}
+
+		int width = 0;
+		int headerHeight = 0;
+		for (TableColumn c : table.getColumns()) {
+			width += c.getWidth();
+			headerHeight = Math.max(c.getHeight(), headerHeight);
+		}
+
+		this.columnsArea = new Rectangle(-horizontalShift, 0, width, headerHeight);
+
+		this.computedSize = new Point(width, headerHeight);
+
+		if (table.getHeaderVisible()) {
+			this.computedSize.y = Math.max(1, this.computedSize.y);
+		} else {
+			this.columnsArea.height = 0;
+			this.computedSize.y = 0;
+		}
 	}
 
 	public void handleMouseMove(Event event) {
