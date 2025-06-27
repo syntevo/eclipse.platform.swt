@@ -17,25 +17,22 @@ public class DefaultTableRenderer extends TableRenderer {
 		final GC gc = new GC(table);
 		try {
 			int colIndex = table.indexOf(column);
-			Point fin = new Point(0, 0);
 			int width = 0;
+			final boolean virtual = table.isVirtual();
 			final TableItem[] items = table.getItems();
-			if (items != null) {
-				final boolean virtual = table.isVirtual();
-				for (TableItem item : items) {
-					if (virtual && !item.cached) {
-						continue;
-					}
-					Point p = item.computeCellSize(colIndex);
-					width = Math.max(width, p.x);
-					item.clearCache();
+			for (TableItem item : items) {
+				if (virtual && !item.cached) {
+					continue;
 				}
+				Point p = item.computeCellSize(colIndex, gc);
+				width = Math.max(width, p.x);
+				item.clearCache();
 			}
 
 			Point headerExt = gc.textExtent(column.getText());
-			fin.x = Math.max(headerExt.x + 2 * HEADER_MARGIN_X, width);
-			fin.y = Math.max(headerExt.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
-			return fin;
+			int x = Math.max(headerExt.x + 2 * HEADER_MARGIN_X, width);
+			int y = Math.max(headerExt.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
+			return new Point(x, y);
 		} finally {
 			gc.dispose();
 		}
@@ -54,6 +51,7 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		table.updateScrollBarWithTextSize();
 
+		gc.setBackground(table.getBackground());
 		gc.fillRectangle(ca);
 
 		if (table.getHeaderVisible()) {
@@ -70,7 +68,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		final int height = table.getHeaderHeight();
 		gc.setForeground(lineColor);
 		gc.drawLine(0, 0, ca.width, 0);
-		gc.drawLine(0, height, ca.width, height);
+		gc.drawLine(0, height - 1, ca.width, height);
 
 		final TableColumn[] columns = table.getColumns();
 		for (int i = 0; i < columns.length; i++) {
@@ -85,7 +83,7 @@ public class DefaultTableRenderer extends TableRenderer {
 
 			final int separatorX = x + width;
 			gc.drawLine(separatorX, HEADER_MARGIN_Y,
-					separatorX, height - HEADER_MARGIN_Y);
+					separatorX, height - HEADER_MARGIN_Y - 1);
 		}
 
 		gc.setForeground(textColor);

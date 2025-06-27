@@ -395,7 +395,7 @@ public class TableColumn extends Item {
 		checkWidget();
 
 		Point p = parent.computeSize(this);
-		this.setWidth(p.x);
+		setWidth(p.x);
 		this.height = p.y;
 
 		getParent().redraw();

@@ -51,7 +51,7 @@ final class TableColumnsHandler {
 	public void handleMouseMove(Event event) {
 		if (cachedHeaderBounds == null) return;
 
-		if (this.columnResizeActive >= 0) {
+		if (columnResizeActive >= 0) {
 			TableColumn c = table.getColumn(this.columnResizeActive);
 			int x = c.getX();
 			c.setWidth(event.x - x);
@@ -60,13 +60,14 @@ final class TableColumnsHandler {
 		}
 
 		if (isInHeader(event.y, cachedHeaderBounds)) {
-			this.columnResizePossible = mouseIsOnColumnSide(event.x);
+			columnResizePossible = mouseIsOnColumnSide(event.x);
+		} else {
+			columnResizePossible = -1;
 		}
 
 		if (columnResizePossible >= 0) {
 			table.setCursor(table.getDisplay().getSystemCursor(SWT.CURSOR_SIZEWE));
-		}
-		else {
+		} else {
 			table.setCursor(null);
 			if (!cachedHeaderBounds.contains(event.x, event.y)
 					&& table.mouseHoverElement instanceof TableColumn c) {

@@ -35,7 +35,7 @@ public class TableItemRenderer {
 		this.item = tableItem;
 	}
 
-	public void doPaint(GC gc, int index, boolean paintItemEvent) {
+	public void doPaint(GC gc, int index) {
 		final Table table = getParent();
 
 		Rectangle itemBounds = item.getBounds();
@@ -72,14 +72,15 @@ public class TableItemRenderer {
 		boolean drawFocusRect = false;
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
-				if (drawCell(i, detail, gc)) {
+				Rectangle cellBounds = item.getBounds(i);
+				if (drawCell(i, detail, cellBounds, gc)) {
 					drawFocusRect = true;
 				}
 				gc.setBackground(background);
 				gc.setForeground(foreground);
 			}
 		} else {
-			drawItem(gc, paintItemEvent, itemBounds);
+			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 			gc.setBackground(background);
 			gc.setForeground(foreground);
 		}
@@ -107,20 +108,16 @@ public class TableItemRenderer {
 		}
 	}
 
-	private boolean drawCell(int columnIndex, int detailDefault, GC gc) {
+	private boolean drawCell(int columnIndex, int detailDefault, Rectangle bounds, GC gc) {
 		final Table table = getParent();
 
-		Color background = gc.getBackground();
-
-		Rectangle b = getBounds(columnIndex);
-		gc.setClipping(b);
+		gc.setClipping(bounds);
 		try {
-			Rectangle itemBounds = item.getBounds(columnIndex);
 			Event event = new Event();
 			event.item = item;
 			event.index = columnIndex;
 			event.gc = gc;
-			event.setBounds(itemBounds);
+			event.setBounds(bounds);
 			// TODO MeasureItem should happen in the bounds calculation logic...
 			table.sendEvent(SWT.MeasureItem, event);
 
@@ -137,17 +134,15 @@ public class TableItemRenderer {
 					gc.setBackground(Table.SELECTION_COLOR);
 				} else if ((event.detail & SWT.HOT) != 0) {
 					gc.setBackground(Table.HOVER_COLOR);
-				} else {
-					gc.setBackground(background);
 				}
-				gc.fillRectangle(itemBounds);
+				gc.fillRectangle(bounds);
 			}
 
 			if ((event.detail & SWT.FOREGROUND) != 0) {
-				int currentWidthPosition = b.x + leftMargin;
+				int currentWidthPosition = bounds.x + leftMargin;
 
 				int xPosition = currentWidthPosition;
-				int yPosition = b.y + topMargin;
+				int yPosition = bounds.y + topMargin;
 
 				Image image = item.getImage(columnIndex);
 				if (image != null) {
@@ -155,12 +150,12 @@ public class TableItemRenderer {
 					currentWidthPosition += image.getBounds().width + GAP;
 				}
 
-				Color fgCol = item.getForeground(columnIndex);
-				if (fgCol != null && !this.selected && !this.hovered) {
-					gc.setForeground(fgCol);
+				Color foreground = item.getForeground(columnIndex);
+				if (foreground != null) {
+					gc.setForeground(foreground);
 				}
 
-				gc.drawText(item.getText(columnIndex), currentWidthPosition, b.y + topMargin);
+				gc.drawText(item.getText(columnIndex), currentWidthPosition, bounds.y + topMargin);
 			}
 
 			table.sendEvent(SWT.PaintItem, event);
@@ -174,81 +169,31 @@ public class TableItemRenderer {
 		return item.getBounds(columnIndex);
 	}
 
-	private void drawItem(GC gc, boolean paintItemEvent, Rectangle bounds) {
-		gc.setClipping(bounds);
-
-		try {
-			final Table parent = getParent();
-			if (paintItemEvent) {
-				Event event = new Event();
-				event.item = item;
-				event.index = 0;
-				event.gc = gc;
-				event.x = bounds.x;
-				event.y = bounds.y;
-				parent.sendEvent(SWT.MeasureItem, event);
-				parent.sendEvent(SWT.EraseItem, event);
-				parent.sendEvent(SWT.PaintItem, event);
-				return;
-			}
-
-			Color prevBgColor = gc.getBackground();
-			Color bgColor = item.getBackground();
-			if (bgColor != null && !this.selected && !this.hovered) {
-				gc.setBackground(bgColor);
-				gc.fillRectangle(bounds);
-			}
-
-			int currentWidthPosition = bounds.x + leftMargin;
-
-			int xPosition = currentWidthPosition;
-			int yPosition = bounds.y + topMargin;
-
-			Image image = item.getImage();
-			if (image != null) {
-				gc.drawImage(image, xPosition, yPosition);
-				currentWidthPosition += image.getBounds().width + GAP;
-			}
-
-			Color prevFG = gc.getForeground();
-			Color fgCol = item.getForeground();
-			if (fgCol != null && !this.selected && !this.hovered) {
-				gc.setForeground(fgCol);
-			}
-
-			gc.drawText(item.getText(), currentWidthPosition, bounds.y + topMargin);
-
-			gc.setForeground(prevFG);
-			gc.setBackground(prevBgColor);
-		} finally {
-			gc.setClipping((Rectangle) null);
-		}
-	}
-
-	public Point computeCellSize(int colIndex) {
+	public Point computeCellSize(int colIndex, GC gc) {
 		final Point cellSize = computedCellSizes.get(colIndex);
 		if (cellSize != null) {
 			return cellSize;
 		}
 
-		var image = item.getImage(colIndex);
-
 		int height = topMargin + bottomMargin;
 		int width = leftMargin + rightMargin;
 
+		Image image = item.getImage(colIndex);
 		if (image != null) {
 			final Rectangle bounds = image.getBounds();
-			var rec = new Rectangle(width, topMargin, bounds.width, bounds.height);
+			Rectangle rec = new Rectangle(width, topMargin, bounds.width, bounds.height);
 			internalComputedCellImage.put(colIndex, rec);
 			height += bounds.height;
 			width += bounds.width;
 		}
 
-		var text = item.getText(colIndex);
-		if (text != null) {
-			var size = getParent().computeTextExtent(text);
+		final Table table = getParent();
 
-			var rec = new Rectangle(width, topMargin, size.x, size.y);
+		String text = item.getText(colIndex);
+		if (text != null) {
+			Point size = table.computeTextExtent(text);
+
+			Rectangle rec = new Rectangle(width, topMargin, size.x, size.y);
 			internalComputedCellTextBounds.put(colIndex, rec);
 
 			width += size.x;
@@ -261,7 +206,20 @@ public class TableItemRenderer {
 			width += GAP;
 		}
 
-		var p = new Point(width, height);
+		if (table.hooks(SWT.MeasureItem)) {
+			final Event event = new Event();
+			event.widget = table;
+			event.item = item;
+			event.gc = gc;
+			event.index = colIndex;
+			event.width = width;
+			event.height = height;
+			table.sendEvent(SWT.MeasureItem, event);
+			width = event.width;
+			height = event.height;
+		}
+
+		Point p = new Point(width, height);
 
 		computedCellSizes.put(colIndex, p);
 
@@ -281,7 +239,7 @@ public class TableItemRenderer {
 		int imageHeight = 0;
 
 		if (item.images != null) {
-			for (var i : item.images) {
+			for (Image i : item.images) {
 				if (i == null) {
 					continue;
 				}
@@ -324,9 +282,9 @@ public class TableItemRenderer {
 		return textHeight + topMargin + bottomMargin;
 	}
 
-	public Rectangle getTextBounds(int index) {
+	public Rectangle getTextBounds(int index, GC gc) {
 		if (internalComputedCellTextBounds.get(index) == null) {
-			computeCellSize(index);
+			computeCellSize(index, gc);
 		}
 
 		Rectangle internal = internalComputedCellTextBounds.get(index);
@@ -334,13 +292,13 @@ public class TableItemRenderer {
 		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
 	}
 
-	public Rectangle getImageBounds(int index) {
+	public Rectangle getImageBounds(int index, GC gc) {
 		if (item.getImage(index) == null) {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
 		if (internalComputedCellImage.get(index) == null) {
-			computeCellSize(index);
+			computeCellSize(index, gc);
 		}
 
 		Rectangle internal = internalComputedCellImage.get(index);
