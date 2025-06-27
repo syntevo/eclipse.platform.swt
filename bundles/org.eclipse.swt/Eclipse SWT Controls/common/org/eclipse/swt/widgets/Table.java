@@ -257,10 +257,6 @@ public class Table extends CustomComposite {
 		initializeAccessible();
 	}
 
-	private void onDoubleClick(Event event) {
-		itemsHandler.handleDoubleClick(event);
-	}
-
 	private void onMouseExit() {
 		if (mouseHoverElement != null) {
 			mouseHoverElement = null;
@@ -495,8 +491,6 @@ public class Table extends CustomComposite {
 	}
 
 	private void onMouseDown(Event e) {
-		if (!isVisible()) return;
-
 		Point p = new Point(e.x, e.y);
 
 		if (columnsHandler.handleMouseDown(e)
@@ -521,6 +515,12 @@ public class Table extends CustomComposite {
 		}
 		redraw();
 		sendSelectionEvent(SWT.Selection);
+	}
+
+	private void onDoubleClick(Event event) {
+		if (!columnsHandler.handleMouseDown(event)) {
+			itemsHandler.handleDoubleClick(event);
+		}
 	}
 
 	private void clickAtRow(int index, boolean shiftPressed, boolean ctrlOrCmdPressed) {

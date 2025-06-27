@@ -100,13 +100,18 @@ final class TableColumnsHandler {
 		if (!isInHeader(event.y, cachedHeaderBounds)) return false;
 		if (event.button != 1) return false;
 
-		if (event.count > 1) {
-			TableColumn column = table.getColumn(this.columnResizePossible);
+		if (event.type == SWT.MouseDoubleClick) {
+			TableColumn column = table.getColumn(columnResizePossible);
 			column.pack();
+			event.type = 0;
 			return true;
 		}
 
-		this.columnResizeActive = this.columnResizePossible;
+		if (event.count > 1) {
+			return true;
+		}
+
+		this.columnResizeActive = columnResizePossible;
 		table.setCapture(true);
 		return true;
 	}
@@ -115,7 +120,11 @@ final class TableColumnsHandler {
 		return y < headerBounds.y + headerBounds.height;
 	}
 
-	public void handleMouseUp(Event e) {
+	public void handleMouseUp(Event event) {
+		if (event.count > 1) {
+			return;
+		}
+
 		this.columnResizeActive = -1;
 		table.setCapture(false);
 	}
