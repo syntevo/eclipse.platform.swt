@@ -337,6 +337,9 @@ public class Table extends CustomComposite {
 	}
 
 	private void onKeyDown(Event event) {
+		if (!event.doit) {
+			return;
+		}
 		final int itemCount = getItemCount();
 		if (itemCount == 0) {
 			return;
@@ -349,33 +352,39 @@ public class Table extends CustomComposite {
 				selectionModel.moveSelectionAbsolute(0, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 			case SWT.END -> {
 				selectionModel.moveSelectionAbsolute(itemCount - 1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 			case SWT.ARROW_UP -> {
 				selectionModel.moveSelectionRelative(-1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 			case SWT.ARROW_DOWN -> {
 				selectionModel.moveSelectionRelative(1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 			case SWT.PAGE_UP -> {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
 				selectionModel.moveSelectionRelative(-amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 			case SWT.PAGE_DOWN -> {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
 				selectionModel.moveSelectionRelative(amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
 				redraw();
+				event.doit = false;
 			}
 		}
 	}
