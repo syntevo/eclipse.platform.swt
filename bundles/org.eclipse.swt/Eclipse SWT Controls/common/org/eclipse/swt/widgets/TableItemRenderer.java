@@ -20,8 +20,8 @@ public class TableItemRenderer {
 	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
 	private Point computedSize;
 
-	public TableItemRenderer(TableItem tableItem) {
-		this.item = tableItem;
+	public TableItemRenderer(TableItem item) {
+		this.item = item;
 	}
 
 	public void doPaint(GC gc, int index) {
