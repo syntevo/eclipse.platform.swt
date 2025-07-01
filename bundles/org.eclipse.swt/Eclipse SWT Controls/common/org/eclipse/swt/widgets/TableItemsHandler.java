@@ -65,7 +65,7 @@ class TableItemsHandler {
 			int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
 
 			Rectangle ca = table.getClientArea();
-			return new Point(ca.width, table.getColumnCount() * heightPerLine);
+			return new Point(ca.width, table.getItemCount() * heightPerLine);
 		}
 
 		final int gridLineSize = table.getGridSize();
