@@ -194,24 +194,24 @@ public class TableItemRenderer {
 		return size;
 	}
 
-	Point computeSize(boolean changed) {
-		if (!changed && this.computedSize != null) {
+	Point computeSize() {
+		if (computedSize != null) {
 			return computedSize;
 		}
 
-		final Table parent = getParent();
+		final Table table = getParent();
 
 		int width = MARGIN_X + MARGIN_X;
 
-		int lineHeight = guessItemHeight(parent);
+		int lineHeight = guessItemHeight(table);
 		int imageHeight = 0;
 
 		if (item.images != null) {
-			for (Image i : item.images) {
-				if (i == null) {
+			for (Image image : item.images) {
+				if (image == null) {
 					continue;
 				}
-				Rectangle imageBounds = i.getBounds();
+				Rectangle imageBounds = image.getBounds();
 				imageHeight = Math.max(imageBounds.height, imageHeight);
 			}
 		} else if (item.image != null) {
@@ -225,12 +225,10 @@ public class TableItemRenderer {
 
 		int height = MARGIN_Y + Math.max(lineHeight, imageHeight) + MARGIN_Y;
 
-		if (parent.getColumnCount() > 0) {
-			width = parent.getTotalColumnWidth();
+		if (table.getColumnCount() > 0) {
+			width = table.getTotalColumnWidth();
 		} else {
-			Point textExtent = parent.computeTextExtent(item.getText());
-			lineHeight = textExtent.y;
-			width += textExtent.x;
+			width += table.computeTextExtent(item.getText()).x;
 		}
 
 		this.computedSize = new Point(width, height);
