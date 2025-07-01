@@ -970,11 +970,7 @@ public class Table extends CustomComposite {
 
 			virtualItemsList.put(index, item);
 		} else {
-			if (index < itemsList.size() - 1) {
-				itemsList.add(index, item);
-			} else {
-				itemsList.add(item);
-			}
+			itemsList.add(index, item);
 
 			selectionModel.setCount(itemsList.size());
 
