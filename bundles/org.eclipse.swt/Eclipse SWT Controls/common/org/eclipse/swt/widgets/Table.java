@@ -917,16 +917,9 @@ public class Table extends CustomComposite {
 
 		moveTextsItemsToRight(index);
 
-		if (getItems() != null) {
-			for (TableItem it : getItems()) {
-				it.clearCache();
-			}
-		}
-
-		if (getItems() != null) {
-			for (TableItem it : getItems()) {
-				it.clearCache();
-			}
+		final TableItem[] items = getItems();
+		for (TableItem it : items) {
+			it.clearCache();
 		}
 
 		if (columnOrder != null) {
