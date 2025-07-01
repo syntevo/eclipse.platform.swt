@@ -120,30 +120,13 @@ public class Table extends CustomComposite {
 
 	TableItem currentItem;
 	TableColumn sortColumn;
-	Rectangle focusRect;
-	boolean[] columnVisible;
-	long headerToolTipHandle, hwndHeader, itemToolTipHandle;
-	boolean ignoreCustomDraw, ignoreDrawForeground, ignoreDrawBackground, ignoreDrawFocus, ignoreDrawSelection,
-			ignoreDrawHot;
-	boolean customDraw, dragStarted, explorerTheme, firstColumnImage, fixScrollWidth, tipRequested, wasSelected,
-			wasResized, painted;
-	boolean ignoreActivate, ignoreSelect, ignoreShrink, ignoreResize, ignoreColumnMove, ignoreColumnResize,
-			fullRowSelect, settingItemHeight;
-	boolean headerItemDragging;
-	int itemHeight, lastIndexOf, lastWidth, sortDirection, resizeCount, selectionForeground, hotIndex;
-	static /* final */ long HeaderProc;
-	static final int INSET = 4;
+	long headerToolTipHandle;
+	boolean customDraw;
+	boolean ignoreResize;
+	int itemHeight;
+	int lastWidth;
+	int sortDirection;
 	static final int GRID_WIDTH = 1;
-	static final int SORT_WIDTH = 10;
-	static final int HEADER_MARGIN = 12;
-	static final int HEADER_EXTRA = 3;
-	static final int VISTA_EXTRA = 2;
-	static final int EXPLORER_EXTRA = 2;
-	static final int H_SCROLL_LIMIT = 32;
-	static final int V_SCROLL_LIMIT = 16;
-	static final int DRAG_IMAGE_SIZE = 301;
-
-	static boolean COMPRESS_ITEMS = true;
 
 	private Accessible acc;
 	private AccessibleAdapter accAdapter;
