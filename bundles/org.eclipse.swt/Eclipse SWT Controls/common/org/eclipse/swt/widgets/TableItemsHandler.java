@@ -20,7 +20,7 @@ class TableItemsHandler {
 		this.itemsCountAtCalculation = table.getItemCount();
 
 		if (table.isVirtual()) {
-			int gridLineSize = getGridSize(table);
+			int gridLineSize = table.getGridSize();
 			int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
 
 			var ca = table.getClientArea();
@@ -31,7 +31,7 @@ class TableItemsHandler {
 		var items = table.getItems();
 		final int headerWidth = table.getHeaderBounds().width;
 
-		int gridLineSize = getGridSize(table);
+		int gridLineSize = table.getGridSize();
 
 		int width = 0;
 		int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
@@ -52,12 +52,8 @@ class TableItemsHandler {
 		this.computedSize = new Point(width, heightPerLine * table.getItemCount());
 	}
 
-	static int getGridSize(Table table) {
-		return table.getLinesVisible() ? Table.TABLE_GRID_LINE_SIZE : 0;
-	}
-
 	static int getItemsHeight(TableItem it) {
-		return it.getSize().y + getGridSize(it.getParent());
+		return it.getSize().y + it.getParent().getGridSize();
 	}
 
 	public void paint(GC gc) {

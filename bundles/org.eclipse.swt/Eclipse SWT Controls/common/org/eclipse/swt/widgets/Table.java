@@ -105,7 +105,7 @@ public class Table extends CustomComposite {
 	static final int TABLE_INITIAL_RIGHT_SHIFT = 3;
 	static final int TABLE_CHECKBOX_RIGHT_SHIFT = 35;
 
-	static final int TABLE_GRID_LINE_SIZE = 1;
+	private static final int TABLE_GRID_LINE_SIZE = 1;
 
 	private final List<TableItem> itemsList = new ArrayList<>();
 	private final TreeMap<Integer, TableItem> virtualItemsList = new TreeMap<>();
@@ -1550,6 +1550,10 @@ public class Table extends CustomComposite {
 		return linesVisible;
 	}
 
+	int getGridSize() {
+		return linesVisible ? TABLE_GRID_LINE_SIZE : 0;
+	}
+
 	/**
 	 * Returns an array of <code>TableItem</code>s that are currently selected in
 	 * the receiver. The order of the items is unspecified. An empty array indicates
@@ -2514,7 +2518,7 @@ public class Table extends CustomComposite {
 
 	Point getTopIndexItemPosition() {
 		Rectangle columns = getHeaderBounds();
-		int gridLineSize = TableItemsHandler.getGridSize(this);
+		int gridLineSize = this.getGridSize();
 		int initialHeightPosition = headerVisible ? columns.height : 0;
 
 		return new Point(columns.x, initialHeightPosition + gridLineSize);
