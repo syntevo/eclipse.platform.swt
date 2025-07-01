@@ -16,42 +16,6 @@ class TableItemsHandler {
 		this.table = table;
 	}
 
-	public void calculateItemsBounds() {
-		this.itemsCountAtCalculation = table.getItemCount();
-
-		if (table.isVirtual()) {
-			int gridLineSize = table.getGridSize();
-			int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
-
-			var ca = table.getClientArea();
-			this.computedSize = new Point(ca.width, table.getColumnCount() * heightPerLine);
-			return;
-		}
-
-		var items = table.getItems();
-		final int headerWidth = table.getHeaderBounds().width;
-
-		int gridLineSize = table.getGridSize();
-
-		int width = 0;
-		int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
-
-		if (table.columnsExist()) {
-			width = headerWidth;
-		} else {
-			for (int i = 0; i < items.length; i++) {
-				var it = items[i];
-				if (i == 0) {
-					heightPerLine = getItemsHeight(it);
-				}
-
-				width = Math.max(width, it.getFullBounds().width);
-			}
-		}
-
-		this.computedSize = new Point(width, heightPerLine * table.getItemCount());
-	}
-
 	static int getItemsHeight(TableItem it) {
 		return it.getSize().y + it.getParent().getGridSize();
 	}
@@ -86,11 +50,44 @@ class TableItemsHandler {
 	}
 
 	public Point getSize() {
-		if (computedSize == null || this.itemsCountAtCalculation != table.getItemCount()) {
-			calculateItemsBounds();
+		final int itemCount = table.getItemCount();
+		if (computedSize == null || itemsCountAtCalculation != itemCount) {
+			itemsCountAtCalculation = itemCount;
+			computedSize = calculateSize();
 		}
 
 		return computedSize;
+	}
+
+	private Point calculateSize() {
+		if (table.isVirtual()) {
+			int gridLineSize = table.getGridSize();
+			int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
+
+			Rectangle ca = table.getClientArea();
+			return new Point(ca.width, table.getColumnCount() * heightPerLine);
+		}
+
+		final int gridLineSize = table.getGridSize();
+		int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
+
+		TableItem[] items = table.getItems();
+		int width = 0;
+		if (table.columnsExist()) {
+			final int headerWidth = table.getHeaderBounds().width;
+			width = headerWidth;
+		} else {
+			for (int i = 0; i < items.length; i++) {
+				TableItem item = items[i];
+				if (i == 0) {
+					heightPerLine = getItemsHeight(item);
+				}
+
+				width = Math.max(width, item.getFullBounds().width);
+			}
+		}
+
+		return new Point(width, heightPerLine * items.length);
 	}
 
 	public Rectangle getItemsClientArea() {
