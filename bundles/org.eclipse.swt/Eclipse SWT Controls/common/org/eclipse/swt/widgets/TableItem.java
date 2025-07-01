@@ -309,15 +309,17 @@ public class TableItem extends Item {
 	 * @return the full Rectangle including a checkbox and initial pixels.
 	 */
 	public Rectangle getFullBounds() {
-		if (topIndexAtCalculation == getParent().getTopIndex() && bounds != null) {
+		checkWidget();
+		final int topIndex = parent.getTopIndex();
+		if (topIndexAtCalculation == topIndex && bounds != null) {
 			return bounds;
 		}
 
 		this.bounds = null;
 		this.location = null;
 
-		checkWidget();
 		if (!parent.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+
 		int itemIndex = getItemIndex();
 		if (itemIndex == -1) {
 			return new Rectangle(0, 0, 0, 0);
@@ -325,48 +327,54 @@ public class TableItem extends Item {
 
 		Point p = renderer.computeSize(false);
 
-		synchronized (getParent()) {
-			if (this.location == null) {
-				calculateLocation();
-			}
-			bounds = new Rectangle(location.x, location.y, p.x, p.y);
+		if (location == null) {
+			location = calculateLocation(itemIndex, topIndex);
+			topIndexAtCalculation = topIndex;
 		}
+		bounds = new Rectangle(location.x, location.y, p.x, p.y);
 
 		return bounds;
 	}
 
-	private void calculateLocation() {
-		int index = getItemIndex();
-
-		final int topIndex = getParent().getTopIndex();
-		if (topIndex == index) {
-			setLocation(getParent().getTopIndexItemPosition());
-		} else if (topIndex < index) {
+	private Point calculateLocation(int index, int topIndex) {
+		final Table table = getParent();
+		final Point location;
+		if (index == topIndex) {
+			location = table.getTopIndexItemPosition();
+		} else if (index > topIndex) {
 			for (int i = topIndex; i < index; i = Math.min(i + 1000, index)) {
-				var it = getParent()._getItem(i, false);
-				it.getLocation();
+				TableItem item = table._getItem(i, false);
+				item.getLocation();
 			}
 
-			var prevItem = getParent().getItem(index - 1);
-			var prevBounds = prevItem.getLocation();
+			TableItem prevItem = table.getItem(index - 1);
+			Point prevBounds = prevItem.getLocation();
 			int fullHeightDiff = TableItemsHandler.getItemsHeight(prevItem);
-			setLocation(new Point(prevBounds.x, prevBounds.y + fullHeightDiff));
+			location = new Point(prevBounds.x, prevBounds.y + fullHeightDiff);
 		} else {
 			for (int i = topIndex; i > index; i = Math.max(i - 1000, index)) {
-				var it = getParent().getItem(i);
-				it.getLocation();
+				TableItem item = table.getItem(i);
+				item.getLocation();
 			}
 
-			var prevItem = getParent().getItem(index + 1);
-			var prevBounds = prevItem.getLocation();
-			int fullHeightDiff = TableItemsHandler.getItemsHeight(this);
-			setLocation(new Point(prevBounds.x, prevBounds.y - fullHeightDiff));
+			TableItem prevItem = table.getItem(index + 1);
+			Point prevBounds = prevItem.getLocation();
+			int lineHeight = TableItemsHandler.getItemsHeight(this);
+			location = new Point(prevBounds.x, prevBounds.y - lineHeight);
 		}
-		topIndexAtCalculation = topIndex;
+		return location;
 	}
 
-	private void setLocation(Point l) {
-		this.location = l;
+	private Point getLocation() {
+		final int topIndex = getParent().getTopIndex();
+		if (topIndex == topIndexAtCalculation && location != null) {
+			return location;
+		}
+
+		int index = getItemIndex();
+		location = calculateLocation(index, topIndex);
+		topIndexAtCalculation = topIndex;
+		return location;
 	}
 
 	Point getSize() {
@@ -1366,15 +1374,6 @@ public class TableItem extends Item {
 		checkWidget();
 		setText(0, string);
 		clearCache();
-	}
-
-	Point getLocation() {
-		if (getParent().getTopIndex() == topIndexAtCalculation && location != null) {
-			return location;
-		}
-
-		calculateLocation();
-		return location;
 	}
 
 	void moveTextToRightAt(int index) {
