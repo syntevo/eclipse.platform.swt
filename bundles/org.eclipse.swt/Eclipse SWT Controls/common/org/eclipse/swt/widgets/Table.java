@@ -146,6 +146,9 @@ public class Table extends CustomComposite {
 
 	private int virtualItemCount;
 
+	private Point itemsSizeCache;
+	private int itemsSizeCacheKey;
+
 	/**
 	 * Constructs a new instance of this class given its parent and a style value
 	 * describing its behavior and appearance.
@@ -851,7 +854,7 @@ public class Table extends CustomComposite {
 
 	private Point getPreferredSize() {
 		Point headerSize = columnsHandler.getSize();
-		Point itemsArea = itemsHandler.getSize();
+		Point itemsArea = getItemsSize();
 
 		int width = Math.max(headerSize.x, itemsArea.x);
 		int height = itemsArea.y;
@@ -859,6 +862,44 @@ public class Table extends CustomComposite {
 			height += headerSize.y;
 		}
 		return new Point(width, height);
+	}
+
+	private Point getItemsSize() {
+		final int itemCount = getItemCount();
+		if (itemsSizeCache == null || itemsSizeCacheKey != itemCount) {
+			itemsSizeCacheKey = itemCount;
+			itemsSizeCache = calculateItemsSize();
+		}
+
+		return itemsSizeCache;
+	}
+
+	private Point calculateItemsSize() {
+		final int gridLineSize = getGridSize();
+		int heightPerLine = TableItemRenderer.guessItemHeight(this) + gridLineSize;
+
+		if (isVirtual()) {
+			Rectangle ca = getClientArea();
+			return new Point(ca.width, getItemCount() * heightPerLine);
+		}
+
+		TableItem[] items = getItems();
+		int width = 0;
+		if (columnsExist()) {
+			final int headerWidth = getHeaderBounds().width;
+			width = headerWidth;
+		} else {
+			for (int i = 0; i < items.length; i++) {
+				TableItem item = items[i];
+				if (i == 0) {
+					heightPerLine = item.getSize().y + gridLineSize;
+				}
+
+				width = Math.max(width, item.getFullBounds().width);
+			}
+		}
+
+		return new Point(width, heightPerLine * items.length);
 	}
 
 	void createHeaderToolTips() {
@@ -2381,7 +2422,7 @@ public class Table extends CustomComposite {
 		}
 
 		columnsHandler.clearCache();
-		itemsHandler.clearCache();
+		itemsSizeCache = null;
 
 		redraw();
 	}

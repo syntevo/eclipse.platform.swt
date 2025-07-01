@@ -6,18 +6,12 @@ import org.eclipse.swt.graphics.*;
 class TableItemsHandler {
 
 	private final Table table;
-	private Point computedSize;
 	private int lastVisibleElementIndex;
-	private int itemsCountAtCalculation;
 
 	final static int ITEMS_OVERLAY = 5;
 
 	public TableItemsHandler(Table table) {
 		this.table = table;
-	}
-
-	static int getItemsHeight(TableItem it) {
-		return it.getSize().y + it.getParent().getGridSize();
 	}
 
 	public void paint(GC gc) {
@@ -47,47 +41,6 @@ class TableItemsHandler {
 		if (this.lastVisibleElementIndex == -1) {
 			this.lastVisibleElementIndex = table.getItemCount() - 1;
 		}
-	}
-
-	public Point getSize() {
-		final int itemCount = table.getItemCount();
-		if (computedSize == null || itemsCountAtCalculation != itemCount) {
-			itemsCountAtCalculation = itemCount;
-			computedSize = calculateSize();
-		}
-
-		return computedSize;
-	}
-
-	private Point calculateSize() {
-		if (table.isVirtual()) {
-			int gridLineSize = table.getGridSize();
-			int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
-
-			Rectangle ca = table.getClientArea();
-			return new Point(ca.width, table.getItemCount() * heightPerLine);
-		}
-
-		final int gridLineSize = table.getGridSize();
-		int heightPerLine = TableItemRenderer.guessItemHeight(table) + gridLineSize;
-
-		TableItem[] items = table.getItems();
-		int width = 0;
-		if (table.columnsExist()) {
-			final int headerWidth = table.getHeaderBounds().width;
-			width = headerWidth;
-		} else {
-			for (int i = 0; i < items.length; i++) {
-				TableItem item = items[i];
-				if (i == 0) {
-					heightPerLine = getItemsHeight(item);
-				}
-
-				width = Math.max(width, item.getFullBounds().width);
-			}
-		}
-
-		return new Point(width, heightPerLine * items.length);
 	}
 
 	public Rectangle getItemsClientArea() {
@@ -142,10 +95,6 @@ class TableItemsHandler {
 
 	public int getLastVisibleElementIndex() {
 		return this.lastVisibleElementIndex;
-	}
-
-	public void clearCache() {
-		computedSize = null;
 	}
 
 	public void handleDoubleClick(Event event) {
