@@ -338,50 +338,16 @@ public class TableItem extends Item {
 
 	private Point calculateLocation(int index, int topIndex) {
 		final Table table = getParent();
-		final Point location;
-		if (index == topIndex) {
-			location = table.getTopIndexItemPosition();
-		} else if (index > topIndex) {
-			for (int i = topIndex; i < index; i = Math.min(i + 1000, index)) {
-				TableItem item = table._getItem(i, false);
-				item.getLocation();
-			}
-
-			TableItem prevItem = table.getItem(index - 1);
-			Point prevBounds = prevItem.getLocation();
-			int fullHeightDiff = TableItemsHandler.getItemsHeight(prevItem);
-			location = new Point(prevBounds.x, prevBounds.y + fullHeightDiff);
-		} else {
-			for (int i = topIndex; i > index; i = Math.max(i - 1000, index)) {
-				TableItem item = table.getItem(i);
-				item.getLocation();
-			}
-
-			TableItem prevItem = table.getItem(index + 1);
-			Point prevBounds = prevItem.getLocation();
-			int lineHeight = TableItemsHandler.getItemsHeight(this);
-			location = new Point(prevBounds.x, prevBounds.y - lineHeight);
+		final Point location = table.getTopIndexItemPosition();
+		if (index != topIndex) {
+			location.y += (index - topIndex) * table.getItemHeight();
 		}
-		return location;
-	}
-
-	private Point getLocation() {
-		final int topIndex = getParent().getTopIndex();
-		if (topIndex == topIndexAtCalculation && location != null) {
-			return location;
-		}
-
-		int index = getItemIndex();
-		location = calculateLocation(index, topIndex);
-		topIndexAtCalculation = topIndex;
 		return location;
 	}
 
 	Point getSize() {
 		return renderer.computeSize(false);
 	}
-
-
 
 	/**
 	 * Returns a rectangle describing the receiver's size and location relative to
@@ -414,14 +380,13 @@ public class TableItem extends Item {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
-		var b = getBounds();
+		Rectangle b = getBounds();
 		final TableColumn column = parent.getColumn(index);
 
-		int y = b.y;
-		int height = b.height;
-
-		int width = column.getWidth();
 		int x = column.getX();
+		int y = b.y;
+		int width = column.getWidth();
+		int height = b.height;
 
 		if (index == 0) {
 			int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;
@@ -431,8 +396,7 @@ public class TableItem extends Item {
 			}
 			// reduce width by shift. This cell must be by default smaller than the others.
 			// If there is a checkbox, this also must be considered.
-			width = width - shift;
-			width = Math.max(0, width);
+			width = Math.max(0, width - shift);
 			x += shift;
 		}
 
