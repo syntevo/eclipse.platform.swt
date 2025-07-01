@@ -2514,11 +2514,10 @@ public class Table extends CustomComposite {
 	}
 
 	Point getTopIndexItemPosition() {
-		Rectangle columns = getHeaderBounds();
-		int gridLineSize = this.getGridSize();
-		int initialHeightPosition = headerVisible ? columns.height : 0;
-
-		return new Point(columns.x, initialHeightPosition + gridLineSize);
+		Rectangle headerBounds = getHeaderBounds();
+		int gridLineSize = getGridSize();
+		int topIndexY = getHeaderHeight();
+		return new Point(headerBounds.x, topIndexY + gridLineSize);
 	}
 
 	@Override
