@@ -972,7 +972,8 @@ public class Table extends CustomComposite {
 		} else {
 			itemsList.add(index, item);
 
-			selectionModel.setCount(itemsList.size());
+			selectionModel.add(index);
+			if (selectionModel.getCount() != itemsList.size()) error(SWT.ERROR_UNSPECIFIED);
 
 			final int topIndex = selectionModel.getTopIndex();
 			if (index < topIndex) {

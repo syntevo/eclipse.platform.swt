@@ -37,8 +37,23 @@ public final class ListLikeModel {
 		this.count = count;
 	}
 
+	public void add(int index) {
+		if (index < 0 || index > count) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+
+		count++;
+
+		if (index < current) {
+			current++;
+		}
+		if (index < anchor) {
+			anchor++;
+		}
+	}
+
 	public void remove(int index) {
 		if (count == 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+		checkIndex(index);
+
 		if (index < current) {
 			current--;
 		}
