@@ -888,6 +888,10 @@ public class Table extends CustomComposite {
 		if (columnsExist()) {
 			final int headerWidth = getHeaderBounds().width;
 			width = headerWidth;
+			if (items.length > 0) {
+				TableItem item = items[0];
+				heightPerLine = item.getSize().y + gridLineSize;
+			}
 		} else {
 			for (int i = 0; i < items.length; i++) {
 				TableItem item = items[i];
