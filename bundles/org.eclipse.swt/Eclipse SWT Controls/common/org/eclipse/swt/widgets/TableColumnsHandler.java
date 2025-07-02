@@ -51,7 +51,7 @@ final class TableColumnsHandler {
 		if (cachedHeaderBounds == null) return;
 
 		if (columnResizeActive >= 0) {
-			TableColumn c = table.getColumn(this.columnResizeActive);
+			TableColumn c = table.getColumn(columnResizeActive);
 			int x = c.getX();
 			c.setWidth(event.x - x);
 			table.redraw();
@@ -84,6 +84,9 @@ final class TableColumnsHandler {
 			final int columnX = c.getX();
 			final int columnWidth = c.getWidth();
 			if (Math.abs(columnX + columnWidth - x) < 5) {
+				if (!c.getResizable()) {
+					break;
+				}
 				return table.indexOf(c);
 			}
 		}
