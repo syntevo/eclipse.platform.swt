@@ -6,10 +6,12 @@ import org.eclipse.swt.graphics.*;
 final class TableColumnsHandler {
 
 	private final Table table;
+	private final Point mouseDownLocation = new Point(0, 0);
 
 	private Rectangle cachedHeaderBounds;
 	private int columnResizePossible = -1;
 	private int columnResizeActive = -1;
+	private int mouseOverColumn = -1;
 
 	TableColumnsHandler(Table table) {
 		this.table = table;
@@ -58,43 +60,39 @@ final class TableColumnsHandler {
 			return;
 		}
 
-		if (isInHeader(event.y, cachedHeaderBounds)) {
-			columnResizePossible = mouseIsOnColumnSide(event.x);
-		} else {
-			columnResizePossible = -1;
+		columnResizePossible = -1;
+		mouseOverColumn = -1;
+		final boolean isInHeader = isInHeader(event.y, cachedHeaderBounds);
+		if (isInHeader) {
+			final int x = event.x;
+			final TableColumn[] columns = table.getColumns();
+			for (TableColumn column : columns) {
+				final int columnX = column.getX();
+				final int columnWidth = column.getWidth();
+				if (Math.abs(columnX + columnWidth - x) < 5) {
+					if (column.getResizable()) {
+						columnResizePossible = table.indexOf(column);
+					}
+					break;
+				}
+
+				if (columnX <= x && x < columnX + columnWidth) {
+					mouseOverColumn = table.indexOf(column);
+					table.mouseHoverElement = column;
+				}
+			}
 		}
 
 		if (columnResizePossible >= 0) {
 			table.setCursor(table.getDisplay().getSystemCursor(SWT.CURSOR_SIZEWE));
 		} else {
 			table.setCursor(null);
-			if (!cachedHeaderBounds.contains(event.x, event.y)
+			if (!isInHeader
 					&& table.mouseHoverElement instanceof TableColumn c) {
 				table.mouseHoverElement = null;
 				table.redrawColumnHeader(c);
 			}
-
-			// TODO highlight columns if mouse over...
 		}
-	}
-
-	private int mouseIsOnColumnSide(int x) {
-		final TableColumn[] columns = table.getColumns();
-		for (TableColumn c : columns) {
-			final int columnX = c.getX();
-			final int columnWidth = c.getWidth();
-			if (Math.abs(columnX + columnWidth - x) < 5) {
-				if (!c.getResizable()) {
-					break;
-				}
-				return table.indexOf(c);
-			}
-		}
-		return -1;
-	}
-
-	public boolean isColumnResizeActive() {
-		return columnResizeActive >= 0;
 	}
 
 	public boolean handleMouseDown(Event event) {
@@ -104,9 +102,11 @@ final class TableColumnsHandler {
 		if (event.button != 1) return false;
 
 		if (event.type == SWT.MouseDoubleClick) {
-			TableColumn column = table.getColumn(columnResizePossible);
-			column.pack();
-			event.type = 0;
+			if (columnResizePossible >= 0) {
+				TableColumn column = table.getColumn(columnResizePossible);
+				column.pack();
+				event.type = 0;
+			}
 			return true;
 		}
 
@@ -115,12 +115,10 @@ final class TableColumnsHandler {
 		}
 
 		this.columnResizeActive = columnResizePossible;
+		mouseDownLocation.x = event.x;
+		mouseDownLocation.y = event.y;
 		table.setCapture(true);
 		return true;
-	}
-
-	private static boolean isInHeader(int y, Rectangle headerBounds) {
-		return y < headerBounds.y + headerBounds.height;
 	}
 
 	public void handleMouseUp(Event event) {
@@ -128,11 +126,22 @@ final class TableColumnsHandler {
 			return;
 		}
 
-		this.columnResizeActive = -1;
+		if (columnResizeActive >= 0) {
+			columnResizeActive = -1;
+		}
+		if (mouseOverColumn >= 0) {
+			TableColumn column = table.getColumn(mouseOverColumn);
+			column.sendEvent(SWT.Selection);
+			mouseOverColumn = -1;
+		}
 		table.setCapture(false);
 	}
 
 	public void clearCache() {
 		cachedHeaderBounds = null;
+	}
+
+	private static boolean isInHeader(int y, Rectangle headerBounds) {
+		return y < headerBounds.y + headerBounds.height;
 	}
 }
