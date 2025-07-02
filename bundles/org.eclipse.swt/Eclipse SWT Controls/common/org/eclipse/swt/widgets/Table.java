@@ -123,6 +123,8 @@ public class Table extends CustomComposite {
 	long headerToolTipHandle;
 	boolean customDraw;
 	boolean ignoreResize;
+	private int lineHeight;
+	private boolean lineHeightChanged;
 	int itemHeight;
 	int lastWidth;
 	int sortDirection;
@@ -1529,10 +1531,16 @@ public class Table extends CustomComposite {
 	public int getItemHeight() {
 		checkWidget();
 
-		final int height = itemsList.isEmpty()
-				? TableItemRenderer.guessItemHeight(this)
-				: itemsList.get(selectionModel.getTopIndex()).getBounds().height;
-		return Math.max(1, height);
+		if (itemHeight > 0) {
+			return itemHeight;
+		}
+
+		if (lineHeight == 0) {
+			lineHeight = itemsList.isEmpty()
+					? TableItemRenderer.guessItemHeight(this)
+					: itemsList.get(selectionModel.getTopIndex()).getBounds().height;
+		}
+		return Math.max(1, lineHeight);
 	}
 
 	/**
@@ -3074,15 +3082,24 @@ public class Table extends CustomComposite {
 		try {
 			int colIndex = indexOf(column);
 			int width = 0;
+			int height = 0;
 			final boolean virtual = isVirtual();
 			final TableItem[] items = getItems();
 			for (TableItem item : items) {
 				if (virtual && !item.cached) {
 					continue;
 				}
-				Point p = item.computeCellSize(colIndex, gc);
-				width = Math.max(width, p.x);
+				Point size = item.computeCellSize(colIndex, gc);
+				width = Math.max(width, size.x);
+				height = Math.max(height, size.y);
 				item.clearCache();
+			}
+
+			if (height > lineHeight) {
+				lineHeight = height;
+				lineHeightChanged = true;
+				updateVerticalScrollBar();
+				redraw();
 			}
 
 			final Point headerSize = renderer.computeHeaderSize(column, gc);
