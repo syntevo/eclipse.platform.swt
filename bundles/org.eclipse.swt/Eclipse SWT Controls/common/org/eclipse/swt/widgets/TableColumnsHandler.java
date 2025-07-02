@@ -25,13 +25,13 @@ final class TableColumnsHandler {
 
 	public Rectangle getHeaderBounds() {
 		if (cachedHeaderBounds == null) {
-			calculateBounds();
+			cachedHeaderBounds = calculateBounds();
 		}
 
 		return new Rectangle(cachedHeaderBounds.x, cachedHeaderBounds.y, cachedHeaderBounds.width, cachedHeaderBounds.height);
 	}
 
-	private void calculateBounds() {
+	private Rectangle calculateBounds() {
 		int horizontalShift = 0;
 		final ScrollBar horizontalBar = table.getHorizontalBar();
 		if (horizontalBar != null) {
@@ -45,7 +45,7 @@ final class TableColumnsHandler {
 			headerHeight = Math.max(c.getHeight(), headerHeight);
 		}
 
-		this.cachedHeaderBounds = new Rectangle(-horizontalShift, 0, width, headerHeight);
+		return new Rectangle(-horizontalShift, 0, width, headerHeight);
 	}
 
 	public void handleMouseMove(Event event) {
