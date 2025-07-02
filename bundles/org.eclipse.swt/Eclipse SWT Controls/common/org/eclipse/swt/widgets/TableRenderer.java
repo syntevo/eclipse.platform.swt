@@ -5,7 +5,7 @@ import org.eclipse.swt.graphics.Point;
 
 public abstract class TableRenderer {
 
-	public abstract Point computeSize(TableColumn column);
+	public abstract Point computeHeaderSize(TableColumn column, GC gc);
 
 	public abstract int guessColumnHeight(TableColumn column);
 

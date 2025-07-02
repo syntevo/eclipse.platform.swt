@@ -3070,7 +3070,27 @@ public class Table extends CustomComposite {
 	}
 
 	Point computeSize(TableColumn column) {
-		return renderer.computeSize(column);
+		final GC gc = new GC(this);
+		try {
+			int colIndex = indexOf(column);
+			int width = 0;
+			final boolean virtual = isVirtual();
+			final TableItem[] items = getItems();
+			for (TableItem item : items) {
+				if (virtual && !item.cached) {
+					continue;
+				}
+				Point p = item.computeCellSize(colIndex, gc);
+				width = Math.max(width, p.x);
+				item.clearCache();
+			}
+
+			final Point headerSize = renderer.computeHeaderSize(column, gc);
+			headerSize.x = Math.max(headerSize.x, width);
+			return headerSize;
+		} finally {
+			gc.dispose();
+		}
 	}
 
 	int guessColumnHeight(TableColumn column) {

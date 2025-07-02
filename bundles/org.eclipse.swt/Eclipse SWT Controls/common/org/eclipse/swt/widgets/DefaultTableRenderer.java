@@ -13,29 +13,11 @@ public class DefaultTableRenderer extends TableRenderer {
 	}
 
 	@Override
-	public Point computeSize(TableColumn column) {
-		final GC gc = new GC(table);
-		try {
-			int colIndex = table.indexOf(column);
-			int width = 0;
-			final boolean virtual = table.isVirtual();
-			final TableItem[] items = table.getItems();
-			for (TableItem item : items) {
-				if (virtual && !item.cached) {
-					continue;
-				}
-				Point p = item.computeCellSize(colIndex, gc);
-				width = Math.max(width, p.x);
-				item.clearCache();
-			}
-
-			Point headerExt = gc.textExtent(column.getText());
-			int x = Math.max(headerExt.x + 2 * HEADER_MARGIN_X, width);
-			int y = Math.max(headerExt.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
-			return new Point(x, y);
-		} finally {
-			gc.dispose();
-		}
+	public Point computeHeaderSize(TableColumn column, GC gc) {
+		Point headerSize = gc.textExtent(column.getText());
+		headerSize.x += 2 * HEADER_MARGIN_X;
+		headerSize.y = Math.max(headerSize.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
+		return headerSize;
 	}
 
 	@Override
