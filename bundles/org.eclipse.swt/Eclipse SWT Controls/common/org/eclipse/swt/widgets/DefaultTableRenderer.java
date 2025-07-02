@@ -1,5 +1,6 @@
 package org.eclipse.swt.widgets;
 
+import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 
 public class DefaultTableRenderer extends TableRenderer {
@@ -66,15 +67,56 @@ public class DefaultTableRenderer extends TableRenderer {
 					separatorX, height - HEADER_MARGIN_Y - 1);
 		}
 
+		final Rectangle clipping = gc.getClipping();
+
 		gc.setForeground(textColor);
 		for (TableColumn column : columns) {
 			if (column == null) {
 				continue;
 			}
 
-			int xPosition = column.getX() + HEADER_MARGIN_X;
-			int yPosition = HEADER_MARGIN_Y;
-			gc.drawText(column.getText(), xPosition, yPosition);
+			final int x = column.getX();
+			final int left = x + HEADER_MARGIN_X;
+			int right = x + column.getWidth() - HEADER_MARGIN_X;
+
+			if (table.sortColumn == column && table.sortDirection != SWT.NONE) {
+				final int y = height / 2;
+				final int size = height / 8;
+				final int sizeY = table.sortDirection == SWT.UP ? size : -size;
+				if (right - left > 10 * size) {
+					final int lineWidth = gc.getLineWidth();
+					gc.setForeground(new Color(160, 160, 160));
+					gc.setLineWidth(height > 20 ? 2 : 1);
+					gc.drawLine(right - 4 * size, y + sizeY,
+					            right - 2 * size, y - sizeY);
+					gc.drawLine(right - 2 * size, y - sizeY,
+					            right, y + sizeY);
+					gc.setLineWidth(lineWidth);
+
+					right -= 4 * size + 2;
+					gc.setForeground(textColor);
+				}
+			}
+
+			final int spaceForText = right - left;
+			gc.setClipping(new Rectangle(left, 0, spaceForText, height));
+
+			int textX = left;
+
+			final String text = column.getText();
+			final int style = column.getStyle() & (SWT.RIGHT | SWT.CENTER);
+			if (style != 0) {
+				final int textWidth = gc.textExtent(text).x;
+				if ((style & SWT.RIGHT) != 0) {
+					textX += Math.max(0, spaceForText - textWidth);
+				}
+				else {
+					textX += Math.max(0, (spaceForText - textWidth) / 2);
+				}
+			}
+
+			gc.drawText(text, textX, HEADER_MARGIN_Y, true);
+			gc.setClipping(clipping);
 		}
 	}
 }

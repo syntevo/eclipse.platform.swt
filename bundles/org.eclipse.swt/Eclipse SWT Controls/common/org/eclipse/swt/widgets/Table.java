@@ -2826,8 +2826,24 @@ public class Table extends CustomComposite {
 	 */
 	public void setSortColumn(TableColumn column) {
 		checkWidget();
+		if (column != null) {
+			if (column.isDisposed()) error(SWT.ERROR_WIDGET_DISPOSED);
+			if (column.getParent() != this) error(SWT.ERROR_INVALID_ARGUMENT);
+		}
 
-		logNotImplemented();
+		if (sortColumn == column) {
+			return;
+		}
+
+		if (sortColumn != null) {
+			redrawColumnHeader(sortColumn);
+		}
+
+		sortColumn = column;
+
+		if (sortColumn != null) {
+			redrawColumnHeader(sortColumn);
+		}
 	}
 
 	@Override
@@ -2840,7 +2856,7 @@ public class Table extends CustomComposite {
 	 * Sets the direction of the sort indicator for the receiver. The value can be
 	 * one of <code>UP</code>, <code>DOWN</code> or <code>NONE</code>.
 	 *
-	 * @param direction the direction of the sort indicator
+	 * @param sortDirection the direction of the sort indicator
 	 *
 	 * @exception SWTException
 	 *                         <ul>
@@ -2852,9 +2868,19 @@ public class Table extends CustomComposite {
 	 *
 	 * @since 3.2
 	 */
-	public void setSortDirection(int direction) {
+	public void setSortDirection(int sortDirection) {
 		checkWidget();
-		logNotImplemented();
+		if (sortDirection != SWT.UP && sortDirection != SWT.DOWN && sortDirection != SWT.NONE) error(SWT.ERROR_INVALID_ARGUMENT);
+
+		if (sortDirection == this.sortDirection) {
+			return;
+		}
+
+		this.sortDirection = sortDirection;
+
+		if (sortColumn != null) {
+			redrawColumnHeader(sortColumn);
+		}
 	}
 
 	void setSubImagesVisible(boolean visible) {

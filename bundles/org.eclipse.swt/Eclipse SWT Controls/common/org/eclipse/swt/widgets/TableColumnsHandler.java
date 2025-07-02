@@ -132,7 +132,6 @@ final class TableColumnsHandler {
 		if (mouseOverColumn >= 0) {
 			TableColumn column = table.getColumn(mouseOverColumn);
 			column.sendEvent(SWT.Selection);
-			mouseOverColumn = -1;
 		}
 		table.setCapture(false);
 	}
