@@ -5,10 +5,10 @@ import org.eclipse.swt.graphics.*;
 
 class TableItemsHandler {
 
+	private static final int ITEMS_OVERLAY = 5;
+
 	private final Table table;
 	private int lastVisibleElementIndex;
-
-	final static int ITEMS_OVERLAY = 5;
 
 	public TableItemsHandler(Table table) {
 		this.table = table;
