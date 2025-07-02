@@ -3093,8 +3093,8 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	int guessColumnHeight(TableColumn column) {
-		return renderer.guessColumnHeight(column);
+	int calculateColumnHeight() {
+		return renderer.calculateColumnHeight();
 	}
 
 	Event sendMeasureItem(TableItem item, int column, GC gc, Rectangle bounds) {

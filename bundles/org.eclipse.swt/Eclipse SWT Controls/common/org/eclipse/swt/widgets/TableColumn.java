@@ -48,7 +48,6 @@ public class TableColumn extends Item {
 	private int x;
 
 	private int width = -1;
-	private int height = -1;
 
 	private Integer horizontalShiftAtCalculation;
 
@@ -370,14 +369,6 @@ public class TableColumn extends Item {
 		return Math.max(this.width, 0);
 	}
 
-	int getHeight() {
-		if (height == -1) {
-			this.height = parent.guessColumnHeight(this);
-		}
-
-		return this.height;
-	}
-
 
 	/**
 	 * Causes the receiver to be resized to its preferred size. For a composite,
@@ -396,9 +387,8 @@ public class TableColumn extends Item {
 
 		Point p = parent.computeSize(this);
 		setWidth(p.x);
-		this.height = p.y;
 
-		getParent().redraw();
+		parent.redraw();
 	}
 
 	@Override
@@ -649,13 +639,6 @@ public class TableColumn extends Item {
 		this.width = width;
 
 		parent.getColumnsHandler().clearCache();
-
-		if (index < parent.getColumnCount() - 1) {
-			for (int i = index + 1; i < parent.getColumnCount(); i++) {
-				TableColumn column = parent.getColumn(i);
-				column.height = -1;
-			}
-		}
 
 		parent.redraw();
 	}

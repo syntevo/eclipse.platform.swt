@@ -17,7 +17,7 @@ final class TableColumnsHandler {
 
 	public Point getSize() {
 		if (cachedHeaderBounds == null) {
-			calculateBounds();
+			cachedHeaderBounds = calculateBounds();
 		}
 
 		return new Point(cachedHeaderBounds.width, cachedHeaderBounds.height);
@@ -39,12 +39,11 @@ final class TableColumnsHandler {
 		}
 
 		int width = 0;
-		int headerHeight = 1;
 		for (TableColumn c : table.getColumns()) {
 			width += c.getWidth();
-			headerHeight = Math.max(c.getHeight(), headerHeight);
 		}
 
+		final int headerHeight = table.calculateColumnHeight();
 		return new Rectangle(-horizontalShift, 0, width, headerHeight);
 	}
 
