@@ -548,6 +548,7 @@ public class Table extends CustomComposite {
 
 	private void onPaint(Event event) {
 		updateColumnsX();
+		updateScrollBarWithTextSize();
 		renderer.paint(event.gc);
 	}
 
@@ -3098,7 +3099,6 @@ public class Table extends CustomComposite {
 			if (height > lineHeight) {
 				lineHeight = height;
 				lineHeightChanged = true;
-				updateVerticalScrollBar();
 				redraw();
 			}
 

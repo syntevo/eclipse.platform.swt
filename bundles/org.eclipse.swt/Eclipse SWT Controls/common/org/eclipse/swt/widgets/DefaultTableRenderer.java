@@ -31,8 +31,6 @@ public class DefaultTableRenderer extends TableRenderer {
 		Rectangle ca = table.getClientArea();
 		if (ca.width == 0 || ca.height == 0) return;
 
-		table.updateScrollBarWithTextSize();
-
 		gc.setBackground(table.getBackground());
 		gc.fillRectangle(ca);
 
