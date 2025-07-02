@@ -733,22 +733,21 @@ public class TableItem extends Item {
 
 	void redraw() {
 		var index = getItemIndex();
-		if (index < getParent().getTopIndex() || index > getParent().getLastVisibleIndex()) return;
+		final Table table = getParent();
+		if (index < table.getTopIndex() || index > table.getLastVisibleIndex()) return;
 
 		Rectangle b = getBounds();
+		int x = b.x;
+		int y = b.y;
+		int width = b.width;
+		int height = b.height;
 
 		if (renderer.checkboxBounds != null) {
-			Rectangle newRect = new Rectangle(0, 0, 0, 0);
-
-			newRect.x = renderer.checkboxBounds.x;
-			newRect.y = b.y;
-			newRect.width = b.x + b.width - newRect.x;
-			newRect.height = b.height;
-
-			b = newRect;
+			width += x;
+			x = renderer.checkboxBounds.x;
 		}
 
-		getParent().redraw(b.x, b.y, b.width, b.height, true);
+		table.redraw(x, y, width, b.height, true);
 	}
 
 	void redraw(int column, boolean drawText, boolean drawImage) {
