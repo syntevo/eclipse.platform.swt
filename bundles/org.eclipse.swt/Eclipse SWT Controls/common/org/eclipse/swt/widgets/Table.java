@@ -528,9 +528,7 @@ public class Table extends CustomComposite {
 	}
 
 	private void onMouseUp(Event e) {
-		if (columnsHandler.getHeaderBounds().contains(e.x, e.y) || columnsHandler.isColumnResizeActive()) {
-			columnsHandler.handleMouseUp(e);
-		}
+		columnsHandler.handleMouseUp(e);
 	}
 
 	@Override
