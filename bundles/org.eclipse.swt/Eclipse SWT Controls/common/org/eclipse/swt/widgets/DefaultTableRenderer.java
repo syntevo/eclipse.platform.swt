@@ -18,6 +18,10 @@ public class DefaultTableRenderer extends TableRenderer {
 		Point headerSize = gc.textExtent(column.getText());
 		headerSize.x += 2 * HEADER_MARGIN_X;
 		headerSize.y = Math.max(headerSize.y + HEADER_MARGIN_Y + DEFAULT_MARGIN_DOWN, 10);
+		if (table.sortDirection != SWT.NONE && column == table.sortColumn) {
+			// don't simplify
+			headerSize.x += headerSize.y / 8 * 4 + 2;
+		}
 		return headerSize;
 	}
 
@@ -75,23 +79,28 @@ public class DefaultTableRenderer extends TableRenderer {
 				continue;
 			}
 
+			final String text = column.getText();
 			final int x = column.getX();
 			final int left = x + HEADER_MARGIN_X;
 			int right = x + column.getWidth() - HEADER_MARGIN_X;
 
 			if (table.sortColumn == column && table.sortDirection != SWT.NONE) {
 				final int y = height / 2;
-				final int size = height / 8;
+				final int textHeight = gc.textExtent(text).y;
+				final int size = textHeight / 8;
 				final int sizeY = table.sortDirection == SWT.UP ? size : -size;
 				if (right - left > 10 * size) {
 					final int lineWidth = gc.getLineWidth();
+					final int antialias = gc.getAntialias();
 					gc.setForeground(new Color(160, 160, 160));
-					gc.setLineWidth(height > 20 ? 2 : 1);
+					gc.setAntialias(SWT.ON);
+					gc.setLineWidth(textHeight > 20 ? 2 : 1);
 					gc.drawLine(right - 4 * size, y + sizeY,
 					            right - 2 * size, y - sizeY);
 					gc.drawLine(right - 2 * size, y - sizeY,
 					            right, y + sizeY);
 					gc.setLineWidth(lineWidth);
+					gc.setAntialias(antialias);
 
 					right -= 4 * size + 2;
 					gc.setForeground(textColor);
@@ -103,7 +112,6 @@ public class DefaultTableRenderer extends TableRenderer {
 
 			int textX = left;
 
-			final String text = column.getText();
 			final int style = column.getStyle() & (SWT.RIGHT | SWT.CENTER);
 			if (style != 0) {
 				final int textWidth = gc.textExtent(text).x;
