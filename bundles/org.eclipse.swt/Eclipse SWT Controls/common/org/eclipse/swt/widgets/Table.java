@@ -635,7 +635,7 @@ public class Table extends CustomComposite {
 	@Override
 	void checkBuffered() {
 		super.checkBuffered();
-//		style |= SWT.DOUBLE_BUFFERED;
+		style |= SWT.DOUBLE_BUFFERED;
 	}
 
 	boolean checkData(TableItem item, boolean redraw) {
