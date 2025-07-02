@@ -52,8 +52,8 @@ public class DefaultTableRenderer extends TableRenderer {
 		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
 		gc.setForeground(lineColor);
-		gc.drawLine(0, 0, ca.width, 0);
-		gc.drawLine(0, height - 1, ca.width, height);
+		drawHLine(gc, 0, ca.width, 0);
+		drawHLine(gc, 0, ca.width, height - 1);
 
 		final TableColumn[] columns = table.getColumns();
 		for (int i = 0; i < columns.length; i++) {
@@ -66,9 +66,7 @@ public class DefaultTableRenderer extends TableRenderer {
 				continue;
 			}
 
-			final int separatorX = x + width;
-			gc.drawLine(separatorX, HEADER_MARGIN_Y,
-					separatorX, height - HEADER_MARGIN_Y - 1);
+			drawVLine(gc, x + width, HEADER_MARGIN_Y, height - HEADER_MARGIN_Y - 1);
 		}
 
 		final Rectangle clipping = gc.getClipping();
@@ -126,5 +124,13 @@ public class DefaultTableRenderer extends TableRenderer {
 			gc.drawText(text, textX, HEADER_MARGIN_Y, true);
 			gc.setClipping(clipping);
 		}
+	}
+
+	private void drawHLine(GC gc, int x1, int x2, int y) {
+		gc.drawLine(x1, y, x2, y);
+	}
+
+	private void drawVLine(GC gc, int x, int y1, int y2) {
+		gc.drawLine(x, y1, x, y2);
 	}
 }
