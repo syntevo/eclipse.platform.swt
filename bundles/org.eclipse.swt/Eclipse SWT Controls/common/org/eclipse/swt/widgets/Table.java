@@ -375,18 +375,8 @@ public class Table extends CustomComposite {
 
 	private void scrollIntoView() {
 		final int current = selectionModel.getCurrent();
-		if (current < 0) {
-			return;
-		}
-		final int topIndex = selectionModel.getTopIndex();
-		final int fullyVisibleItemCount = getFullyVisibleItemCount();
-		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
-		final int lastFullyVisibleItem = fullyVisibleItemCount + topIndex;
-		if (current < topIndex + margin) {
-			selectionModel.setTopIndex(Math.max(0, current - margin));
-		} else if (current > lastFullyVisibleItem - margin) {
-			selectionModel.setTopIndex(Math.min(current - fullyVisibleItemCount + margin,
-					selectionModel.getCount() - fullyVisibleItemCount));
+		if (current >= 0) {
+			showItem(current);
 		}
 	}
 
@@ -2981,10 +2971,18 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	void showItem(int index) {
-		if (index < getTopIndex() || index > itemsHandler.getLastVisibleElementIndex()) {
-			setTopIndex(index);
-			redraw();
+	private void showItem(int index) {
+		if (index < 0 || index >= getItemCount()) error(SWT.ERROR_INVALID_ARGUMENT);
+
+		final int topIndex = selectionModel.getTopIndex();
+		final int fullyVisibleItemCount = getFullyVisibleItemCount();
+		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
+		final int lastFullyVisibleItem = fullyVisibleItemCount + topIndex;
+		if (index < topIndex + margin) {
+			selectionModel.setTopIndex(Math.max(0, index - margin));
+		} else if (index > lastFullyVisibleItem - margin) {
+			selectionModel.setTopIndex(Math.min(index - fullyVisibleItemCount + margin,
+			                                    selectionModel.getCount() - fullyVisibleItemCount));
 		}
 	}
 
