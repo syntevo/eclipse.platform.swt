@@ -740,14 +740,13 @@ public class TableItem extends Item {
 		int x = b.x;
 		int y = b.y;
 		int width = b.width;
-		int height = b.height;
 
 		if (renderer.checkboxBounds != null) {
 			width += x;
 			x = renderer.checkboxBounds.x;
 		}
 
-		table.redraw(x, y, width, b.height, true);
+		table.redraw(x, y, width, table.getItemHeight(), true);
 	}
 
 	void redraw(int column, boolean drawText, boolean drawImage) {
