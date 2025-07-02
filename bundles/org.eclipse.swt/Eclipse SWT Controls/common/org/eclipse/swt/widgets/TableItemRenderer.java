@@ -27,7 +27,6 @@ public class TableItemRenderer {
 	public void doPaint(GC gc, int index) {
 		final Table table = getParent();
 
-		Rectangle itemBounds = item.getBounds();
 		final int detail = prepareEventDetail(index, table);
 
 		if ((table.getStyle() & SWT.CHECK) != 0) {
@@ -37,14 +36,21 @@ public class TableItemRenderer {
 		final Color background = gc.getBackground();
 		final Color foreground = gc.getForeground();
 
+		final Rectangle itemBounds = item.getBounds();
+		final int height = table.getItemHeight();
+		itemBounds.height = height;
+
 		final int columnCount = table.getColumnCount();
 		boolean drawFocusRect = false;
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
+				final TableColumn column = table.getColumn(i);
+				Rectangle cellBounds = item.getBounds(i);
+				cellBounds.width = column.getWidth();
+				cellBounds.height = height;
+
 				gc.setBackground(background);
 				gc.setForeground(foreground);
-				Rectangle cellBounds = item.getBounds(i);
-
 				if (drawCell(i, detail, cellBounds, gc)) {
 					drawFocusRect = true;
 				}
@@ -52,7 +58,6 @@ public class TableItemRenderer {
 		} else {
 			gc.setBackground(background);
 			gc.setForeground(foreground);
-
 			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 		}
 
