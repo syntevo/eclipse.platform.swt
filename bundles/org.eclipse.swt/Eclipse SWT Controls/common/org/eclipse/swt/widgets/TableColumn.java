@@ -385,10 +385,8 @@ public class TableColumn extends Item {
 	public void pack() {
 		checkWidget();
 
-		Point p = parent.computeSize(this);
-		setWidth(p.x);
-
-		parent.redraw();
+		int width = parent.calculateColumnWidth(this);
+		setWidth(width);
 	}
 
 	@Override
@@ -636,10 +634,13 @@ public class TableColumn extends Item {
 		int index = parent.indexOf(this);
 		if (index == -1) return;
 
+		if (width == this.width) {
+			return;
+		}
+
 		this.width = width;
 
 		parent.getColumnsHandler().clearCache();
-
 		parent.redraw();
 	}
 

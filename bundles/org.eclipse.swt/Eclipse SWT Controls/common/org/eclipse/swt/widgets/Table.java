@@ -3069,7 +3069,7 @@ public class Table extends CustomComposite {
 		return itemsHandler;
 	}
 
-	Point computeSize(TableColumn column) {
+	int calculateColumnWidth(TableColumn column) {
 		final GC gc = new GC(this);
 		try {
 			int colIndex = indexOf(column);
@@ -3086,8 +3086,7 @@ public class Table extends CustomComposite {
 			}
 
 			final Point headerSize = renderer.computeHeaderSize(column, gc);
-			headerSize.x = Math.max(headerSize.x, width);
-			return headerSize;
+			return Math.max(headerSize.x, width);
 		} finally {
 			gc.dispose();
 		}
