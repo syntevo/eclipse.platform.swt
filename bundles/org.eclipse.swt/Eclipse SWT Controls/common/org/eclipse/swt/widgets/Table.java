@@ -391,7 +391,7 @@ public class Table extends CustomComposite {
 	}
 
 	private int getFullyVisibleItemCount() {
-		final int height = getClientArea().height + getHeaderHeight();
+		final int height = getClientArea().height - getHeaderHeight();
 		final int itemHeight = getItemHeight();
 		return Math.max(0, height / itemHeight);
 	}
