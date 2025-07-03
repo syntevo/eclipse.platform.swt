@@ -33,9 +33,6 @@ public class TableItemRenderer {
 			drawCheckbox(gc);
 		}
 
-		final Color background = gc.getBackground();
-		final Color foreground = gc.getForeground();
-
 		final Rectangle itemBounds = item.getBounds();
 		final int height = table.getItemHeight();
 		itemBounds.height = height;
@@ -49,15 +46,15 @@ public class TableItemRenderer {
 				cellBounds.width = column.getWidth();
 				cellBounds.height = height;
 
-				gc.setBackground(background);
-				gc.setForeground(foreground);
+				gc.setBackground(item.getBackground(i));
+				gc.setForeground(item.getForeground(i));
 				if (drawCell(i, detail, cellBounds, gc)) {
 					drawFocusRect = true;
 				}
 			}
 		} else {
-			gc.setBackground(background);
-			gc.setForeground(foreground);
+			gc.setBackground(item.getBackground());
+			gc.setForeground(item.getForeground());
 			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 		}
 

@@ -19,8 +19,6 @@ class TableItemsHandler {
 
 		this.lastVisibleElementIndex = -1;
 
-		final Color background = table.getBackground();
-
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
 
@@ -28,7 +26,6 @@ class TableItemsHandler {
 				table.checkData(item, i, false);
 			}
 
-			gc.setBackground(background);
 			item.doPaint(gc, i);
 
 			final Rectangle bounds = item.getFullBounds();
