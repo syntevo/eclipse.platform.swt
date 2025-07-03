@@ -29,12 +29,9 @@ public class TableItemRenderer {
 
 		final int detail = prepareEventDetail(index, table);
 
-		if ((table.getStyle() & SWT.CHECK) != 0) {
-			drawCheckbox(gc);
-		}
+		final int height = table.getItemHeight();
 
 		final Rectangle itemBounds = item.getBounds();
-		final int height = table.getItemHeight();
 		itemBounds.height = height;
 
 		final int columnCount = table.getColumnCount();
@@ -46,6 +43,10 @@ public class TableItemRenderer {
 				cellBounds.width = column.getWidth();
 				cellBounds.height = height;
 
+				if (i == 0 && (table.getStyle() & SWT.CHECK) != 0) {
+					drawCheckbox(gc, column.getX(), cellBounds.y, cellBounds.height);
+				}
+
 				gc.setBackground(item.getBackground(i));
 				gc.setForeground(item.getForeground(i));
 				if (drawCell(i, detail, cellBounds, gc)) {
@@ -53,6 +54,11 @@ public class TableItemRenderer {
 				}
 			}
 		} else {
+			if ((table.getStyle() & SWT.CHECK) != 0) {
+				final Rectangle fullBounds = item.getFullBounds();
+				drawCheckbox(gc, fullBounds.x, fullBounds.y, height);
+			}
+
 			gc.setBackground(item.getBackground());
 			gc.setForeground(item.getForeground());
 			drawFocusRect = drawCell(0, detail, itemBounds, gc);
@@ -83,10 +89,9 @@ public class TableItemRenderer {
 		return detail;
 	}
 
-	private void drawCheckbox(GC gc) {
-		Rectangle itemBounds = item.getFullBounds();
-
-		this.checkboxBounds = new Rectangle(itemBounds.x + 5, itemBounds.y + 3, 20, 20);
+	private void drawCheckbox(GC gc, int x, int y, int height) {
+		final int size = 20;
+		this.checkboxBounds = new Rectangle(x + 5, y + (height - size) / 2, size, size);
 
 		gc.drawRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
 		if (item.getChecked()) {

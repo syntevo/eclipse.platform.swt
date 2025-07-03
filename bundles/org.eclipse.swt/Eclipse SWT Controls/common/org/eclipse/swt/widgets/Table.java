@@ -2285,6 +2285,7 @@ public class Table extends CustomComposite {
 		if (order.length != set.size()) error(SWT.ERROR_INVALID_ARGUMENT);
 
 		this.columnOrder = order;
+		redraw();
 	}
 
 	void setCustomDraw(boolean customDraw) {
