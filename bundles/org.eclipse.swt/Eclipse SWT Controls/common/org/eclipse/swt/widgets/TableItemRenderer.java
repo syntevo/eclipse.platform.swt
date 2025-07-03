@@ -88,12 +88,16 @@ public class TableItemRenderer {
 
 		this.checkboxBounds = new Rectangle(itemBounds.x + 5, itemBounds.y + 3, 20, 20);
 
-		gc.drawRectangle(this.checkboxBounds);
+		gc.drawRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
 		if (item.getChecked()) {
-			gc.drawLine(this.checkboxBounds.x, this.checkboxBounds.y, this.checkboxBounds.x + this.checkboxBounds.width,
-					this.checkboxBounds.y + this.checkboxBounds.height);
-			gc.drawLine(this.checkboxBounds.x + this.checkboxBounds.width, this.checkboxBounds.y, this.checkboxBounds.x,
-					this.checkboxBounds.y + this.checkboxBounds.height);
+			final int lineWidth = gc.getLineWidth();
+			gc.setLineWidth(2);
+			final int inset = 5;
+			gc.drawLine(checkboxBounds.x + inset, checkboxBounds.y + inset, checkboxBounds.x + checkboxBounds.width - inset,
+					checkboxBounds.y + checkboxBounds.height - inset);
+			gc.drawLine(checkboxBounds.x + checkboxBounds.width - inset, checkboxBounds.y + inset,
+					checkboxBounds.x + inset, checkboxBounds.y + checkboxBounds.height - inset);
+			gc.setLineWidth(lineWidth);
 		}
 	}
 
