@@ -884,13 +884,16 @@ public class Table extends CustomComposite {
 				heightPerLine = item.getSize().y + gridLineSize;
 			}
 		} else {
+			final int x0 = horizontalBar.getSelection();
 			for (int i = 0; i < items.length; i++) {
 				TableItem item = items[i];
+				final Rectangle bounds = item.getBounds();
 				if (i == 0) {
-					heightPerLine = item.getSize().y + gridLineSize;
+					heightPerLine = bounds.y + gridLineSize;
 				}
 
-				width = Math.max(width, item.getFullBounds().width);
+				final int itemWidth = bounds.width + bounds.x - x0;
+				width = Math.max(width, itemWidth);
 			}
 		}
 
