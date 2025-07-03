@@ -62,7 +62,7 @@ final class TableColumnsHandler {
 
 		columnResizePossible = -1;
 		mouseOverColumn = -1;
-		final boolean isInHeader = isInHeader(event.y, cachedHeaderBounds);
+		final boolean isInHeader = table.getHeaderVisible() && isInHeader(event.y, cachedHeaderBounds);
 		if (isInHeader) {
 			final int x = event.x;
 			final TableColumn[] columns = table.getColumns();
