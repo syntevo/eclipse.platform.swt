@@ -616,7 +616,7 @@ public class Table extends CustomComposite {
 		addTypedListener(listener, SWT.Selection, SWT.DefaultSelection);
 	}
 
-	private static int checkStyle(int style) {
+	static int checkStyle(int style) {
 		/*
 		 * Feature in Windows. Even when WS_HSCROLL or WS_VSCROLL is not specified,
 		 * Windows creates trees and tables with scroll bars. The fix is to set H_SCROLL
