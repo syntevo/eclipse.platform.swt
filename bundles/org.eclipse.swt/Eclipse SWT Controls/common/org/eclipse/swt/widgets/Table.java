@@ -2456,7 +2456,7 @@ public class Table extends CustomComposite {
 				return;
 			}
 
-			boolean redraw = count > virtualItemCount;
+			final int prevItemCount = virtualItemCount;
 			this.virtualItemCount = count;
 
 			while (!virtualItemsList.isEmpty()) {
@@ -2470,7 +2470,10 @@ public class Table extends CustomComposite {
 
 			selectionModel.setCount(count);
 
-			if (redraw) {
+			if (count > prevItemCount) {
+				if (prevItemCount == 0) {
+					measureLineHeight(0);
+				}
 				redraw();
 			}
 
@@ -3104,6 +3107,18 @@ public class Table extends CustomComposite {
 		return itemsHandler;
 	}
 
+	private void measureLineHeight(int index) {
+		final GC gc = new GC(this);
+		try {
+			final TableItem item = _getItem(index);
+			final Rectangle bounds = item.getBounds();
+			setLineHeight(bounds.height);
+		}
+		finally {
+			gc.dispose();
+		}
+	}
+
 	int calculateColumnWidth(TableColumn column) {
 		final GC gc = new GC(this);
 		try {
@@ -3122,16 +3137,20 @@ public class Table extends CustomComposite {
 				item.clearCache();
 			}
 
-			if (height > lineHeight) {
-				lineHeight = height;
-				lineHeightChanged = true;
-				redraw();
-			}
+			setLineHeight(height);
 
 			final Point headerSize = renderer.computeHeaderSize(column, gc);
 			return Math.max(headerSize.x, width);
 		} finally {
 			gc.dispose();
+		}
+	}
+
+	private void setLineHeight(int height) {
+		if (height > lineHeight) {
+			lineHeight = height;
+			lineHeightChanged = true;
+			redraw();
 		}
 	}
 
