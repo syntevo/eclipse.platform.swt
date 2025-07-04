@@ -47,16 +47,19 @@ import java.util.stream.Collectors;
  */
 public class TableItem extends Item {
 
-	Table parent;
-	String[] strings;
-	Image[] images;
-	Font font;
-	Font[] cellFont;
-	boolean checked, grayed, cached;
-	int imageIndent;
-	Color background;
-	Color foreground;
-	Color[] cellBackground, cellForeground;
+	private Table parent;
+	private String[] strings;
+	private Image[] images;
+	private Font font;
+	private Font[] cellFont;
+	private boolean checked;
+	private boolean grayed;
+	boolean cached;
+	private int imageIndent;
+	private Color background;
+	private Color foreground;
+	private Color[] cellBackground;
+	private Color[] cellForeground;
 	private int topIndexAtCalculation = -1;
 
 	private Point location;
