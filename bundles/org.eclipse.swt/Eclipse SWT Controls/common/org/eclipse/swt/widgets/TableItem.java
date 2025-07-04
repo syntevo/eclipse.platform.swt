@@ -325,7 +325,7 @@ public class TableItem extends Item {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
-		Point p = renderer.computeSize();
+		Point p = renderer.getSize();
 
 		if (location == null) {
 			location = calculateLocation(itemIndex, topIndex);
@@ -346,7 +346,7 @@ public class TableItem extends Item {
 	}
 
 	Point getSize() {
-		return renderer.computeSize();
+		return renderer.getSize();
 	}
 
 	/**

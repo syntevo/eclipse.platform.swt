@@ -205,46 +205,48 @@ public class TableItemRenderer {
 		return size;
 	}
 
-	Point computeSize() {
-		if (computedSize != null) {
-			return computedSize;
+	Point getSize() {
+		if (computedSize == null) {
+			computedSize = computeSize();
 		}
+		return computedSize;
+	}
 
+	private Point computeSize() {
 		final Table table = getParent();
 
 		int width = MARGIN_X + MARGIN_X;
-
-		int lineHeight = guessItemHeight(table);
 		int imageHeight = 0;
 
-		if (item.images != null) {
-			for (Image image : item.images) {
-				if (image == null) {
-					continue;
+		final int columnCount = table.getColumnCount();
+		if (columnCount > 0) {
+			for (int i = 0; i < columnCount; i++) {
+				final Image image = item.getImage(i);
+				if (image != null) {
+					Rectangle imageBounds = image.getBounds();
+					imageHeight = Math.max(imageBounds.height, imageHeight);
 				}
-				Rectangle imageBounds = image.getBounds();
-				imageHeight = Math.max(imageBounds.height, imageHeight);
 			}
-		} else if (item.image != null) {
-			Rectangle imageBounds = item.image.getBounds();
-			imageHeight = Math.max(imageBounds.height, imageHeight);
-			width += imageBounds.width;
-			if (item.text != null) {
-				width += GAP;
-			}
-		}
 
-		int height = MARGIN_Y + Math.max(lineHeight, imageHeight) + MARGIN_Y;
-
-		if (table.getColumnCount() > 0) {
 			width = table.getTotalColumnWidth();
-		} else {
+		}
+		else {
+			final Image image = item.getImage();
+			if (image != null) {
+				Rectangle imageBounds = item.image.getBounds();
+				imageHeight = Math.max(imageBounds.height, imageHeight);
+				width += imageBounds.width;
+				if (item.text != null) {
+					width += GAP;
+				}
+			}
+
 			width += table.computeTextExtent(item.getText()).x;
 		}
 
-		this.computedSize = new Point(width, height);
-
-		return this.computedSize;
+		final int textHeight = table.guessTextHeight();
+		final int height = MARGIN_Y + Math.max(textHeight, imageHeight) + MARGIN_Y;
+		return new Point(width, height);
 	}
 
 	public void clearCache() {
