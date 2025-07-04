@@ -314,29 +314,26 @@ public class TableItem extends Item {
 	public Rectangle getFullBounds() {
 		checkWidget();
 		final int topIndex = parent.getTopIndex();
-		if (topIndexAtCalculation == topIndex && bounds != null) {
-			return bounds;
-		}
+		if (topIndexAtCalculation != topIndex || bounds == null) {
+			this.bounds = null;
+			this.location = null;
 
-		this.bounds = null;
-		this.location = null;
+			if (!parent.checkData(this, true)) {
+				error(SWT.ERROR_WIDGET_DISPOSED);
+			}
 
-		if (!parent.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+			int itemIndex = getItemIndex();
+			if (itemIndex == -1) {
+				return new Rectangle(0, 0, 0, 0);
+			}
 
-		int itemIndex = getItemIndex();
-		if (itemIndex == -1) {
-			return new Rectangle(0, 0, 0, 0);
-		}
+			Point p = renderer.getSize();
 
-		Point p = renderer.getSize();
-
-		if (location == null) {
 			location = calculateLocation(itemIndex, topIndex);
 			topIndexAtCalculation = topIndex;
+			bounds = new Rectangle(location.x, location.y, p.x, p.y);
 		}
-		bounds = new Rectangle(location.x, location.y, p.x, p.y);
-
-		return bounds;
+		return new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 	}
 
 	private Point calculateLocation(int index, int topIndex) {
