@@ -931,7 +931,7 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	void createItem(TableColumn column, int index) {
+	void createColumn(TableColumn column, int index) {
 		columnsList.add(index, column);
 
 		moveTextsItemsToRight(index);

@@ -92,7 +92,7 @@ public class TableColumn extends Item {
 		super(parent, checkStyle(style));
 		resizable = true;
 		this.parent = parent;
-		parent.createItem(this, parent.getColumnCount());
+		parent.createColumn(this, parent.getColumnCount());
 	}
 
 	/**
@@ -147,7 +147,7 @@ public class TableColumn extends Item {
 
 		resizable = true;
 		this.parent = parent;
-		parent.createItem(this, index);
+		parent.createColumn(this, index);
 	}
 
 	@Override
