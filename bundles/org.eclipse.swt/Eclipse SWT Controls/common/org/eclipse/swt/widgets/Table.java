@@ -909,7 +909,10 @@ public class Table extends CustomComposite {
 
 		int index = columnsList.indexOf(column);
 		columnsList.remove(column);
-		moveTextsItemsToLeft(index);
+
+		for (TableItem item : itemsList) {
+			item.columnRemoved(index);
+		}
 
 		if (columnOrder != null) {
 			int[] newColOrder = new int[columnsList.size()];
@@ -934,7 +937,9 @@ public class Table extends CustomComposite {
 	void createColumn(TableColumn column, int index) {
 		columnsList.add(index, column);
 
-		moveTextsItemsToRight(index);
+		for (TableItem item : itemsList) {
+			item.columnAdded(index);
+		}
 
 		final TableItem[] items = getItems();
 		for (TableItem it : items) {
@@ -954,18 +959,6 @@ public class Table extends CustomComposite {
 
 		updateScrollBarWithTextSize();
 		redraw();
-	}
-
-	private void moveTextsItemsToRight(int index) {
-		for (TableItem i : itemsList) {
-			i.moveTextToRightAt(index);
-		}
-	}
-
-	private void moveTextsItemsToLeft(int index) {
-		for (TableItem i : itemsList) {
-			i.moveTextsItemsToLeft(index);
-		}
 	}
 
 	protected int getTotalColumnWidth() {

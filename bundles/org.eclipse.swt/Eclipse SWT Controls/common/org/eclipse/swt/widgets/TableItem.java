@@ -24,7 +24,7 @@ import org.eclipse.swt.graphics.Rectangle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Instances of this class represent a selectable user interface object that
@@ -690,10 +690,10 @@ public class TableItem extends Item {
 		if (index == 0) {
 			return getText();
 		}
-		if (strings != null) {
-			if (0 <= index && index < strings.length) {
-				String string = strings[index];
-				return string != null ? string : "";
+		if (strings != null && 0 <= index && index < strings.length) {
+			String string = strings[index];
+			if (string != null) {
+				return string;
 			}
 		}
 		return "";
@@ -1194,7 +1194,6 @@ public class TableItem extends Item {
 
 		clearCache();
 		redraw(index, drawText, true);
-
 	}
 
 	@Override
@@ -1307,23 +1306,24 @@ public class TableItem extends Item {
 	public void setText(int index, String string) {
 		checkWidget();
 		if (string == null) error(SWT.ERROR_NULL_ARGUMENT);
+		if (index < 0) return;
 
 		try {
 			if (index == 0) {
 				if (string.equals(text)) return;
 				super.setText(string);
 			}
-			int count = Math.max(1, parent.getColumnCount());
-			if (0 > index || index > count - 1) return;
-			if (strings == null && index != 0) {
-				strings = new String[count];
-				strings[0] = text;
-			} else if (strings != null && strings.length < count) {
-				String[] newStrings = new String[count];
-				System.arraycopy(strings, 0, newStrings, 0, strings.length);
-				strings = newStrings;
-			}
-			if (strings != null) {
+			else {
+				int count = Math.max(1, parent.getColumnCount());
+				if (index >= count) return;
+				if (strings == null) {
+					strings = new String[count];
+					strings[index] = text;
+				} else if (strings.length < count) {
+					String[] newStrings = new String[count];
+					System.arraycopy(strings, 0, newStrings, 0, strings.length);
+					strings = newStrings;
+				}
 				if (string.equals(strings[index])) return;
 				strings[index] = string;
 			}
@@ -1341,43 +1341,37 @@ public class TableItem extends Item {
 		clearCache();
 	}
 
-	void moveTextToRightAt(int index) {
-		if (strings == null && images == null) return;
+	void columnAdded(int index) {
+		if (index < 0 || index > parent.getColumnCount()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 
-		java.util.List<String> newTexts = new ArrayList<>();
-		java.util.List<Image> newImages = new ArrayList<>();
-
-		for (int i = 0; i < index && i < strings.length; i++) {
-			newTexts.add(strings[i]);
-			newImages.add(getImage(i));
-		}
-		newTexts.add("");
-		newImages.add(null);
-
-		if (strings.length >= index) {
-			for (int k = index; k < strings.length; k++) {
-				newTexts.add(strings[k]);
-				newImages.add(getImage(k));
+		if (strings != null) {
+			List<String> newStrings = new ArrayList<>(Math.max(strings.length, index) + 1);
+			newStrings.addAll(Arrays.asList(strings));
+			if (index < newStrings.size()) {
+				newStrings.add(index, null);
 			}
+			strings = newStrings.toArray(new String[0]);
 		}
 
-		strings = newTexts.toArray(new String[0]);
-		images = newImages.toArray(new Image[0]);
+		if (images != null) {
+			List<Image> newImages = new ArrayList<>(Math.max(images.length, index) + 1);
+			newImages.addAll(Arrays.asList(images));
+			if (index < newImages.size()) {
+				newImages.add(index, null);
+			}
+			images = newImages.toArray(new Image[0]);
+		}
 	}
 
-	void moveTextsItemsToLeft(int index) {
-		if (strings == null && images == null) return;
-
-		if (strings != null && index > 0 && index < strings.length) {
-			java.util.List<String> newTexts = new ArrayList<>();
-			newTexts.addAll(Arrays.stream(strings).collect(Collectors.toList()));
+	void columnRemoved(int index) {
+		if (strings != null && index >= 0 && index < strings.length) {
+			List<String> newTexts = new ArrayList<>(Arrays.asList(strings));
 			newTexts.remove(index);
 			strings = newTexts.toArray(new String[0]);
 		}
 
-		if (images != null && index > 0 && index < images.length) {
-			java.util.List<Image> newImages = new ArrayList<>();
-			newImages.addAll(Arrays.stream(images).collect(Collectors.toList()));
+		if (images != null && index >= 0 && index < images.length) {
+			List<Image> newImages = new ArrayList<>(Arrays.asList(images));
 			newImages.remove(index);
 			images = newImages.toArray(new Image[0]);
 		}
