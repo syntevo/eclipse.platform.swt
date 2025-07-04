@@ -3101,15 +3101,26 @@ public class Table extends CustomComposite {
 	}
 
 	private void measureLineHeight(int index) {
+		final TableItem item = _getItem(index);
+		int height = lineHeight;
 		final GC gc = new GC(this);
 		try {
-			final TableItem item = _getItem(index);
-			final Rectangle bounds = item.getBounds();
-			setLineHeight(bounds.height);
+			final int columnCount = getColumnCount();
+			if (columnCount > 0) {
+				for (int i = 0; i < columnCount; i++) {
+					final Point size = item.computeCellSize(i, gc);
+					height = Math.max(height, size.y);
+				}
+			}
+			else {
+				final Rectangle bounds = item.getBounds();
+				height = Math.max(height, bounds.height);
+			}
 		}
 		finally {
 			gc.dispose();
 		}
+		setLineHeight(height);
 	}
 
 	int calculateColumnWidth(TableColumn column) {
