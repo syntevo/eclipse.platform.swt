@@ -275,23 +275,9 @@ public class TableItem extends Item {
 	 * @since 3.2
 	 */
 	public Rectangle getBounds() {
-		Rectangle full = getFullBounds();
-
-		int width = full.width;
-		int x = full.x;
-
-		int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;
-		if ((getParent().getStyle() & SWT.CHECK) != 0) {
-			shift = Table.TABLE_CHECKBOX_RIGHT_SHIFT;
-		}
-
-		if (getParent().columnsExist()) {
-			width -= shift;
-			width = Math.max(0, width);
-		}
-
-		x += shift;
-		return new Rectangle(x, full.y, width, full.height);
+		Rectangle bounds = getFullBounds();
+		handleLeadingIndent(bounds);
+		return bounds;
 	}
 
 	private int getItemIndex() {
@@ -380,27 +366,29 @@ public class TableItem extends Item {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
-		Rectangle b = getBounds();
-		final TableColumn column = parent.getColumn(index);
+		Rectangle bounds = getFullBounds();
 
-		int x = column.getX();
-		int y = b.y;
-		int width = column.getWidth();
-		int height = b.height;
+		final TableColumn column = parent.getColumn(index);
+		bounds.x = column.getX();
+		bounds.width = column.getWidth();
 
 		if (index == 0) {
-			int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;
-
-			if ((getParent().getStyle() & SWT.CHECK) != 0) {
-				shift = Table.TABLE_CHECKBOX_RIGHT_SHIFT;
-			}
-			// reduce width by shift. This cell must be by default smaller than the others.
-			// If there is a checkbox, this also must be considered.
-			width = Math.max(0, width - shift);
-			x += shift;
+			handleLeadingIndent(bounds);
 		}
 
-		return new Rectangle(x, y, width, height);
+		return bounds;
+	}
+
+	private void handleLeadingIndent(Rectangle bounds) {
+		int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;
+
+		if ((getParent().getStyle() & SWT.CHECK) != 0) {
+			shift = Table.TABLE_CHECKBOX_RIGHT_SHIFT;
+		}
+		// reduce width by shift. This cell must be by default smaller than the others.
+		// If there is a checkbox, this also must be considered.
+		bounds.width = Math.max(0, bounds.width - shift);
+		bounds.x += shift;
 	}
 
 	/**
