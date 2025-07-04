@@ -54,7 +54,6 @@ public class DefaultTableRenderer extends TableRenderer {
 		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
 		gc.setForeground(lineColor);
-		drawHLine(gc, 0, ca.width, 0);
 		drawHLine(gc, 0, ca.width, height - 1);
 
 		final TableColumn[] columns = table.getColumns();
