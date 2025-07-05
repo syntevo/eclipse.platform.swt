@@ -43,25 +43,26 @@ public class TableItemRenderer {
 				cellBounds.width = column.getWidth();
 				cellBounds.height = height;
 
-				if (i == 0 && (table.getStyle() & SWT.CHECK) != 0) {
-					drawCheckbox(gc, column.getX(), cellBounds.y, cellBounds.height);
-				}
+				final int x = column.getX();
 
 				gc.setBackground(item.getBackground(i));
 				gc.setForeground(item.getForeground(i));
-				if (drawCell(i, detail, cellBounds, gc)) {
+				if (drawCell(i, detail, cellBounds, x, gc)) {
 					drawFocusRect = true;
+				}
+				if (i == 0 && (table.getStyle() & SWT.CHECK) != 0) {
+					drawCheckbox(gc, x, cellBounds.y, cellBounds.height);
 				}
 			}
 		} else {
+			gc.setBackground(item.getBackground());
+			gc.setForeground(item.getForeground());
+			drawFocusRect = drawCell(0, detail, itemBounds, 0, gc);
+
 			if ((table.getStyle() & SWT.CHECK) != 0) {
 				final Rectangle fullBounds = item.getFullBounds();
 				drawCheckbox(gc, fullBounds.x, fullBounds.y, height);
 			}
-
-			gc.setBackground(item.getBackground());
-			gc.setForeground(item.getForeground());
-			drawFocusRect = drawCell(0, detail, itemBounds, gc);
 		}
 
 		if (drawFocusRect) {
@@ -93,6 +94,8 @@ public class TableItemRenderer {
 		final int size = 20;
 		this.checkboxBounds = new Rectangle(x + 5, y + (height - size) / 2, size, size);
 
+		gc.setBackground(new Color(255, 255, 255));
+		gc.fillRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
 		gc.drawRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
 		if (item.getChecked()) {
 			final int lineWidth = gc.getLineWidth();
@@ -106,12 +109,14 @@ public class TableItemRenderer {
 		}
 	}
 
-	private boolean drawCell(int columnIndex, int detailDefault, Rectangle bounds, GC gc) {
+	private boolean drawCell(int columnIndex, int detailDefault, Rectangle bounds, int left, GC gc) {
 		final Table table = getParent();
 
-		gc.setClipping(bounds);
+		final Rectangle cellRect = new Rectangle(left, bounds.y, Math.max(0, bounds.width + bounds.x - left), bounds.height);
+
+		gc.setClipping(cellRect);
 		try {
-			Event event = table.sendMeasureItem(item, columnIndex, gc, bounds);
+			Event event = table.sendMeasureItem(item, columnIndex, gc, cellRect);
 
 			event.detail = detailDefault;
 			table.sendEvent(SWT.EraseItem, event);
@@ -127,19 +132,17 @@ public class TableItemRenderer {
 				} else if ((event.detail & SWT.HOT) != 0) {
 					gc.setBackground(Table.HOVER_COLOR);
 				}
-				gc.fillRectangle(bounds);
+				gc.fillRectangle(cellRect);
 			}
 
 			if ((event.detail & SWT.FOREGROUND) != 0) {
-				int currentWidthPosition = bounds.x + MARGIN_X;
-
-				int xPosition = currentWidthPosition;
-				int yPosition = bounds.y + MARGIN_Y;
+				int x = bounds.x + MARGIN_X;
 
 				Image image = item.getImage(columnIndex);
 				if (image != null) {
-					gc.drawImage(image, xPosition, yPosition);
-					currentWidthPosition += image.getBounds().width + GAP;
+					final Rectangle imageSize = image.getBounds();
+					gc.drawImage(image, x, bounds.y + (bounds.height - imageSize.height) / 2);
+					x += imageSize.width + GAP;
 				}
 
 				Color foreground = item.getForeground(columnIndex);
@@ -147,7 +150,11 @@ public class TableItemRenderer {
 					gc.setForeground(foreground);
 				}
 
-				gc.drawText(item.getText(columnIndex), currentWidthPosition, bounds.y + MARGIN_Y);
+				final String text = item.getText(columnIndex);
+				if (text.length() > 0) {
+					final int fontHeight = gc.getFontMetrics().getHeight();
+					gc.drawText(text, x, bounds.y + (bounds.height - fontHeight) / 2);
+				}
 			}
 
 			table.sendEvent(SWT.PaintItem, event);
