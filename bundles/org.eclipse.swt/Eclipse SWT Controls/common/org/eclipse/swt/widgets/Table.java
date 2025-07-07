@@ -2839,12 +2839,6 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	@Override
-	public void pack() {
-		super.pack();
-		redraw();
-	}
-
 	/**
 	 * Sets the direction of the sort indicator for the receiver. The value can be
 	 * one of <code>UP</code>, <code>DOWN</code> or <code>NONE</code>.
