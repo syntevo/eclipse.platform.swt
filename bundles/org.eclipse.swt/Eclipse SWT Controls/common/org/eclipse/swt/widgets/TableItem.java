@@ -726,21 +726,6 @@ public class TableItem extends Item {
 		table.redraw(x, y, width, table.getItemHeight(), true);
 	}
 
-	void redraw(int column, boolean drawText, boolean drawImage) {
-		if (!table.isVisible()) return;
-
-		int index = getItemIndex();
-		final int topIndex = table.getTopIndex();
-		if (index < topIndex || index > table.getLastVisibleIndex()) return;
-
-		if (topIndex == topIndexAtCalculation && location != null) {
-			Rectangle b = getBounds();
-			table.redraw(b.x, b.y, b.width, b.height, true);
-		} else {
-			table.redraw();
-		}
-	}
-
 	@Override
 	void releaseHandle() {
 		super.releaseHandle();
@@ -841,7 +826,7 @@ public class TableItem extends Item {
 		if ((table.style & SWT.VIRTUAL) != 0) {
 			cached = true;
 		}
-		redraw(index, true, true);
+		redraw();
 	}
 
 	/**
@@ -974,7 +959,7 @@ public class TableItem extends Item {
 		if ((table.style & SWT.VIRTUAL) != 0) {
 			cached = true;
 		}
-		redraw(index, true, false);
+		redraw();
 	}
 
 	/**
@@ -1058,7 +1043,7 @@ public class TableItem extends Item {
 		if ((table.style & SWT.VIRTUAL) != 0) {
 			cached = true;
 		}
-		redraw(index, true, false);
+		redraw();
 	}
 
 	/**
@@ -1167,7 +1152,7 @@ public class TableItem extends Item {
 		boolean drawText = (image == null && oldImage != null) || (image != null && oldImage == null);
 
 		clearCache();
-		redraw(index, drawText, true);
+		redraw();
 	}
 
 	@Override
@@ -1305,7 +1290,7 @@ public class TableItem extends Item {
 			clearCache();
 		}
 
-		redraw(index, true, false);
+		redraw();
 	}
 
 	@Override
