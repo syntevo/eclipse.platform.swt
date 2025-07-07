@@ -473,15 +473,19 @@ public class Table extends CustomComposite {
 			return;
 		}
 
+		final int lineHeight = getItemHeight();
 		for (int i = getTopIndex(); i <= itemsHandler.getLastVisibleElementIndex(); i++) {
-			TableItem it = getItem(i);
+			TableItem item = getItem(i);
 
-			Rectangle b = it.getBounds();
-			if (it.isInCheckArea(p)) {
-				it.toggleCheck();
+			if (item.isInCheckArea(p)) {
+				item.toggleCheck();
 				break;
 			}
-			if (b.contains(p)) {
+
+			Rectangle bounds = item.getBounds();
+			// todo
+			bounds.height = lineHeight;
+			if (bounds.contains(p)) {
 				final boolean shiftPressed = (e.stateMask & SWT.SHIFT) != 0;
 				final boolean ctrlOrCmdPressed = (e.stateMask & SWT.MOD1) != 0;
 				clickAtRow(i, shiftPressed, ctrlOrCmdPressed);

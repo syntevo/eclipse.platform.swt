@@ -66,6 +66,7 @@ class TableItemsHandler {
 
 		if (mouseHoverElement instanceof TableItem item) {
 			final Rectangle bounds = item.getFullBounds();
+			// todo
 			bounds.height = itemHeight;
 			if (bounds.contains(p)) {
 				return;
