@@ -212,7 +212,7 @@ public class Table extends CustomComposite {
 			case SWT.FocusOut -> onFocusOut();
 			case SWT.Traverse -> onTraverse(event);
 			case SWT.Selection -> onSelection(event);
-			case SWT.MouseWheel -> onScrollBar();
+			case SWT.MouseWheel -> onMouseWheel();
 			case SWT.KeyDown -> onKeyDown(event);
 			case SWT.KeyUp -> onKeyUp(event);
 			case SWT.MouseMove -> onMouseMove(event);
@@ -257,10 +257,9 @@ public class Table extends CustomComposite {
 		itemsHandler.handleMouseMove(event);
 	}
 
-	private void onScrollBar() {
-		ScrollBar scrollBar = getVerticalBar();
-		if (scrollBar != null) {
-			int selection = scrollBar.getSelection();
+	private void onMouseWheel() {
+		if (verticalBar != null) {
+			int selection = verticalBar.getSelection();
 			setTopIndex(selection);
 		}
 	}
