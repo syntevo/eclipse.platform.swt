@@ -420,13 +420,13 @@ public class Table extends CustomComposite {
 		updateVerticalScrollBar();
 
 		if (horizontalBar != null) {
-			Point tableSize = getPreferredSize();
+			final int preferredWidth = getPreferredSize().x;
 			Rectangle ca = getClientArea();
 			// +1 for the closing vertical line of the table header
-			horizontalBar.setMaximum(tableSize.x + 1);
+			horizontalBar.setMaximum(preferredWidth + 1);
 			horizontalBar.setMinimum(0);
 			horizontalBar.setThumb(ca.width);
-			horizontalBar.setVisible(tableSize.x > ca.width);
+			horizontalBar.setVisible(preferredWidth > ca.width);
 		}
 	}
 
