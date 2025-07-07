@@ -40,7 +40,7 @@ import org.eclipse.swt.graphics.*;
  */
 public class TableColumn extends Item {
 
-	private Table parent;
+	private Table table;
 	// TODO implement moveable
 	private boolean resizable, moveable;
 	private String toolTipText;
@@ -91,7 +91,7 @@ public class TableColumn extends Item {
 	public TableColumn(Table parent, int style) {
 		super(parent, checkStyle(style));
 		resizable = true;
-		this.parent = parent;
+		this.table = parent;
 		parent.createColumn(this, parent.getColumnCount());
 	}
 
@@ -146,7 +146,7 @@ public class TableColumn extends Item {
 		if (index > parent.getColumnCount()) error(SWT.ERROR_INVALID_RANGE);
 
 		resizable = true;
-		this.parent = parent;
+		this.table = parent;
 		parent.createColumn(this, index);
 	}
 
@@ -228,7 +228,7 @@ public class TableColumn extends Item {
 
 	@Override
 	void destroyWidget() {
-		parent.destroyItem(this);
+		table.destroyItem(this);
 		releaseHandle();
 	}
 
@@ -281,7 +281,7 @@ public class TableColumn extends Item {
 	 */
 	public Table getParent() {
 		checkWidget();
-		return parent;
+		return table;
 	}
 
 	/**
@@ -385,21 +385,21 @@ public class TableColumn extends Item {
 	public void pack() {
 		checkWidget();
 
-		int width = parent.calculateColumnWidth(this);
+		int width = table.calculateColumnWidth(this);
 		setWidth(width);
 	}
 
 	@Override
 	void releaseHandle() {
 		super.releaseHandle();
-		parent = null;
+		table = null;
 	}
 
 	@Override
 	void releaseParent() {
 		super.releaseParent();
-		if (parent.sortColumn == this) {
-			parent.sortColumn = null;
+		if (table.sortColumn == this) {
+			table.sortColumn = null;
 		}
 	}
 
@@ -488,7 +488,7 @@ public class TableColumn extends Item {
 		checkWidget();
 
 		if ((alignment & (SWT.LEFT | SWT.RIGHT | SWT.CENTER)) == 0) return;
-		int index = parent.indexOf(this);
+		int index = table.indexOf(this);
 		if (index == -1 || index == 0) return;
 
 		style &= ~(SWT.LEFT | SWT.RIGHT | SWT.CENTER);
@@ -501,13 +501,13 @@ public class TableColumn extends Item {
 		if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
 
 		super.setImage(image);
-		if (parent.sortColumn != this || parent.sortDirection != SWT.NONE) {
+		if (table.sortColumn != this || table.sortDirection != SWT.NONE) {
 			setImage(image, false, false);
 		}
 	}
 
 	void setImage(Image image, boolean sort, boolean right) {
-		int index = parent.indexOf(this);
+		int index = table.indexOf(this);
 		if (index == -1) return;
 		Table.logNotImplemented();
 	}
@@ -537,7 +537,7 @@ public class TableColumn extends Item {
 	public void setMoveable(boolean moveable) {
 		checkWidget();
 		this.moveable = moveable;
-		parent.updateMoveable();
+		table.updateMoveable();
 	}
 
 	/**
@@ -561,7 +561,7 @@ public class TableColumn extends Item {
 	}
 
 	void setSortDirection(int direction) {
-		int index = parent.indexOf(this);
+		int index = table.indexOf(this);
 		if (index == -1) return;
 		Table.logNotImplemented();
 	}
@@ -607,10 +607,10 @@ public class TableColumn extends Item {
 	public void setToolTipText(String string) {
 		checkWidget();
 		toolTipText = string;
-		long hwndHeaderToolTip = parent.headerToolTipHandle;
+		long hwndHeaderToolTip = table.headerToolTipHandle;
 		if (hwndHeaderToolTip == 0) {
-			parent.createHeaderToolTips();
-			parent.updateHeaderToolTips();
+			table.createHeaderToolTips();
+			table.updateHeaderToolTips();
 		}
 	}
 
@@ -631,7 +631,7 @@ public class TableColumn extends Item {
 		checkWidget();
 
 		if (width < 0) return;
-		int index = parent.indexOf(this);
+		int index = table.indexOf(this);
 		if (index == -1) return;
 
 		if (width == this.width) {
@@ -640,8 +640,8 @@ public class TableColumn extends Item {
 
 		this.width = width;
 
-		parent.getColumnsHandler().clearCache();
-		parent.redraw();
+		table.getColumnsHandler().clearCache();
+		table.redraw();
 	}
 
 	void updateToolTip(int index) {
