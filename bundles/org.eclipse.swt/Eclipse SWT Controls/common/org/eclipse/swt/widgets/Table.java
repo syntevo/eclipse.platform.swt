@@ -151,6 +151,8 @@ public class Table extends CustomComposite {
 	private Point itemsSizeCache;
 	private int itemsSizeCacheKey;
 
+	private int hScrollPos;
+
 	/**
 	 * Constructs a new instance of this class given its parent and a style value
 	 * describing its behavior and appearance.
@@ -290,12 +292,18 @@ public class Table extends CustomComposite {
 	private void onSelection(Event event) {
 		if (event.widget == verticalBar) {
 			setTopIndex(verticalBar.getSelection());
+		} else if (event.widget == horizontalBar) {
+			hScrollPos = horizontalBar.getSelection();
 		}
 
 		updateColumnsX();
 		// TODO also the scrollbars will be handled here
 
 		redraw();
+	}
+
+	int getHScrollPos() {
+		return hScrollPos;
 	}
 
 	void updateColumnsX() {
