@@ -25,14 +25,6 @@ final class TableColumnsHandler {
 		return new Point(cachedHeaderSize.x, cachedHeaderSize.y);
 	}
 
-	public Rectangle getHeaderBounds() {
-		if (cachedHeaderSize == null) {
-			cachedHeaderSize = calculateSize();
-		}
-
-		return new Rectangle(-table.getHScrollPos(), 0, cachedHeaderSize.x, cachedHeaderSize.y);
-	}
-
 	private Point calculateSize() {
 		int width = 0;
 		for (TableColumn c : table.getColumns()) {

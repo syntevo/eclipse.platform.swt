@@ -888,7 +888,7 @@ public class Table extends CustomComposite {
 		TableItem[] items = getItems();
 		int width = 0;
 		if (columnsExist()) {
-			final int headerWidth = getHeaderBounds().width;
+			final int headerWidth = columnsHandler.getSize().x;
 			width = headerWidth;
 			if (items.length > 0) {
 				TableItem item = items[0];
@@ -1666,13 +1666,6 @@ public class Table extends CustomComposite {
 		checkWidget();
 
 		return selectionModel.getSelectionIndex();
-	}
-
-	/**
-	 * @return rectangle which contains all visible columns of the table
-	 */
-	Rectangle getHeaderBounds() {
-		return columnsHandler.getHeaderBounds();
 	}
 
 	/**
@@ -2567,10 +2560,9 @@ public class Table extends CustomComposite {
 	}
 
 	Point getTopIndexItemPosition() {
-		Rectangle headerBounds = getHeaderBounds();
 		int gridLineSize = getGridSize();
 		int topIndexY = getHeaderHeight();
-		return new Point(headerBounds.x, topIndexY + gridLineSize);
+		return new Point(-hScrollPos, topIndexY + gridLineSize);
 	}
 
 	@Override
