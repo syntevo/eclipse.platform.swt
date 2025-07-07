@@ -8,7 +8,7 @@ final class TableColumnsHandler {
 	private final Table table;
 	private final Point mouseDownLocation = new Point(0, 0);
 
-	private Rectangle cachedHeaderBounds;
+	private Point cachedHeaderSize;
 	private int columnResizePossible = -1;
 	private int columnResizeActive = -1;
 	private int mouseOverColumn = -1;
@@ -18,39 +18,33 @@ final class TableColumnsHandler {
 	}
 
 	public Point getSize() {
-		if (cachedHeaderBounds == null) {
-			cachedHeaderBounds = calculateBounds();
+		if (cachedHeaderSize == null) {
+			cachedHeaderSize = calculateSize();
 		}
 
-		return new Point(cachedHeaderBounds.width, cachedHeaderBounds.height);
+		return new Point(cachedHeaderSize.x, cachedHeaderSize.y);
 	}
 
 	public Rectangle getHeaderBounds() {
-		if (cachedHeaderBounds == null) {
-			cachedHeaderBounds = calculateBounds();
+		if (cachedHeaderSize == null) {
+			cachedHeaderSize = calculateSize();
 		}
 
-		return new Rectangle(cachedHeaderBounds.x, cachedHeaderBounds.y, cachedHeaderBounds.width, cachedHeaderBounds.height);
+		return new Rectangle(-table.getHScrollPos(), 0, cachedHeaderSize.x, cachedHeaderSize.y);
 	}
 
-	private Rectangle calculateBounds() {
-		int horizontalShift = 0;
-		final ScrollBar horizontalBar = table.getHorizontalBar();
-		if (horizontalBar != null) {
-			horizontalShift = horizontalBar.getSelection();
-		}
-
+	private Point calculateSize() {
 		int width = 0;
 		for (TableColumn c : table.getColumns()) {
 			width += c.getWidth();
 		}
 
-		final int headerHeight = table.calculateColumnHeight();
-		return new Rectangle(-horizontalShift, 0, width, headerHeight);
+		final int height = table.calculateColumnHeight();
+		return new Point(width, height);
 	}
 
 	public void handleMouseMove(Event event) {
-		if (cachedHeaderBounds == null) return;
+		if (cachedHeaderSize == null) return;
 
 		if (columnResizeActive >= 0) {
 			TableColumn c = table.getColumn(columnResizeActive);
@@ -62,7 +56,7 @@ final class TableColumnsHandler {
 
 		columnResizePossible = -1;
 		mouseOverColumn = -1;
-		final boolean isInHeader = table.getHeaderVisible() && isInHeader(event.y, cachedHeaderBounds);
+		final boolean isInHeader = table.getHeaderVisible() && event.y < cachedHeaderSize.y;
 		if (isInHeader) {
 			final int x = event.x;
 			final TableColumn[] columns = table.getColumns();
@@ -97,8 +91,8 @@ final class TableColumnsHandler {
 
 	public boolean handleMouseDown(Event event) {
 		if (!table.getHeaderVisible()) return false;
-		if (cachedHeaderBounds == null) return false;
-		if (!isInHeader(event.y, cachedHeaderBounds)) return false;
+		if (cachedHeaderSize == null) return false;
+		if (event.y >= cachedHeaderSize.y) return false;
 		if (event.button != 1) return false;
 
 		if (event.type == SWT.MouseDoubleClick) {
@@ -137,10 +131,6 @@ final class TableColumnsHandler {
 	}
 
 	public void clearCache() {
-		cachedHeaderBounds = null;
-	}
-
-	private static boolean isInHeader(int y, Rectangle headerBounds) {
-		return y < headerBounds.y + headerBounds.height;
+		cachedHeaderSize = null;
 	}
 }
