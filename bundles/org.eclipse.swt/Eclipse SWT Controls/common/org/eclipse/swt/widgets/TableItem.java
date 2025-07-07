@@ -285,20 +285,9 @@ public class TableItem extends Item {
 			this.itemIndex = parent.indexOf(this);
 		}
 		return this.itemIndex;
-
 	}
 
-	/**
-	 * The method getBounds excludes a checkbox if visible and also the first pixel
-	 * on the right are excluded in the first column.
-	 *
-	 * This includes the checkbox if the table has style SWT.CHECK.
-	 *
-	 *
-	 * @return the full Rectangle including a checkbox and initial pixels.
-	 */
-	public Rectangle getFullBounds() {
-		checkWidget();
+	Rectangle getFullBounds() {
 		final int topIndex = parent.getTopIndex();
 		if (topIndexAtCalculation != topIndex || bounds == null) {
 			this.bounds = null;
