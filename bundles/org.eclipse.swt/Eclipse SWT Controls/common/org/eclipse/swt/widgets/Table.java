@@ -2959,20 +2959,20 @@ public class Table extends CustomComposite {
 		if (column.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
 		if (column.getParent() != this) error(SWT.ERROR_INVALID_ARGUMENT);
 		if (!isVisible()) return;
+		if (horizontalBar == null) return;
 
 		int index = indexOf(column);
 		if (0 > index || index >= getColumnCount()) return;
 
-		Rectangle ca = getClientArea();
-
-		updateColumnsX();
-		int horShift = column.getXScrolled();
-		if (ca.x < horShift && ca.x + ca.width > horShift) return;
-
-		final ScrollBar horizontalBar = getHorizontalBar();
-		if (horizontalBar != null) {
-			horizontalBar.setSelection(horizontalBar.getSelection() + horShift);
-			redraw();
+		final Rectangle clientArea = getClientArea();
+		final int x = column.getX();
+		final int width = Math.max(column.getWidth(), clientArea.width);
+		final int currentScrollPos = getHScrollPos();
+		int scrollPos = Math.min(currentScrollPos, x);
+		scrollPos = Math.max(scrollPos, x + width - clientArea.width);
+		if (scrollPos != currentScrollPos) {
+			horizontalBar.setSelection(scrollPos);
+			this.hScrollPos = scrollPos;
 		}
 	}
 
