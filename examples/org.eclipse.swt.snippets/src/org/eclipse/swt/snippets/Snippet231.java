@@ -42,7 +42,7 @@ public static void main(String [] args) {
 	table.setHeaderVisible(true);
 	table.setLinesVisible(true);
 	for (int i = 0; i < COLUMN_COUNT; i++) {
-		new TableColumn(table, SWT.NONE);
+		new TableColumn(table, SWT.NONE).setWidth(100);
 	}
 	for (int i = 0; i < ITEM_COUNT; i++) {
 		TableItem item = new TableItem(table, SWT.NONE);
@@ -83,9 +83,11 @@ public static void main(String [] args) {
 		event.gc.drawText(text, event.x + TEXT_MARGIN, event.y + yOffset, true);
 	});
 
+/*
 	for (int i = 0; i < COLUMN_COUNT; i++) {
 		table.getColumn(i).pack();
 	}
+*/
 	table.pack();
 	shell.pack();
 	shell.open();
