@@ -358,7 +358,7 @@ public class TableItem extends Item {
 		Rectangle bounds = getFullBounds();
 
 		final TableColumn column = table.getColumn(index);
-		bounds.x = column.getX();
+		bounds.x = column.getXScrolled();
 		bounds.width = column.getWidth();
 
 		if (index == 0) {

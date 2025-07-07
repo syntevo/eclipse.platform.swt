@@ -43,7 +43,7 @@ public class TableItemRenderer {
 				cellBounds.width = column.getWidth();
 				cellBounds.height = height;
 
-				final int x = column.getX();
+				final int x = column.getXScrolled();
 
 				gc.setBackground(item.getBackground(i));
 				gc.setForeground(item.getForeground(i));

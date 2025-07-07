@@ -307,7 +307,7 @@ public class Table extends CustomComposite {
 	}
 
 	void updateColumnsX() {
-		int x = -horizontalBar.getSelection();
+		int x = 0;
 		final int[] columnOrder = getColumnOrder();
 		for (int i : columnOrder) {
 			final TableColumn column = columnsList.get(i);
@@ -557,7 +557,7 @@ public class Table extends CustomComposite {
 		}
 		int width = column.getWidth();
 		int height = getHeaderHeight();
-		redraw(column.getX(), 0, width, height, true);
+		redraw(column.getXScrolled(), 0, width, height, true);
 	}
 
 	public boolean columnsExist() {
@@ -2966,7 +2966,7 @@ public class Table extends CustomComposite {
 		Rectangle ca = getClientArea();
 
 		updateColumnsX();
-		int horShift = column.getX();
+		int horShift = column.getXScrolled();
 		if (ca.x < horShift && ca.x + ca.width > horShift) return;
 
 		final ScrollBar horizontalBar = getHorizontalBar();

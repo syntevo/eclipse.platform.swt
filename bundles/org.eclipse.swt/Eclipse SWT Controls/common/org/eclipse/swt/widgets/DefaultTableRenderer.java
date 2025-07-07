@@ -59,7 +59,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		final TableColumn[] columns = table.getColumns();
 		for (int i = 0; i < columns.length; i++) {
 			TableColumn column = columns[i];
-			final int x = column.getX();
+			final int x = column.getXScrolled();
 			final int width = column.getWidth();
 			if (x + width < ca.x
 					|| x >= ca.x + ca.width) {
@@ -79,7 +79,7 @@ public class DefaultTableRenderer extends TableRenderer {
 			}
 
 			final String text = column.getText();
-			final int x = column.getX();
+			final int x = column.getXScrolled();
 			final int left = x + HEADER_MARGIN_X;
 			int right = x + column.getWidth() - HEADER_MARGIN_X;
 

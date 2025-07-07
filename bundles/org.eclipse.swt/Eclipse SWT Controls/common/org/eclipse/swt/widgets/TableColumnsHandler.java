@@ -54,7 +54,7 @@ final class TableColumnsHandler {
 
 		if (columnResizeActive >= 0) {
 			TableColumn c = table.getColumn(columnResizeActive);
-			int x = c.getX();
+			int x = c.getXScrolled();
 			c.setWidth(event.x - x);
 			table.redraw();
 			return;
@@ -67,7 +67,7 @@ final class TableColumnsHandler {
 			final int x = event.x;
 			final TableColumn[] columns = table.getColumns();
 			for (TableColumn column : columns) {
-				final int columnX = column.getX();
+				final int columnX = column.getXScrolled();
 				final int columnWidth = column.getWidth();
 				if (Math.abs(columnX + columnWidth - x) < 5) {
 					if (column.getResizable()) {

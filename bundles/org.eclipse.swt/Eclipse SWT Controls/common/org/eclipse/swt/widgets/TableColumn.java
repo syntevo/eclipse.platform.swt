@@ -652,6 +652,10 @@ public class TableColumn extends Item {
 		return x;
 	}
 
+	int getXScrolled() {
+		return x - table.getHScrollPos();
+	}
+
 	void setX(int x) {
 		this.x = x;
 	}
