@@ -237,6 +237,7 @@ public class TableItemRenderer {
 			}
 
 			width += table.computeTextExtent(item.getText()).x;
+			width += table.getLeftIndent();
 		}
 
 		final int textHeight = table.guessTextHeight();

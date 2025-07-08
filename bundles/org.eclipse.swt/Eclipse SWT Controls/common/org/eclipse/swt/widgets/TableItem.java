@@ -294,9 +294,12 @@ public class TableItem extends Item {
 		}
 
 		final int relativeIndex = itemIndex - table.getTopIndex();
-		int y = table.getHeaderHeight();
-		y += relativeIndex * (table.getItemHeight() + table.getGridSize());
-		return new Rectangle(0, y, table.getColumnsHandler().getSize().x, table.getItemHeight());
+		int y = relativeIndex * (table.getItemHeight() + table.getGridSize());
+		if (table.getHeaderVisible()) {
+			y += table.getHeaderHeight();
+		}
+		final int width = table.getWidth();
+		return new Rectangle(0, y, width, table.getItemHeight());
 	}
 
 	/**
@@ -345,11 +348,7 @@ public class TableItem extends Item {
 	}
 
 	private void handleLeadingIndent(Rectangle bounds) {
-		int shift = Table.TABLE_INITIAL_RIGHT_SHIFT;
-
-		if ((getParent().getStyle() & SWT.CHECK) != 0) {
-			shift = Table.TABLE_CHECKBOX_RIGHT_SHIFT;
-		}
+		final int shift = getParent().getLeftIndent();
 		// reduce width by shift. This cell must be by default smaller than the others.
 		// If there is a checkbox, this also must be considered.
 		bounds.width = Math.max(0, bounds.width - shift);
@@ -685,8 +684,13 @@ public class TableItem extends Item {
 	}
 
 	void redraw() {
-		var index = getItemIndex();
 		final Table table = getParent();
+		final Point size = table.getSize();
+		if (size.x == 0 || size.y == 0) {
+			return;
+		}
+
+		int index = getItemIndex();
 		if (index < table.getTopIndex() || index > table.getLastVisibleIndex()) return;
 
 		Rectangle b = getBounds();
@@ -1319,5 +1323,9 @@ public class TableItem extends Item {
 
 	Point computeCellSize(int colIndex, GC gc) {
 		return renderer.computeCellSize(colIndex, gc);
+	}
+
+	Point computeSize() {
+		return renderer.computeSize();
 	}
 }

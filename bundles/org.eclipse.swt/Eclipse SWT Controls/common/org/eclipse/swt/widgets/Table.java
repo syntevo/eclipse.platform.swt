@@ -124,6 +124,7 @@ public class Table extends CustomComposite {
 	boolean customDraw;
 	boolean ignoreResize;
 	private int itemHeight;
+	private int noColumnWidth;
 	int sortDirection;
 	static final int GRID_WIDTH = 1;
 
@@ -417,13 +418,13 @@ public class Table extends CustomComposite {
 		updateVerticalScrollBar();
 
 		if (horizontalBar != null) {
-			final int preferredWidth = getPreferredSize().x;
-			Rectangle ca = getClientArea();
+			final int width = getWidth();
+			final int caWidth = getClientArea().width;
 			// +1 for the closing vertical line of the table header
-			horizontalBar.setMaximum(preferredWidth + 1);
+			horizontalBar.setMaximum(width + 1);
 			horizontalBar.setMinimum(0);
-			horizontalBar.setThumb(ca.width);
-			horizontalBar.setVisible(preferredWidth > ca.width);
+			horizontalBar.setThumb(caWidth);
+			horizontalBar.setVisible(width > caWidth);
 		}
 	}
 
@@ -873,32 +874,39 @@ public class Table extends CustomComposite {
 
 	private Point calculateItemsSize() {
 		final int gridLineSize = getGridSize();
-		int heightPerLine = getItemHeight() + gridLineSize;
+		final int heightPerLine = getItemHeight() + gridLineSize;
 
 		if (isVirtual()) {
 			Rectangle ca = getClientArea();
 			return new Point(ca.width, getItemCount() * heightPerLine);
 		}
 
-		TableItem[] items = getItems();
-		int width = 0;
+		final int width;
 		if (columnsExist()) {
 			width = columnsHandler.getSize().x;
 		} else {
-			final int x0 = horizontalBar.getSelection();
-			for (int i = 0; i < items.length; i++) {
-				TableItem item = items[i];
-				final Rectangle bounds = item.getBounds();
-				if (i == 0) {
-					heightPerLine = bounds.y + gridLineSize;
-				}
-
-				final int itemWidth = bounds.width + bounds.x - x0;
-				width = Math.max(width, itemWidth);
-			}
+			width = getNoColumnWidth();
 		}
+		return new Point(width, heightPerLine * getItemCount());
+	}
 
-		return new Point(width, heightPerLine * items.length);
+	private int getNoColumnWidth() {
+		if (noColumnWidth == 0) {
+			int width = 0;
+			TableItem[] items = getItems();
+			for (TableItem item : items) {
+				final Point size = item.computeSize();
+				width = Math.max(width, size.x);
+			}
+			noColumnWidth = width;
+		}
+		return noColumnWidth;
+	}
+
+	int getWidth() {
+		return columnsExist()
+				? getColumnsHandler().getSize().x
+				: getNoColumnWidth();
 	}
 
 	void createHeaderToolTips() {
@@ -3101,5 +3109,14 @@ public class Table extends CustomComposite {
 		final Event event = sendMeasureItem(item, column, gc, bounds);
 		itemHeight = Math.max(itemHeight, event.height);
 		return event;
+	}
+
+	int getLeftIndent() {
+		int indent = TABLE_INITIAL_RIGHT_SHIFT;
+
+		if ((getStyle() & SWT.CHECK) != 0) {
+			indent = TABLE_CHECKBOX_RIGHT_SHIFT;
+		}
+		return indent;
 	}
 }
