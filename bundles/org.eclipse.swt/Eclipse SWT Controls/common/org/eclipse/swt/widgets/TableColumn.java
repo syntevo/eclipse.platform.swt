@@ -566,15 +566,6 @@ public class TableColumn extends Item {
 		Table.logNotImplemented();
 	}
 
-	@Override
-	public void setText(String string) {
-		checkWidget();
-
-		super.setText(string);
-
-		pack();
-	}
-
 	/**
 	 * Sets the receiver's tool tip text to the argument, which may be null
 	 * indicating that the default tool tip for the control will be shown. For a
