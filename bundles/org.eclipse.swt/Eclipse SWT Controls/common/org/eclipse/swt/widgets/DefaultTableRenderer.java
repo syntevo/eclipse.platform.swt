@@ -44,7 +44,15 @@ public class DefaultTableRenderer extends TableRenderer {
 		if (table.getHeaderVisible()) {
 			paintHeader(gc);
 		}
-		table.getItemsHandler().paint(gc);
+
+		final int initialItemHeight = table.getItemHeight();
+
+		paintItems(gc);
+
+		if (table.getItemHeight() != initialItemHeight) {
+			table.updateScrollBarWithTextSize();
+			paintItems(gc);
+		}
 	}
 
 	private void paintHeader(GC gc) {
@@ -125,6 +133,14 @@ public class DefaultTableRenderer extends TableRenderer {
 			gc.drawText(text, textX, HEADER_MARGIN_Y, true);
 			gc.setClipping(clipping);
 		}
+	}
+
+	private void paintItems(GC gc) {
+		Rectangle ca = table.getClientArea();
+		final int maxY = ca.y + ca.height;
+
+		final TableItemsHandler itemsHandler = table.getItemsHandler();
+		itemsHandler.paint(gc, maxY);
 	}
 
 	private void drawHLine(GC gc, int x1, int x2, int y) {

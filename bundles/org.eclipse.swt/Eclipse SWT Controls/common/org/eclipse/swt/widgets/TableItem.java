@@ -60,10 +60,6 @@ public class TableItem extends Item {
 	private Color foreground;
 	private Color[] cellBackground;
 	private Color[] cellForeground;
-	private int topIndexAtCalculation = -1;
-
-	private Point location;
-	private Point size;
 
 	private int itemIndex = -2;
 
@@ -297,33 +293,10 @@ public class TableItem extends Item {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
-		Point location = getLocation();
-		Point size = getSize();
-		return new Rectangle(location.x, location.y, size.x, size.y);
-	}
-
-	private Point getLocation() {
-		final int topIndex = table.getTopIndex();
-		if (topIndexAtCalculation != topIndex || location == null) {
-			topIndexAtCalculation = topIndex;
-			location = calculateLocation(itemIndex, topIndex);
-		}
-		return location;
-	}
-
-	private Point calculateLocation(int index, int topIndex) {
-		final Point location = table.getTopIndexItemPosition();
-		if (index != topIndex) {
-			location.y += (index - topIndex) * table.getItemHeight();
-		}
-		return location;
-	}
-
-	Point getSize() {
-		if (size == null) {
-			size = renderer.computeSize();
-		}
-		return size;
+		final int relativeIndex = itemIndex - table.getTopIndex();
+		int y = table.getHeaderHeight();
+		y += relativeIndex * (table.getItemHeight() + table.getGridSize());
+		return new Rectangle(0, y, table.getColumnsHandler().getSize().x, table.getItemHeight());
 	}
 
 	/**
@@ -357,12 +330,12 @@ public class TableItem extends Item {
 			return new Rectangle(0, 0, 0, 0);
 		}
 
-		Rectangle bounds = getFullBounds();
-
 		final TableColumn column = table.getColumn(index);
-		bounds.x = column.getXScrolled();
-		bounds.width = column.getWidth();
-		bounds.height = table.getItemHeight();
+
+		final int relativeIndex = itemIndex - table.getTopIndex();
+		int y = table.getHeaderHeight();
+		y += relativeIndex * (table.getItemHeight() + table.getGridSize());
+		final Rectangle bounds = new Rectangle(column.getXScrolled(), y, column.getWidth(), table.getItemHeight());
 
 		if (index == 0) {
 			handleLeadingIndent(bounds);
@@ -1235,8 +1208,6 @@ public class TableItem extends Item {
 	void clearCache() {
 		renderer.clearCache();
 		this.itemIndex = -2;
-		location = null;
-		size = null;
 	}
 
 	/**

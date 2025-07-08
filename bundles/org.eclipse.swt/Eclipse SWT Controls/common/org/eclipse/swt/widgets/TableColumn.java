@@ -640,6 +640,7 @@ public class TableColumn extends Item {
 
 		this.width = width;
 
+		table.updateColumnsX();
 		table.getColumnsHandler().clearCache();
 		table.redraw();
 	}

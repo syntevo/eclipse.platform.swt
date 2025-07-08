@@ -14,9 +14,7 @@ class TableItemsHandler {
 		this.table = table;
 	}
 
-	public void paint(GC gc) {
-		Rectangle itemsArea = getItemsClientArea();
-
+	public void paint(GC gc, int maxY) {
 		this.lastVisibleElementIndex = -1;
 
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
@@ -29,7 +27,7 @@ class TableItemsHandler {
 			item.doPaint(gc, i);
 
 			final Rectangle bounds = item.getFullBounds();
-			if (bounds.y + bounds.height > itemsArea.y + itemsArea.height) {
+			if (bounds.y + bounds.height > maxY) {
 				this.lastVisibleElementIndex = i;
 				break;
 			}

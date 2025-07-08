@@ -28,10 +28,7 @@ public class TableItemRenderer {
 
 		final int detail = prepareEventDetail(index, table);
 
-		final int height = table.getItemHeight();
-
 		final Rectangle itemBounds = item.getBounds();
-		itemBounds.height = height;
 
 		final int columnCount = table.getColumnCount();
 		boolean drawFocusRect = false;
@@ -40,7 +37,6 @@ public class TableItemRenderer {
 				final TableColumn column = table.getColumn(i);
 				Rectangle cellBounds = item.getBounds(i);
 				cellBounds.width = column.getWidth();
-				cellBounds.height = height;
 
 				final int x = column.getXScrolled();
 
@@ -60,7 +56,7 @@ public class TableItemRenderer {
 
 			if ((table.getStyle() & SWT.CHECK) != 0) {
 				final Rectangle fullBounds = item.getFullBounds();
-				drawCheckbox(gc, fullBounds.x, fullBounds.y, height);
+				drawCheckbox(gc, fullBounds.x, fullBounds.y, fullBounds.height);
 			}
 		}
 
@@ -115,7 +111,7 @@ public class TableItemRenderer {
 
 		gc.setClipping(cellRect);
 		try {
-			Event event = table.sendMeasureItem(item, columnIndex, gc, cellRect);
+			Event event = table.sendMeasureItemMaybeExtendItemHeight(item, columnIndex, gc, cellRect);
 
 			event.detail = detailDefault;
 			table.sendEvent(SWT.EraseItem, event);

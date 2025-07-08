@@ -546,8 +546,6 @@ public class Table extends CustomComposite {
 	}
 
 	private void onPaint(Event event) {
-		updateColumnsX();
-		updateScrollBarWithTextSize();
 		renderer.paint(event.gc);
 	}
 
@@ -878,7 +876,7 @@ public class Table extends CustomComposite {
 
 	private Point calculateItemsSize() {
 		final int gridLineSize = getGridSize();
-		int heightPerLine = TableItemRenderer.guessItemHeight(this) + gridLineSize;
+		int heightPerLine = getItemHeight() + gridLineSize;
 
 		if (isVirtual()) {
 			Rectangle ca = getClientArea();
@@ -888,12 +886,7 @@ public class Table extends CustomComposite {
 		TableItem[] items = getItems();
 		int width = 0;
 		if (columnsExist()) {
-			final int headerWidth = columnsHandler.getSize().x;
-			width = headerWidth;
-			if (items.length > 0) {
-				TableItem item = items[0];
-				heightPerLine = item.getSize().y + gridLineSize;
-			}
+			width = columnsHandler.getSize().x;
 		} else {
 			final int x0 = horizontalBar.getSelection();
 			for (int i = 0; i < items.length; i++) {
@@ -3168,6 +3161,12 @@ public class Table extends CustomComposite {
 		if (hooks(SWT.MeasureItem)) {
 			sendEvent(SWT.MeasureItem, event);
 		}
+		return event;
+	}
+
+	Event sendMeasureItemMaybeExtendItemHeight(TableItem item, int column, GC gc, Rectangle bounds) {
+		final Event event = sendMeasureItem(item, column, gc, bounds);
+		lineHeight = Math.max(lineHeight, event.height);
 		return event;
 	}
 }
