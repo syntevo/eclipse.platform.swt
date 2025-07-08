@@ -484,7 +484,7 @@ public class Table extends CustomComposite {
 		Point p = new Point(e.x, e.y);
 
 		if (columnsHandler.handleMouseDown(e)
-		    || !itemsHandler.getItemsClientArea().contains(e.x, e.y)) {
+		    || !getItemsClientArea().contains(e.x, e.y)) {
 			return;
 		}
 
@@ -1675,13 +1675,6 @@ public class Table extends CustomComposite {
 		checkWidget();
 
 		return selectionModel.getSelectionIndex();
-	}
-
-	/**
-	 * @return rectangle which contains all visible items of the table
-	 */
-	Rectangle getItemsArea() {
-		return itemsHandler.getItemsClientArea();
 	}
 
 	/**
@@ -3121,5 +3114,11 @@ public class Table extends CustomComposite {
 			indent = TABLE_CHECKBOX_RIGHT_SHIFT;
 		}
 		return indent;
+	}
+
+	Rectangle getItemsClientArea() {
+		Rectangle ca = getClientArea();
+		final int headerHeight = getHeaderHeight();
+		return new Rectangle(0, headerHeight + 1, ca.width, ca.height - headerHeight);
 	}
 }

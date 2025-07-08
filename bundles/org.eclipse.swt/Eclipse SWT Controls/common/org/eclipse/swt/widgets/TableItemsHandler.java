@@ -28,14 +28,8 @@ class TableItemsHandler {
 		}
 	}
 
-	public Rectangle getItemsClientArea() {
-		Rectangle ca = table.getClientArea();
-		final int headerHeight = table.getHeaderHeight();
-		return new Rectangle(0, headerHeight + 1, ca.width, ca.height - headerHeight);
-	}
-
 	public void handleMouseMove(Event event) {
-		Rectangle ica = getItemsClientArea();
+		Rectangle ica = table.getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
 
 		Item mouseHoverElement = table.mouseHoverElement;
@@ -85,7 +79,7 @@ class TableItemsHandler {
 	}
 
 	public void handleDoubleClick(Event event) {
-		Rectangle ica = getItemsClientArea();
+		Rectangle ica = table.getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
 
 		Point p = new Point(event.x, event.y);
