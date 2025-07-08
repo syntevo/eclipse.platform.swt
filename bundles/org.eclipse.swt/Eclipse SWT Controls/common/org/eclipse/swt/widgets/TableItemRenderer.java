@@ -1,7 +1,5 @@
 package org.eclipse.swt.widgets;
 
-import java.util.*;
-
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 
@@ -14,9 +12,6 @@ public class TableItemRenderer {
 	private static final int MARGIN_Y = 2;
 
 	private final TableItem item;
-
-	private final Map<Integer, Rectangle> internalComputedCellTextBounds = new HashMap<>();
-	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
 
 	public TableItemRenderer(TableItem item) {
 		this.item = item;
@@ -161,39 +156,6 @@ public class TableItemRenderer {
 		}
 	}
 
-	public Point computeCellSize(int colIndex, GC gc) {
-		int height = MARGIN_Y + MARGIN_Y;
-		int width = MARGIN_X + MARGIN_X;
-
-		Image image = item.getImage(colIndex);
-		if (image != null) {
-			final Rectangle bounds = image.getBounds();
-			Rectangle rec = new Rectangle(width, MARGIN_Y, bounds.width, bounds.height);
-			internalComputedCellImage.put(colIndex, rec);
-			height += bounds.height;
-			width += bounds.width;
-		}
-
-		String text = item.getText(colIndex);
-		if (text != null) {
-			Point textSize = gc.textExtent(text, DRAW_FLAGS);
-
-			Rectangle rec = new Rectangle(width, MARGIN_Y, textSize.x, textSize.y);
-			internalComputedCellTextBounds.put(colIndex, rec);
-
-			width += textSize.x;
-			height += textSize.y;
-		} else {
-			internalComputedCellTextBounds.put(colIndex, new Rectangle(width, height, 0, 0));
-		}
-
-		if (image != null && text != null) {
-			width += GAP;
-		}
-
-		return new Point(width, height);
-	}
-
 	public Point computeSize(GC gc) {
 		final Table table = getParent();
 
@@ -233,37 +195,58 @@ public class TableItemRenderer {
 		return new Point(width, height);
 	}
 
-	public void clearCache() {
-		this.internalComputedCellTextBounds.clear();
-		this.internalComputedCellImage.clear();
+	public Point computeCellSize(int colIndex, GC gc) {
+		return computeCellSize(colIndex, gc, null, null);
+	}
+
+	public Point computeCellSize(int colIndex, GC gc, Rectangle imageBounds, Rectangle textBounds) {
+		int height = MARGIN_Y + MARGIN_Y;
+		int width = MARGIN_X + MARGIN_X;
+
+		Image image = item.getImage(colIndex);
+		if (image != null) {
+			final Rectangle bounds = image.getBounds();
+			if (imageBounds != null) {
+				imageBounds.x = width;
+				imageBounds.y = MARGIN_Y;
+				imageBounds.width = bounds.width;
+				imageBounds.height = bounds.height;
+			}
+			height += bounds.height;
+			width += bounds.width;
+		}
+
+		String text = item.getText(colIndex);
+		if (text != null) {
+			Point textSize = gc.textExtent(text, DRAW_FLAGS);
+
+			if (textBounds != null) {
+				textBounds.x = width;
+				textBounds.y = MARGIN_Y;
+				textBounds.width = textSize.x;
+				textBounds.height = textSize.y;
+			}
+
+			width += textSize.x;
+			height += textSize.y;
+		} else {
+			if (textBounds != null) {
+				textBounds.x = width;
+				textBounds.y = height;
+				textBounds.width = 0;
+				textBounds.height = 0;
+			}
+		}
+
+		if (image != null && text != null) {
+			width += GAP;
+		}
+
+		return new Point(width, height);
 	}
 
 	public static int guessItemHeight(Table table) {
 		int textHeight = table.guessTextHeight();
 		return textHeight + MARGIN_Y + MARGIN_Y;
-	}
-
-	public Rectangle getTextBounds(int index, GC gc) {
-		if (internalComputedCellTextBounds.get(index) == null) {
-			computeCellSize(index, gc);
-		}
-
-		Rectangle internal = internalComputedCellTextBounds.get(index);
-		Rectangle outer = item.getBounds(index);
-		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
-	}
-
-	public Rectangle getImageBounds(int index, GC gc) {
-		if (item.getImage(index) == null) {
-			return new Rectangle(0, 0, 0, 0);
-		}
-
-		if (internalComputedCellImage.get(index) == null) {
-			computeCellSize(index, gc);
-		}
-
-		Rectangle internal = internalComputedCellImage.get(index);
-		Rectangle outer = item.getBounds(index);
-		return new Rectangle(outer.x + internal.x, outer.y + internal.y, internal.width, internal.height);
 	}
 }

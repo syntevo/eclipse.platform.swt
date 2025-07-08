@@ -559,7 +559,12 @@ public class TableItem extends Item {
 
 		final GC gc = new GC(table);
 		try {
-			return renderer.getImageBounds(index, gc);
+			final Rectangle imageBounds = new Rectangle(0, 0, 0, 0);
+			if (getImage(index) != null) {
+				renderer.computeCellSize(index, gc, imageBounds, null);
+			}
+
+			return imageBounds;
 		}
 		finally {
 			gc.dispose();
@@ -670,17 +675,17 @@ public class TableItem extends Item {
 		checkWidget();
 		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
 		int itemIndex = getItemIndex();
-		if (itemIndex == -1) {
-			return new Rectangle(0, 0, 0, 0);
+		final Rectangle textBounds = new Rectangle(0, 0, 0, 0);
+		if (itemIndex >= 0) {
+			final GC gc = new GC(table);
+			try {
+				renderer.computeCellSize(index, gc, null, textBounds);
+			}
+			finally {
+				gc.dispose();
+			}
 		}
-
-		final GC gc = new GC(table);
-		try {
-			return renderer.getTextBounds(index, gc);
-		}
-		finally {
-			gc.dispose();
-		}
+		return textBounds;
 	}
 
 	void redraw() {
@@ -1201,7 +1206,6 @@ public class TableItem extends Item {
 	}
 
 	void clearCache() {
-		renderer.clearCache();
 		this.itemIndex = -2;
 	}
 
