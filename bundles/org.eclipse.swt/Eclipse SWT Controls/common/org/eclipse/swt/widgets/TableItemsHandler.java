@@ -44,12 +44,8 @@ class TableItemsHandler {
 
 		Point p = new Point(event.x, event.y);
 
-		final int itemHeight = table.getItemHeight();
-
 		if (mouseHoverElement instanceof TableItem item) {
 			final Rectangle bounds = item.getFullBounds();
-			// todo
-			bounds.height = itemHeight;
 			if (bounds.contains(p)) {
 				return;
 			}
@@ -68,7 +64,6 @@ class TableItemsHandler {
 			for (int i = topIndex, max = table.getLastVisibleIndex(); i <= max; i++) {
 				TableItem item = table.getItem(i);
 				final Rectangle bounds = item.getFullBounds();
-				bounds.height = itemHeight;
 				if (bounds.contains(p)) {
 					table.mouseHoverElement = item;
 					item.redraw();

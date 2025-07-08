@@ -498,8 +498,6 @@ public class Table extends CustomComposite {
 			}
 
 			Rectangle bounds = item.getBounds();
-			// todo
-			bounds.height = lineHeight;
 			if (bounds.contains(p)) {
 				final boolean shiftPressed = (e.stateMask & SWT.SHIFT) != 0;
 				final boolean ctrlOrCmdPressed = (e.stateMask & SWT.MOD1) != 0;
