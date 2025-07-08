@@ -124,7 +124,6 @@ public class Table extends CustomComposite {
 	boolean customDraw;
 	boolean ignoreResize;
 	private int lineHeight;
-	private boolean lineHeightChanged;
 	int itemHeight;
 	int lastWidth;
 	int sortDirection;
@@ -3142,7 +3141,6 @@ public class Table extends CustomComposite {
 	private void setLineHeight(int height) {
 		if (height > lineHeight) {
 			lineHeight = height;
-			lineHeightChanged = true;
 			redraw();
 		}
 	}
