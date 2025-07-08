@@ -15,7 +15,6 @@ public class TableItemRenderer {
 
 	Rectangle checkboxBounds;
 
-	private final Map<Integer, Point> computedCellSizes = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellTextBounds = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
 
@@ -160,11 +159,6 @@ public class TableItemRenderer {
 	}
 
 	public Point computeCellSize(int colIndex, GC gc) {
-		final Point cellSize = computedCellSizes.get(colIndex);
-		if (cellSize != null) {
-			return cellSize;
-		}
-
 		int height = MARGIN_Y + MARGIN_Y;
 		int width = MARGIN_X + MARGIN_X;
 
@@ -196,15 +190,7 @@ public class TableItemRenderer {
 			width += GAP;
 		}
 
-		final Rectangle bounds = item.getBounds(colIndex);
-		bounds.width = width;
-		bounds.height = height;
-		Event event = table.sendMeasureItem(item, colIndex, gc, bounds);
-		final Point size = new Point(event.width, event.height);
-
-		computedCellSizes.put(colIndex, size);
-
-		return size;
+		return new Point(width, height);
 	}
 
 	public Point computeSize() {
@@ -246,7 +232,6 @@ public class TableItemRenderer {
 	}
 
 	public void clearCache() {
-		this.computedCellSizes.clear();
 		this.internalComputedCellTextBounds.clear();
 		this.internalComputedCellImage.clear();
 	}
