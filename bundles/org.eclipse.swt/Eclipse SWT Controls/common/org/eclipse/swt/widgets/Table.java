@@ -97,8 +97,6 @@ public class Table extends CustomComposite {
 
 // ------------------------------------------------------------
 
-	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
-
 	static final Color SELECTION_COLOR = new Color(224, 238, 254);
 	static final Color HOVER_COLOR = new Color(234, 244, 255);
 
@@ -893,10 +891,16 @@ public class Table extends CustomComposite {
 	private int getNoColumnWidth() {
 		if (noColumnWidth == 0) {
 			int width = 0;
-			TableItem[] items = getItems();
-			for (TableItem item : items) {
-				final Point size = item.computeSize();
-				width = Math.max(width, size.x);
+			final GC gc = new GC(this);
+			gc.setFont(getFont());
+			try {
+				TableItem[] items = getItems();
+				for (TableItem item : items) {
+					final Point size = item.computeSize(gc);
+					width = Math.max(width, size.x);
+				}
+			} finally {
+				gc.dispose();
 			}
 			noColumnWidth = width;
 		}
@@ -3008,15 +3012,6 @@ public class Table extends CustomComposite {
 		try {
 			gc.setFont(getFont());
 			return gc.getFontMetrics().getHeight();
-		} finally {
-			gc.dispose();
-		}
-	}
-
-	Point computeTextExtent(String str) {
-		final GC gc = new GC(this);
-		try {
-			return gc.textExtent(str, DRAW_FLAGS);
 		} finally {
 			gc.dispose();
 		}

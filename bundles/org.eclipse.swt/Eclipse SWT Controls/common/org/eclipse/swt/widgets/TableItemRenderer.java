@@ -7,6 +7,8 @@ import org.eclipse.swt.graphics.*;
 
 public class TableItemRenderer {
 
+	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
+
 	private static final int GAP = 3;
 	private static final int MARGIN_X = 3;
 	private static final int MARGIN_Y = 2;
@@ -172,17 +174,15 @@ public class TableItemRenderer {
 			width += bounds.width;
 		}
 
-		final Table table = getParent();
-
 		String text = item.getText(colIndex);
 		if (text != null) {
-			Point size = table.computeTextExtent(text);
+			Point textSize = gc.textExtent(text, DRAW_FLAGS);
 
-			Rectangle rec = new Rectangle(width, MARGIN_Y, size.x, size.y);
+			Rectangle rec = new Rectangle(width, MARGIN_Y, textSize.x, textSize.y);
 			internalComputedCellTextBounds.put(colIndex, rec);
 
-			width += size.x;
-			height += size.y;
+			width += textSize.x;
+			height += textSize.y;
 		} else {
 			internalComputedCellTextBounds.put(colIndex, new Rectangle(width, height, 0, 0));
 		}
@@ -194,7 +194,7 @@ public class TableItemRenderer {
 		return new Point(width, height);
 	}
 
-	public Point computeSize() {
+	public Point computeSize(GC gc) {
 		final Table table = getParent();
 
 		int width = MARGIN_X + MARGIN_X;
@@ -223,7 +223,8 @@ public class TableItemRenderer {
 				}
 			}
 
-			width += table.computeTextExtent(item.getText()).x;
+			final String text = item.getText();
+			width += gc.textExtent(text, DRAW_FLAGS).x;
 			width += table.getLeftIndent();
 		}
 

@@ -1320,7 +1320,7 @@ public class TableItem extends Item {
 		return renderer.computeCellSize(colIndex, gc);
 	}
 
-	Point computeSize() {
-		return renderer.computeSize();
+	Point computeSize(GC gc) {
+		return renderer.computeSize(gc);
 	}
 }
