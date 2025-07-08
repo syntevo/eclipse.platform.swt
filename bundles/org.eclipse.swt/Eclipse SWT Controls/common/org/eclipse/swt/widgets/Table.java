@@ -124,8 +124,6 @@ public class Table extends CustomComposite {
 	boolean customDraw;
 	boolean ignoreResize;
 	private int lineHeight;
-	int itemHeight;
-	int lastWidth;
 	int sortDirection;
 	static final int GRID_WIDTH = 1;
 
@@ -1519,10 +1517,6 @@ public class Table extends CustomComposite {
 	public int getItemHeight() {
 		checkWidget();
 
-		if (itemHeight > 0) {
-			return itemHeight;
-		}
-
 		if (lineHeight == 0) {
 			lineHeight = Math.max(1, TableItemRenderer.guessItemHeight(this));
 		}
@@ -2279,15 +2273,6 @@ public class Table extends CustomComposite {
 		this.customDraw = customDraw;
 	}
 
-	void setDeferResize(boolean defer) {
-		logNotImplemented();
-
-	}
-
-	void setCheckboxImageList(int width, int height, boolean fixScroll) {
-		logNotImplemented();
-	}
-
 	boolean isFocusRow(int index) {
 		return selectionModel.getCurrent() == index;
 	}
@@ -2483,46 +2468,6 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	void setItemHeight(boolean fixScroll) {
-		int topIndex = getTopIndex();
-		if (fixScroll && topIndex != 0) {
-			setRedraw(false);
-			setTopIndex(0);
-		}
-
-		logNotImplemented();
-		if (fixScroll && topIndex != 0) {
-			setTopIndex(topIndex);
-			setRedraw(true);
-		}
-	}
-
-	/**
-	 * Sets the height of the area which would be used to display <em>one</em> of
-	 * the items in the table.
-	 *
-	 * @param itemHeight the height of one item
-	 *
-	 * @exception SWTException
-	 *                         <ul>
-	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
-	 *                         disposed</li>
-	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
-	 *                         the thread that created the receiver</li>
-	 *                         </ul>
-	 *
-	 * @since 3.2
-	 */
-	/* public */ void setItemHeight(int itemHeight) {
-		checkWidget();
-		if (itemHeight < -1) error(SWT.ERROR_INVALID_ARGUMENT);
-
-		this.itemHeight = itemHeight;
-		logNotImplemented();
-		setItemHeight(true);
-		setScrollWidth(null, true);
-	}
-
 	/**
 	 * Marks the receiver's lines as visible if the argument is <code>true</code>,
 	 * and marks it invisible otherwise. Note that some platforms draw grid lines
@@ -2549,20 +2494,10 @@ public class Table extends CustomComposite {
 		logNotImplemented();
 	}
 
-	Point getTopIndexItemPosition() {
-		int gridLineSize = getGridSize();
-		int topIndexY = getHeaderHeight();
-		return new Point(-hScrollPos, topIndexY + gridLineSize);
-	}
-
 	@Override
 	public void setRedraw(boolean redraw) {
 		checkWidget();
 		super.setRedraw(redraw);
-	}
-
-	void setScrollWidth(int width) {
-		logNotImplemented();
 	}
 
 	boolean setScrollWidth(TableItem item, boolean force) {
