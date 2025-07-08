@@ -123,7 +123,7 @@ public class Table extends CustomComposite {
 	long headerToolTipHandle;
 	boolean customDraw;
 	boolean ignoreResize;
-	private int lineHeight;
+	private int itemHeight;
 	int sortDirection;
 	static final int GRID_WIDTH = 1;
 
@@ -1517,10 +1517,10 @@ public class Table extends CustomComposite {
 	public int getItemHeight() {
 		checkWidget();
 
-		if (lineHeight == 0) {
-			lineHeight = Math.max(1, TableItemRenderer.guessItemHeight(this));
+		if (itemHeight == 0) {
+			itemHeight = Math.max(1, TableItemRenderer.guessItemHeight(this));
 		}
-		return lineHeight;
+		return itemHeight;
 	}
 
 	/**
@@ -3024,7 +3024,7 @@ public class Table extends CustomComposite {
 
 	private void measureLineHeight(int index) {
 		final TableItem item = _getItem(index);
-		int height = lineHeight;
+		int height = itemHeight;
 		final GC gc = new GC(this);
 		try {
 			final int columnCount = getColumnCount();
@@ -3074,8 +3074,8 @@ public class Table extends CustomComposite {
 	}
 
 	private void setLineHeight(int height) {
-		if (height > lineHeight) {
-			lineHeight = height;
+		if (height > itemHeight) {
+			itemHeight = height;
 			redraw();
 		}
 	}
@@ -3099,7 +3099,7 @@ public class Table extends CustomComposite {
 
 	Event sendMeasureItemMaybeExtendItemHeight(TableItem item, int column, GC gc, Rectangle bounds) {
 		final Event event = sendMeasureItem(item, column, gc, bounds);
-		lineHeight = Math.max(lineHeight, event.height);
+		itemHeight = Math.max(itemHeight, event.height);
 		return event;
 	}
 }
