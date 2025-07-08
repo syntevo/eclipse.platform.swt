@@ -3058,22 +3058,21 @@ public class Table extends CustomComposite {
 		try {
 			int colIndex = indexOf(column);
 			int width = 0;
-			if (isVirtual()) {
-				// todo
-			} else {
-				final Point headerSize = renderer.computeHeaderSize(column, gc);
-
-				final TableItem[] items = getItems();
-				for (TableItem item : items) {
-					Rectangle bounds = item.getBounds(colIndex);
-					Point size = item.computeCellSize(colIndex, gc);
-					bounds.width = size.x;
-					final Event event = sendMeasureItem(item, colIndex, gc, bounds);
-					width = Math.max(width, event.x);
+			final boolean virtual = isVirtual();
+			final TableItem[] items = getItems();
+			for (TableItem item : items) {
+				if (virtual && !checkData(item, false)) {
+					continue;
 				}
-
-				width = Math.max(headerSize.x, width);
+				Rectangle bounds = item.getBounds(colIndex);
+				Point size = item.computeCellSize(colIndex, gc);
+				bounds.width = size.x;
+				final Event event = sendMeasureItem(item, colIndex, gc, bounds);
+				width = Math.max(width, event.width);
 			}
+
+			final Point headerSize = renderer.computeHeaderSize(column, gc);
+			width = Math.max(headerSize.x, width);
 
 			return width;
 		} finally {
