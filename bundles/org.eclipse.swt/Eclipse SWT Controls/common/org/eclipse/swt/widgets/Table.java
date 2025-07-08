@@ -384,8 +384,20 @@ public class Table extends CustomComposite {
 	}
 
 	private int getFullyVisibleItemCount() {
-		final int height = getClientArea().height - getHeaderHeight();
+		return getVisibleItemCount(false);
+	}
+
+	int getLastVisibleIndex() {
+		return Math.min(getTopIndex() + getVisibleItemCount(true), getItemCount() - 1);
+	}
+
+	private int getVisibleItemCount(boolean includingPartlyVisible) {
+		int height = getClientArea().height - getHeaderHeight();
 		final int itemHeight = getItemHeight();
+		if (itemHeight < 1) error(SWT.ERROR_UNSPECIFIED);
+		if (includingPartlyVisible) {
+			height += itemHeight - 1;
+		}
 		return Math.max(0, height / itemHeight);
 	}
 
@@ -477,9 +489,9 @@ public class Table extends CustomComposite {
 		}
 
 		final int lineHeight = getItemHeight();
-		for (int i = getTopIndex(); i <= itemsHandler.getLastVisibleElementIndex(); i++) {
+		final int topIndex = getTopIndex();
+		for (int i = topIndex, max = getLastVisibleIndex(); i <= max ; i++) {
 			TableItem item = getItem(i);
-
 			if (item.isInCheckArea(p)) {
 				item.toggleCheck();
 				break;
@@ -1015,7 +1027,8 @@ public class Table extends CustomComposite {
 		if (!isVirtual()) {
 			updateScrollBarWithTextSize();
 		}
-		if (index >= getTopIndex() && index <= itemsHandler.getLastVisibleElementIndex()) {
+		final int topIndex = getTopIndex();
+		if (index >= topIndex && index <= getLastVisibleIndex()) {
 			redraw();
 		}
 	}
@@ -1475,7 +1488,7 @@ public class Table extends CustomComposite {
 	public TableItem getItem(Point point) {
 		checkWidget();
 		if (point == null) error(SWT.ERROR_NULL_ARGUMENT);
-		final int max = Math.min(getItemCount(), itemsHandler.getLastVisibleElementIndex() + 1);
+		final int max = getLastVisibleIndex() + 1;
 		for (int i = getTopIndex(); i < max; i++) {
 			TableItem it = getItem(i);
 			if (it != null && it.getBounds().contains(point)) {
@@ -2918,10 +2931,6 @@ public class Table extends CustomComposite {
 			selectionModel.setTopIndex(Math.min(index - fullyVisibleItemCount + margin,
 			                                    selectionModel.getCount() - fullyVisibleItemCount));
 		}
-	}
-
-	int getLastVisibleIndex() {
-		return itemsHandler.getLastVisibleElementIndex();
 	}
 
 	/**

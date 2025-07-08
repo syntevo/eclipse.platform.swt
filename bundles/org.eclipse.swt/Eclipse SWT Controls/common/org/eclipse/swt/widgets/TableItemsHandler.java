@@ -5,18 +5,13 @@ import org.eclipse.swt.graphics.*;
 
 class TableItemsHandler {
 
-	private static final int ITEMS_OVERLAY = 5;
-
 	private final Table table;
-	private int lastVisibleElementIndex;
 
 	public TableItemsHandler(Table table) {
 		this.table = table;
 	}
 
 	public void paint(GC gc, int maxY) {
-		this.lastVisibleElementIndex = -1;
-
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
 
@@ -28,13 +23,8 @@ class TableItemsHandler {
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > maxY) {
-				this.lastVisibleElementIndex = i;
 				break;
 			}
-		}
-
-		if (this.lastVisibleElementIndex == -1) {
-			this.lastVisibleElementIndex = table.getItemCount() - 1;
 		}
 	}
 
@@ -81,8 +71,7 @@ class TableItemsHandler {
 		TableItem[] items = table.getItems();
 		int topIndex = table.getTopIndex();
 		if (items != null) {
-			for (int i = topIndex; i < Math.min(this.lastVisibleElementIndex + ITEMS_OVERLAY,
-					table.getItemCount()); i++) {
+			for (int i = topIndex, max = table.getLastVisibleIndex(); i <= max; i++) {
 				TableItem item = table.getItem(i);
 				final Rectangle bounds = item.getFullBounds();
 				bounds.height = itemHeight;
@@ -95,10 +84,6 @@ class TableItemsHandler {
 		}
 	}
 
-	public int getLastVisibleElementIndex() {
-		return this.lastVisibleElementIndex;
-	}
-
 	public void handleDoubleClick(Event event) {
 		Rectangle ica = getItemsClientArea();
 		if (ica.width == 0 || ica.height == 0 || !table.isVisible()) return;
@@ -108,8 +93,7 @@ class TableItemsHandler {
 			return;
 		}
 
-		final int max = Math.min(lastVisibleElementIndex + ITEMS_OVERLAY, table.getItemCount());
-		for (int i = table.getTopIndex(); i < max; i++) {
+		for (int i = table.getTopIndex(), max = table.getLastVisibleIndex(); i <= max; i++) {
 			TableItem it = table.getItem(i);
 			if (it.getBounds().contains(p)) {
 				Event e = new Event();
