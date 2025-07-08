@@ -1532,11 +1532,9 @@ public class Table extends CustomComposite {
 		}
 
 		if (lineHeight == 0) {
-			lineHeight = itemsList.isEmpty()
-					? TableItemRenderer.guessItemHeight(this)
-					: itemsList.get(selectionModel.getTopIndex()).getBounds().height;
+			lineHeight = Math.max(1, TableItemRenderer.guessItemHeight(this));
 		}
-		return Math.max(1, lineHeight);
+		return lineHeight;
 	}
 
 	/**
@@ -3125,23 +3123,24 @@ public class Table extends CustomComposite {
 		try {
 			int colIndex = indexOf(column);
 			int width = 0;
-			int height = 0;
-			final boolean virtual = isVirtual();
-			final TableItem[] items = getItems();
-			for (TableItem item : items) {
-				if (virtual && !item.cached) {
-					continue;
+			if (isVirtual()) {
+				// todo
+			} else {
+				final Point headerSize = renderer.computeHeaderSize(column, gc);
+
+				final TableItem[] items = getItems();
+				for (TableItem item : items) {
+					Rectangle bounds = item.getBounds(colIndex);
+					Point size = item.computeCellSize(colIndex, gc);
+					bounds.width = size.x;
+					final Event event = sendMeasureItem(item, colIndex, gc, bounds);
+					width = Math.max(width, event.x);
 				}
-				Point size = item.computeCellSize(colIndex, gc);
-				width = Math.max(width, size.x);
-				height = Math.max(height, size.y);
-				item.clearCache();
+
+				width = Math.max(headerSize.x, width);
 			}
 
-			setLineHeight(height);
-
-			final Point headerSize = renderer.computeHeaderSize(column, gc);
-			return Math.max(headerSize.x, width);
+			return width;
 		} finally {
 			gc.dispose();
 		}

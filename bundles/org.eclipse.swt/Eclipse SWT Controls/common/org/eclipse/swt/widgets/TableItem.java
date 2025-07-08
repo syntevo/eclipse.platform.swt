@@ -362,6 +362,7 @@ public class TableItem extends Item {
 		final TableColumn column = table.getColumn(index);
 		bounds.x = column.getXScrolled();
 		bounds.width = column.getWidth();
+		bounds.height = table.getItemHeight();
 
 		if (index == 0) {
 			handleLeadingIndent(bounds);
