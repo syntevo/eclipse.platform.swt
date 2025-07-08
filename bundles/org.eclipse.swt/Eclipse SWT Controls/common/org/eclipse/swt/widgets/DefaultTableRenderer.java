@@ -139,8 +139,20 @@ public class DefaultTableRenderer extends TableRenderer {
 		Rectangle ca = table.getClientArea();
 		final int maxY = ca.y + ca.height;
 
-		final TableItemsHandler itemsHandler = table.getItemsHandler();
-		itemsHandler.paint(gc, maxY);
+		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
+			TableItem item = table.getItem(i);
+
+			if (table.isVirtual()) {
+				table.checkData(item, i, false);
+			}
+
+			item.doPaint(gc, i);
+
+			final Rectangle bounds = item.getFullBounds();
+			if (bounds.y + bounds.height > maxY) {
+				break;
+			}
+		}
 	}
 
 	private void drawHLine(GC gc, int x1, int x2, int y) {

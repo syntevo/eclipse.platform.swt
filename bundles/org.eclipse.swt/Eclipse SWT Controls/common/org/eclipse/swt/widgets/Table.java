@@ -114,7 +114,6 @@ public class Table extends CustomComposite {
 	private final List<TableColumn> columnsList = new ArrayList<>();
 
 	private final TableColumnsHandler columnsHandler = new TableColumnsHandler(this);
-	private final TableItemsHandler itemsHandler = new TableItemsHandler(this);
 
 	TableItem currentItem;
 	TableColumn sortColumn;
@@ -252,7 +251,48 @@ public class Table extends CustomComposite {
 
 	private void onMouseMove(Event event) {
 		columnsHandler.handleMouseMove(event);
-		itemsHandler.handleMouseMove(event);
+
+		Rectangle ica = getItemsClientArea();
+		if (ica.width == 0 || ica.height == 0 || !isVisible()) return;
+
+		if (!ica.contains(event.x, event.y)) {
+			if (mouseHoverElement instanceof TableItem ti) {
+				mouseHoverElement = null;
+				ti.redraw();
+			}
+
+			return;
+		}
+
+		Point p = new Point(event.x, event.y);
+
+		if (mouseHoverElement instanceof TableItem item) {
+			final Rectangle bounds = item.getFullBounds();
+			if (bounds.contains(p)) {
+				return;
+			}
+
+			mouseHoverElement = null;
+			item.redraw();
+		}
+
+		if ((event.stateMask & SWT.BUTTON_MASK) != 0) {
+			return;
+		}
+
+		TableItem[] items = getItems();
+		int topIndex = getTopIndex();
+		if (items != null) {
+			for (int i = topIndex, max = getLastVisibleIndex(); i <= max; i++) {
+				TableItem item = getItem(i);
+				final Rectangle bounds = item.getFullBounds();
+				if (bounds.contains(p)) {
+					mouseHoverElement = item;
+					item.redraw();
+					return;
+				}
+			}
+		}
 	}
 
 	private void onMouseWheel() {
@@ -510,8 +550,35 @@ public class Table extends CustomComposite {
 	}
 
 	private void onDoubleClick(Event event) {
-		if (!columnsHandler.handleMouseDown(event)) {
-			itemsHandler.handleDoubleClick(event);
+		if (columnsHandler.handleMouseDown(event)) {
+			return;
+		}
+
+		Rectangle ica = getItemsClientArea();
+		if (ica.width == 0 || ica.height == 0 || !isVisible()) return;
+
+		Point p = new Point(event.x, event.y);
+		if (!ica.contains(p)) {
+			return;
+		}
+
+		for (int i = getTopIndex(), max = getLastVisibleIndex(); i <= max; i++) {
+			TableItem item = _getItem(i);
+			if (item.getBounds().contains(p)) {
+				Event e = new Event();
+				e.item = item;
+				e.type = SWT.DefaultSelection;
+				e.count = event.count;
+				e.button = event.button;
+				e.doit = event.doit;
+				e.stateMask = event.stateMask;
+				e.time = event.time;
+				e.x = event.x;
+				e.y = event.y;
+
+				postEvent(SWT.DefaultSelection, e);
+				return;
+			}
 		}
 	}
 
@@ -3021,10 +3088,6 @@ public class Table extends CustomComposite {
 		return columnsHandler;
 	}
 
-	TableItemsHandler getItemsHandler() {
-		return itemsHandler;
-	}
-
 	private void measureLineHeight(int index) {
 		final TableItem item = _getItem(index);
 		int height = itemHeight;
@@ -3086,7 +3149,7 @@ public class Table extends CustomComposite {
 		return renderer.calculateColumnHeight();
 	}
 
-	Event sendMeasureItem(TableItem item, int column, GC gc, Rectangle bounds) {
+	private Event sendMeasureItem(TableItem item, int column, GC gc, Rectangle bounds) {
 		final Event event = new Event();
 		event.widget = this;
 		event.item = item;
@@ -3114,7 +3177,7 @@ public class Table extends CustomComposite {
 		return indent;
 	}
 
-	Rectangle getItemsClientArea() {
+	private Rectangle getItemsClientArea() {
 		Rectangle ca = getClientArea();
 		final int headerHeight = getHeaderHeight();
 		return new Rectangle(0, headerHeight + 1, ca.width, ca.height - headerHeight);
