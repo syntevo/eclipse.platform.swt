@@ -18,7 +18,6 @@ public class TableItemRenderer {
 	private final Map<Integer, Point> computedCellSizes = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellTextBounds = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
-	private Point computedSize;
 
 	public TableItemRenderer(TableItem item) {
 		this.item = item;
@@ -212,14 +211,7 @@ public class TableItemRenderer {
 		return size;
 	}
 
-	Point getSize() {
-		if (computedSize == null) {
-			computedSize = computeSize();
-		}
-		return computedSize;
-	}
-
-	private Point computeSize() {
+	public Point computeSize() {
 		final Table table = getParent();
 
 		int width = MARGIN_X + MARGIN_X;
@@ -260,7 +252,6 @@ public class TableItemRenderer {
 		this.computedCellSizes.clear();
 		this.internalComputedCellTextBounds.clear();
 		this.internalComputedCellImage.clear();
-		computedSize = null;
 	}
 
 	public static int guessItemHeight(Table table) {

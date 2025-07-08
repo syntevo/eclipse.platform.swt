@@ -63,7 +63,7 @@ public class TableItem extends Item {
 	private int topIndexAtCalculation = -1;
 
 	private Point location;
-	private Rectangle bounds;
+	private Point size;
 
 	private int itemIndex = -2;
 
@@ -288,31 +288,30 @@ public class TableItem extends Item {
 	}
 
 	Rectangle getFullBounds() {
-		final int topIndex = table.getTopIndex();
-		if (topIndexAtCalculation != topIndex || bounds == null) {
-			this.bounds = null;
-			this.location = null;
-
-			if (!table.checkData(this, true)) {
-				error(SWT.ERROR_WIDGET_DISPOSED);
-			}
-
-			int itemIndex = getItemIndex();
-			if (itemIndex == -1) {
-				return new Rectangle(0, 0, 0, 0);
-			}
-
-			Point p = renderer.getSize();
-
-			location = calculateLocation(itemIndex, topIndex);
-			topIndexAtCalculation = topIndex;
-			bounds = new Rectangle(location.x, location.y, p.x, p.y);
+		if (!table.checkData(this, true)) {
+			error(SWT.ERROR_WIDGET_DISPOSED);
 		}
-		return new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+
+		int itemIndex = getItemIndex();
+		if (itemIndex == -1) {
+			return new Rectangle(0, 0, 0, 0);
+		}
+
+		Point location = getLocation();
+		Point size = getSize();
+		return new Rectangle(location.x, location.y, size.x, size.y);
+	}
+
+	private Point getLocation() {
+		final int topIndex = table.getTopIndex();
+		if (topIndexAtCalculation != topIndex || location == null) {
+			topIndexAtCalculation = topIndex;
+			location = calculateLocation(itemIndex, topIndex);
+		}
+		return location;
 	}
 
 	private Point calculateLocation(int index, int topIndex) {
-		final Table table = getParent();
 		final Point location = table.getTopIndexItemPosition();
 		if (index != topIndex) {
 			location.y += (index - topIndex) * table.getItemHeight();
@@ -321,7 +320,10 @@ public class TableItem extends Item {
 	}
 
 	Point getSize() {
-		return renderer.getSize();
+		if (size == null) {
+			size = renderer.computeSize();
+		}
+		return size;
 	}
 
 	/**
@@ -1230,12 +1232,10 @@ public class TableItem extends Item {
 	}
 
 	void clearCache() {
-		synchronized (this) {
-			renderer.clearCache();
-			this.itemIndex = -2;
-			location = null;
-			bounds = null;
-		}
+		renderer.clearCache();
+		this.itemIndex = -2;
+		location = null;
+		size = null;
 	}
 
 	/**
