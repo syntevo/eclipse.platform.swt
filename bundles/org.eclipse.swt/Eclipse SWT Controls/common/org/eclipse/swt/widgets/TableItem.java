@@ -693,17 +693,8 @@ public class TableItem extends Item {
 		int index = getItemIndex();
 		if (index < table.getTopIndex() || index > table.getLastVisibleIndex()) return;
 
-		Rectangle b = getBounds();
-		int x = b.x;
-		int y = b.y;
-		int width = b.width;
-
-		if (renderer.checkboxBounds != null) {
-			width += x;
-			x = renderer.checkboxBounds.x;
-		}
-
-		table.redraw(x, y, width, table.getItemHeight(), true);
+		Rectangle b = getFullBounds();
+		table.redraw(b.x, b.y, b.width, table.getItemHeight(), true);
 	}
 
 	@Override
@@ -1313,7 +1304,11 @@ public class TableItem extends Item {
 	}
 
 	boolean isInCheckArea(Point p) {
-		return renderer.checkboxBounds != null && renderer.checkboxBounds.contains(p);
+		final Rectangle bounds = getBounds();
+		if (p.y < bounds.y || p.y >= bounds.y + bounds.height) {
+			return false;
+		}
+		return p.x < bounds.x;
 	}
 
 	void toggleCheck() {

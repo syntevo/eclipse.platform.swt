@@ -13,8 +13,6 @@ public class TableItemRenderer {
 
 	private final TableItem item;
 
-	Rectangle checkboxBounds;
-
 	private final Map<Integer, Rectangle> internalComputedCellTextBounds = new HashMap<>();
 	private final Map<Integer, Rectangle> internalComputedCellImage = new HashMap<>();
 
@@ -86,19 +84,22 @@ public class TableItemRenderer {
 
 	private void drawCheckbox(GC gc, int x, int y, int height) {
 		final int size = 20;
-		this.checkboxBounds = new Rectangle(x + 5, y + (height - size) / 2, size, size);
+
+		x += 5;
+		y += (height - size) / 2;
 
 		gc.setBackground(new Color(255, 255, 255));
-		gc.fillRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
-		gc.drawRoundRectangle(checkboxBounds.x, checkboxBounds.y, checkboxBounds.width, checkboxBounds.height, 5, 5);
+		gc.fillRoundRectangle(x, y, size, size, 5, 5);
+		gc.drawRoundRectangle(x, y, size, size, 5, 5);
+
 		if (item.getChecked()) {
 			final int lineWidth = gc.getLineWidth();
 			gc.setLineWidth(2);
 			final int inset = 5;
-			gc.drawLine(checkboxBounds.x + inset, checkboxBounds.y + inset, checkboxBounds.x + checkboxBounds.width - inset,
-					checkboxBounds.y + checkboxBounds.height - inset);
-			gc.drawLine(checkboxBounds.x + checkboxBounds.width - inset, checkboxBounds.y + inset,
-					checkboxBounds.x + inset, checkboxBounds.y + checkboxBounds.height - inset);
+			gc.drawLine(x + inset, y + inset, x + size - inset,
+					y + size - inset);
+			gc.drawLine(x + size - inset, y + inset,
+					x + inset, y + size - inset);
 			gc.setLineWidth(lineWidth);
 		}
 	}
