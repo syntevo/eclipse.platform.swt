@@ -420,7 +420,7 @@ public class TableItem extends Item {
 	}
 
 	private void handleLeadingIndent(Rectangle bounds) {
-		final int shift = getParent().getLeftIndent();
+		final int shift = table.renderer.getLeftIndent();
 		// reduce width by shift. This cell must be by default smaller than the others.
 		// If there is a checkbox, this also must be considered.
 		bounds.width = Math.max(0, bounds.width - shift);

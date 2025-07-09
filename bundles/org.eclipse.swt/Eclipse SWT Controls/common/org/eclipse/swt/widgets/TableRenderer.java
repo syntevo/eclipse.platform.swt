@@ -16,13 +16,15 @@ public abstract class TableRenderer {
 
 	public abstract boolean drawCell(TableItem item, int columnIndex, int detail, Rectangle bounds, int x, GC gc);
 
+	public abstract int getLeftIndent();
+
 	public abstract Point computeSize(TableItem item, GC gc);
+
+	public abstract Point computeCellSize(TableItem item, int colIndex, GC gc, Rectangle imageBounds, Rectangle textBounds);
 
 	protected final Table table;
 
 	protected TableRenderer(Table table) {
 		this.table = table;
 	}
-
-	public abstract Point computeCellSize(TableItem item, int colIndex, GC gc, Rectangle imageBounds, Rectangle textBounds);
 }

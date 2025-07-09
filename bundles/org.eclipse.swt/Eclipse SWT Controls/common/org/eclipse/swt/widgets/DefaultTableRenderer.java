@@ -18,6 +18,8 @@ public class DefaultTableRenderer extends TableRenderer {
 	private static final int GAP = 3;
 	private static final int MARGIN_X = 3;
 	private static final int MARGIN_Y = 2;
+	private static final int INITIAL_RIGHT_SHIFT = 3;
+	private static final int CHECKBOX_RIGHT_SHIFT = 35;
 
 	protected DefaultTableRenderer(Table table) {
 		super(table);
@@ -155,12 +157,22 @@ public class DefaultTableRenderer extends TableRenderer {
 
 			final String text = item.getText();
 			width += gc.textExtent(text, DRAW_FLAGS).x;
-			width += table.getLeftIndent();
+			width += getLeftIndent();
 		}
 
 		final int textHeight = table.guessTextHeight();
 		final int height = MARGIN_Y + Math.max(textHeight, imageHeight) + MARGIN_Y;
 		return new Point(width, height);
+	}
+
+	@Override
+	public int getLeftIndent() {
+		int indent = INITIAL_RIGHT_SHIFT;
+
+		if ((table.getStyle() & SWT.CHECK) != 0) {
+			indent = CHECKBOX_RIGHT_SHIFT;
+		}
+		return indent;
 	}
 
 	@Override

@@ -97,9 +97,6 @@ public class Table extends CustomComposite {
 
 // ------------------------------------------------------------
 
-	static final int TABLE_INITIAL_RIGHT_SHIFT = 3;
-	static final int TABLE_CHECKBOX_RIGHT_SHIFT = 35;
-
 	private static final int TABLE_GRID_LINE_SIZE = 1;
 
 	private final List<TableItem> itemsList = new ArrayList<>();
@@ -3169,15 +3166,6 @@ public class Table extends CustomComposite {
 		final Event event = sendMeasureItem(item, column, gc, bounds);
 		itemHeight = Math.max(itemHeight, event.height);
 		return event;
-	}
-
-	int getLeftIndent() {
-		int indent = TABLE_INITIAL_RIGHT_SHIFT;
-
-		if ((getStyle() & SWT.CHECK) != 0) {
-			indent = TABLE_CHECKBOX_RIGHT_SHIFT;
-		}
-		return indent;
 	}
 
 	private Rectangle getItemsClientArea() {
