@@ -1053,9 +1053,6 @@ public class Table extends CustomComposite {
 
 			this.columnOrder = newOrder;
 		}
-
-		updateScrollBarWithTextSize();
-		redraw();
 	}
 
 	protected int getTotalColumnWidth() {
