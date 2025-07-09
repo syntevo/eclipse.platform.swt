@@ -968,16 +968,18 @@ public class Table extends CustomComposite {
 	private int getNoColumnWidth() {
 		if (noColumnWidth == 0) {
 			int width = 0;
-			final GC gc = new GC(this);
-			gc.setFont(getFont());
-			try {
-				TableItem[] items = getItems();
-				for (TableItem item : items) {
-					final Point size = renderer.computeSize(item, gc);
-					width = Math.max(width, size.x);
+			TableItem[] items = getItems();
+			if (items.length > 0) {
+				final GC gc = new GC(this);
+				gc.setFont(getFont());
+				try {
+					for (TableItem item : items) {
+						final Point size = renderer.computeSize(item, gc);
+						width = Math.max(width, size.x);
+					}
+				} finally {
+					gc.dispose();
 				}
-			} finally {
-				gc.dispose();
 			}
 			noColumnWidth = width;
 		}
