@@ -1340,7 +1340,7 @@ public class TableItem extends Item {
 	public void setText(String string) {
 		checkWidget();
 		setText(0, string);
-		clearCache();
+		table.itemChanged(this);
 	}
 
 	void columnAdded(int index) {

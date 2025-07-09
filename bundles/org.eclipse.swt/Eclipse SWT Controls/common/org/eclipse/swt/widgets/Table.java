@@ -3186,4 +3186,8 @@ public class Table extends CustomComposite {
 		final int headerHeight = getHeaderHeight();
 		return new Rectangle(0, headerHeight + 1, ca.width, ca.height - headerHeight);
 	}
+
+	void itemChanged(TableItem item) {
+		noColumnWidth = 0;
+	}
 }
