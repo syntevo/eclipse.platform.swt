@@ -132,7 +132,7 @@ public class Table extends CustomComposite {
 
 	private int[] columnOrder;
 
-	private final TableRenderer renderer;
+	final TableRenderer renderer;
 
 	private Color headerBackgroundColor;
 
@@ -973,7 +973,7 @@ public class Table extends CustomComposite {
 			try {
 				TableItem[] items = getItems();
 				for (TableItem item : items) {
-					final Point size = item.computeSize(gc);
+					final Point size = renderer.computeSize(item, gc);
 					width = Math.max(width, size.x);
 				}
 			} finally {
@@ -1608,7 +1608,7 @@ public class Table extends CustomComposite {
 		checkWidget();
 
 		if (itemHeight == 0) {
-			itemHeight = Math.max(1, TableItemRenderer.guessItemHeight(this));
+			itemHeight = Math.max(1, renderer.guessItemHeight());
 		}
 		return itemHeight;
 	}
@@ -3096,7 +3096,7 @@ public class Table extends CustomComposite {
 			final int columnCount = getColumnCount();
 			if (columnCount > 0) {
 				for (int i = 0; i < columnCount; i++) {
-					final Point size = item.computeCellSize(i, gc);
+					final Point size = renderer.computeCellSize(item, i, gc, null, null);
 					height = Math.max(height, size.y);
 				}
 			}
@@ -3123,7 +3123,7 @@ public class Table extends CustomComposite {
 					continue;
 				}
 				Rectangle bounds = item.getBounds(colIndex);
-				Point size = item.computeCellSize(colIndex, gc);
+				Point size = renderer.computeCellSize(item, colIndex, gc, null, null);
 				bounds.width = size.x;
 				final Event event = sendMeasureItem(item, colIndex, gc, bounds);
 				width = Math.max(width, event.width);
