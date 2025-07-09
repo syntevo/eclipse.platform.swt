@@ -369,24 +369,28 @@ public class Table extends CustomComposite {
 			case SWT.HOME -> {
 				selectionModel.moveSelectionAbsolute(0, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
 			case SWT.END -> {
 				selectionModel.moveSelectionAbsolute(itemCount - 1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
 			case SWT.ARROW_UP -> {
 				selectionModel.moveSelectionRelative(-1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
 			case SWT.ARROW_DOWN -> {
 				selectionModel.moveSelectionRelative(1, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
@@ -394,6 +398,7 @@ public class Table extends CustomComposite {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
 				selectionModel.moveSelectionRelative(-amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
@@ -401,6 +406,7 @@ public class Table extends CustomComposite {
 				final int amount = Math.max(1, getFullyVisibleItemCount());
 				selectionModel.moveSelectionRelative(amount, shiftPressed, ctrlOrCmdPressed);
 				scrollIntoView();
+				sendSelectionEvent(SWT.Selection);
 				redraw();
 				event.doit = false;
 			}
