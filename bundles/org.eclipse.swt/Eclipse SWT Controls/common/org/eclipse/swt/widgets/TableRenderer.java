@@ -14,8 +14,6 @@ public abstract class TableRenderer {
 
 	public abstract int guessItemHeight();
 
-	public abstract boolean drawCell(TableItem item, int columnIndex, int detail, Rectangle bounds, int x, GC gc);
-
 	public abstract int getLeftIndent();
 
 	public abstract Point computeSize(TableItem item, GC gc);

@@ -73,8 +73,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		return textHeight + MARGIN_Y + MARGIN_Y;
 	}
 
-	@Override
-	public boolean drawCell(TableItem item, int columnIndex, int detailDefault, Rectangle bounds, int left, GC gc) {
+	private boolean drawCell(TableItem item, int columnIndex, int detailDefault, Rectangle bounds, int left, GC gc) {
 		final Rectangle cellRect = new Rectangle(left, bounds.y, Math.max(0, bounds.width + bounds.x - left), bounds.height);
 
 		gc.setClipping(cellRect);
@@ -312,13 +311,92 @@ public class DefaultTableRenderer extends TableRenderer {
 				table.checkData(item, i, false);
 			}
 
-			item.doPaint(gc, i);
+			paintItem(item, i, gc);
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > maxY) {
 				break;
 			}
 		}
+	}
+
+	private void paintItem(TableItem item, int index, GC gc) {
+		final int detail = prepareEventDetail(item, index);
+		final boolean isCheckboxTable = (table.getStyle() & SWT.CHECK) != 0;
+
+		final Rectangle itemBounds = item.getBounds();
+
+		final int columnCount = table.getColumnCount();
+		boolean drawFocusRect = false;
+		if (columnCount > 0) {
+			for (int i = 0; i < columnCount; i++) {
+				final TableColumn column = table.getColumn(i);
+				Rectangle cellBounds = item.getBounds(i);
+				cellBounds.width = column.getWidth();
+
+				final int x = column.getXScrolled();
+
+				gc.setBackground(item.getBackground(i));
+				gc.setForeground(item.getForeground(i));
+				if (drawCell(item, i, detail, cellBounds, x, gc)) {
+					drawFocusRect = true;
+				}
+				if (i == 0 && isCheckboxTable) {
+					drawCheckbox(item, x, cellBounds.y, cellBounds.height, gc);
+				}
+			}
+		} else {
+			gc.setBackground(item.getBackground());
+			gc.setForeground(item.getForeground());
+			drawFocusRect = drawCell(item, 0, detail, itemBounds, 0, gc);
+
+			if (isCheckboxTable) {
+				final Rectangle fullBounds = item.getFullBounds();
+				drawCheckbox(item, fullBounds.x, fullBounds.y, fullBounds.height, gc);
+			}
+		}
+
+		if (drawFocusRect) {
+			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
+		}
+	}
+
+	private void drawCheckbox(TableItem item, int x, int y, int height, GC gc) {
+		final int size = 20;
+
+		x += 5;
+		y += (height - size) / 2;
+
+		gc.setBackground(new Color(255, 255, 255));
+		gc.fillRoundRectangle(x, y, size, size, 5, 5);
+		gc.drawRoundRectangle(x, y, size, size, 5, 5);
+
+		if (item.getChecked()) {
+			final int lineWidth = gc.getLineWidth();
+			gc.setLineWidth(2);
+			final int inset = 5;
+			gc.drawLine(x + inset, y + inset, x + size - inset,
+					y + size - inset);
+			gc.drawLine(x + size - inset, y + inset,
+					x + inset, y + size - inset);
+			gc.setLineWidth(lineWidth);
+		}
+	}
+
+	private int prepareEventDetail(TableItem item, int index) {
+		int detail = SWT.BACKGROUND | SWT.FOREGROUND;
+		if (table.isSelected(index)) {
+			detail |= SWT.SELECTED;
+		}
+
+		if (table.mouseHoverElement == item) {
+			detail |= SWT.HOT;
+		}
+
+		if (table.isFocusRow(index)) {
+			detail |= SWT.FOCUSED;
+		}
+		return detail;
 	}
 
 	private void drawHLine(GC gc, int x1, int x2, int y) {
