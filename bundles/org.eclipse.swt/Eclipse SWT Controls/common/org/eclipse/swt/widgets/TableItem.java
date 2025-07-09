@@ -371,7 +371,7 @@ public class TableItem extends Item {
 			y += table.getHeaderHeight();
 		}
 		final int width = table.getWidth();
-		return new Rectangle(0, y, width, table.getItemHeight());
+		return new Rectangle(-table.getHScrollPos(), y, width, table.getItemHeight());
 	}
 
 	/**
