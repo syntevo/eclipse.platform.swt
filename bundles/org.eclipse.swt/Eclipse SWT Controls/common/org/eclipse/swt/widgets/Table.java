@@ -2989,14 +2989,16 @@ public class Table extends CustomComposite {
 		if (index < 0 || index >= getItemCount()) error(SWT.ERROR_INVALID_ARGUMENT);
 
 		final int topIndex = selectionModel.getTopIndex();
-		final int fullyVisibleItemCount = getFullyVisibleItemCount();
+		final int fullyVisibleItemCount = Math.max(getFullyVisibleItemCount(), 1);
 		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
-		final int lastFullyVisibleItem = fullyVisibleItemCount + topIndex;
+		final int lastFullyVisibleItem = topIndex + fullyVisibleItemCount - 1;
 		if (index < topIndex + margin) {
 			selectionModel.setTopIndex(Math.max(0, index - margin));
+			redraw();
 		} else if (index > lastFullyVisibleItem - margin) {
-			selectionModel.setTopIndex(Math.min(index - fullyVisibleItemCount + margin,
-			                                    selectionModel.getCount() - fullyVisibleItemCount));
+			selectionModel.setTopIndex(Math.min(index - fullyVisibleItemCount + 1 + margin,
+			                                    selectionModel.getCount() - fullyVisibleItemCount + 1));
+			redraw();
 		}
 	}
 
