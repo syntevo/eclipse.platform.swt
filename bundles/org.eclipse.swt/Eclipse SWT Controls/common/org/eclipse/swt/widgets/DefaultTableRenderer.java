@@ -86,17 +86,21 @@ public class DefaultTableRenderer extends TableRenderer {
 			event.detail = detailDefault;
 			table.sendEvent(SWT.EraseItem, event);
 
+			// see Snippet229
+			gc.setAlpha(255);
+
 			if (!event.doit) {
 				event.detail = 0;
 			}
 			event.detail &= detailDefault;
 
-			if ((event.detail & SWT.BACKGROUND) != 0) {
-				if ((event.detail & SWT.SELECTED) != 0) {
-					gc.setBackground(SELECTION_COLOR);
-				} else if ((event.detail & SWT.HOT) != 0) {
-					gc.setBackground(HOVER_COLOR);
-				}
+			if ((event.detail & SWT.SELECTED) != 0) {
+				gc.setBackground(SELECTION_COLOR);
+				gc.fillRectangle(cellRect);
+			} else if ((event.detail & SWT.HOT) != 0) {
+				gc.setBackground(HOVER_COLOR);
+				gc.fillRectangle(cellRect);
+			} else if ((event.detail & SWT.BACKGROUND) != 0) {
 				gc.fillRectangle(cellRect);
 			}
 
@@ -118,7 +122,7 @@ public class DefaultTableRenderer extends TableRenderer {
 				final String text = item.getText(columnIndex);
 				if (text.length() > 0) {
 					final int fontHeight = gc.getFontMetrics().getHeight();
-					gc.drawText(text, x, bounds.y + (bounds.height - fontHeight) / 2);
+					gc.drawText(text, x, bounds.y + (bounds.height - fontHeight) / 2, true);
 				}
 			}
 
@@ -324,7 +328,10 @@ public class DefaultTableRenderer extends TableRenderer {
 	}
 
 	private void paintItem(TableItem item, int index, GC gc) {
-		final int detail = prepareEventDetail(item, index);
+		final Color tableBackground = table.getBackground();
+		final Color itemBackground = item._getBackground();
+		final int detailDefault = prepareEventDetail(item, index);
+
 		final boolean isCheckboxTable = (table.getStyle() & SWT.CHECK) != 0;
 
 		final Rectangle itemBounds = item.getBounds();
@@ -339,7 +346,17 @@ public class DefaultTableRenderer extends TableRenderer {
 
 				final int x = column.getXScrolled();
 
-				gc.setBackground(item.getBackground(i));
+				int detail = detailDefault;
+				Color cellBackground = item._getBackgroundOrNull(i);
+				if (cellBackground == null) {
+					cellBackground = itemBackground;
+				}
+				if (cellBackground != null) {
+					gc.setBackground(cellBackground);
+					detail |= SWT.BACKGROUND;
+				} else {
+					gc.setBackground(tableBackground);
+				}
 				gc.setForeground(item.getForeground(i));
 				if (drawCell(item, i, detail, cellBounds, x, gc)) {
 					drawFocusRect = true;
@@ -349,7 +366,13 @@ public class DefaultTableRenderer extends TableRenderer {
 				}
 			}
 		} else {
-			gc.setBackground(item.getBackground());
+			int detail = detailDefault;
+			if (itemBackground != null) {
+				gc.setBackground(itemBackground);
+				detail |= SWT.BACKGROUND;
+			} else {
+				gc.setBackground(tableBackground);
+			}
 			gc.setForeground(item.getForeground());
 			drawFocusRect = drawCell(item, 0, detail, itemBounds, 0, gc);
 
@@ -389,7 +412,7 @@ public class DefaultTableRenderer extends TableRenderer {
 	}
 
 	private int prepareEventDetail(TableItem item, int index) {
-		int detail = SWT.BACKGROUND | SWT.FOREGROUND;
+		int detail = SWT.FOREGROUND;
 		if (table.isSelected(index)) {
 			detail |= SWT.SELECTED;
 		}

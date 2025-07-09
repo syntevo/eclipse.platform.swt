@@ -216,7 +216,11 @@ public class TableItem extends Item {
 			return background;
 		}
 
-		return getParent().getBackground();
+		return table.getBackground();
+	}
+
+	Color _getBackground() {
+		return background;
 	}
 
 	/**
@@ -237,13 +241,18 @@ public class TableItem extends Item {
 	 */
 	public Color getBackground(int index) {
 		checkWidget();
+		final Color color = _getBackgroundOrNull(index);
+		return color != null ? color : getBackground();
+	}
+
+	Color _getBackgroundOrNull(int index) {
 		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
 		int count = Math.max(1, table.getColumnCount());
-		if (0 > index || index > count - 1) {
-			return getBackground();
+		if (0 <= index && index <= count - 1
+				&& cellBackground != null) {
+			return cellBackground[index];
 		}
-		Color cell = cellBackground != null ? cellBackground[index] : null;
-		return cell == null ? getBackground() : cell;
+		return null;
 	}
 
 	/**
