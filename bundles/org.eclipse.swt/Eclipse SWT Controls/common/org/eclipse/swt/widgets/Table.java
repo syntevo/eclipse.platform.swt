@@ -483,6 +483,11 @@ public class Table extends CustomComposite {
 			return;
 		}
 
+		final Point size = getSize();
+		if (size.x == 0 || size.y == 0) {
+			return;
+		}
+
 		final int fullyVisibleItemCount = getFullyVisibleItemCount();
 
 		final int itemCount = getItemCount();
