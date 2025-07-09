@@ -9,6 +9,9 @@ public class DefaultTableRenderer extends TableRenderer {
 	private static final Color SELECTION_COLOR = new Color(224, 238, 254);
 	private static final Color HEADER_LINE_COLOR = new Color(192, 192, 192);
 	private static final Color HEADER_SORT_INDICATOR_COLOR = new Color(160, 160, 160);
+	private static final Color CHECKBOX_INNER_COLOR = new Color(255, 255, 255);
+	private static final Color CHECKBOX_OUTER_COLOR = new Color(128, 128, 128);
+	private static final Color CHECKBOX_SELECTION_COLOR = new Color(0, 0, 0);
 
 	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
 
@@ -367,11 +370,13 @@ public class DefaultTableRenderer extends TableRenderer {
 		x += 5;
 		y += (height - size) / 2;
 
-		gc.setBackground(new Color(255, 255, 255));
+		gc.setBackground(CHECKBOX_INNER_COLOR);
 		gc.fillRoundRectangle(x, y, size, size, 5, 5);
+		gc.setForeground(CHECKBOX_OUTER_COLOR);
 		gc.drawRoundRectangle(x, y, size, size, 5, 5);
 
 		if (item.getChecked()) {
+			gc.setForeground(CHECKBOX_SELECTION_COLOR);
 			final int lineWidth = gc.getLineWidth();
 			gc.setLineWidth(2);
 			final int inset = 5;
