@@ -533,13 +533,18 @@ public class Table extends CustomComposite {
 			return;
 		}
 
-		final int lineHeight = getItemHeight();
+		final boolean isCheckBoxTable = (style & SWT.CHECK) != 0;
 		final int topIndex = getTopIndex();
 		for (int i = topIndex, max = getLastVisibleIndex(); i <= max ; i++) {
 			TableItem item = getItem(i);
-			if (item.isInCheckArea(p)) {
+			if (isCheckBoxTable && item.isInCheckArea(p)) {
 				item.toggleCheck();
-				break;
+
+				Event event = new Event();
+				event.item = this;
+				event.detail = SWT.CHECK;
+				sendSelectionEvent(SWT.Selection, event, false);
+				return;
 			}
 
 			Rectangle bounds = item.getBounds();
