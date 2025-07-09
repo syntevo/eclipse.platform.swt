@@ -84,6 +84,7 @@ public class DefaultTableRenderer extends TableRenderer {
 			Event event = table.sendMeasureItemMaybeExtendItemHeight(item, columnIndex, gc, cellRect);
 
 			event.detail = detailDefault;
+			event.setBounds(cellRect);
 			table.sendEvent(SWT.EraseItem, event);
 
 			// see Snippet229
@@ -341,9 +342,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		if (columnCount > 0) {
 			for (int i = 0; i < columnCount; i++) {
 				final TableColumn column = table.getColumn(i);
-				Rectangle cellBounds = item.getBounds(i);
-				cellBounds.width = column.getWidth();
-
+				final Rectangle cellBounds = item.getBounds(i);
 				final int x = column.getXScrolled();
 
 				int detail = detailDefault;
