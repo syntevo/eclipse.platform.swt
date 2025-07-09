@@ -76,64 +76,6 @@ public class DefaultTableRenderer extends TableRenderer {
 		return textHeight + MARGIN_Y + MARGIN_Y;
 	}
 
-	private boolean drawCell(TableItem item, int columnIndex, int detailDefault, Rectangle bounds, int left, GC gc) {
-		final Rectangle cellRect = new Rectangle(left, bounds.y, Math.max(0, bounds.width + bounds.x - left), bounds.height);
-
-		gc.setClipping(cellRect);
-		try {
-			Event event = table.sendMeasureItemMaybeExtendItemHeight(item, columnIndex, gc, cellRect);
-
-			event.detail = detailDefault;
-			event.setBounds(cellRect);
-			table.sendEvent(SWT.EraseItem, event);
-
-			// see Snippet229
-			gc.setAlpha(255);
-
-			if (!event.doit) {
-				event.detail = 0;
-			}
-			event.detail &= detailDefault;
-
-			if ((event.detail & SWT.SELECTED) != 0) {
-				gc.setBackground(SELECTION_COLOR);
-				gc.fillRectangle(cellRect);
-			} else if ((event.detail & SWT.HOT) != 0) {
-				gc.setBackground(HOVER_COLOR);
-				gc.fillRectangle(cellRect);
-			} else if ((event.detail & SWT.BACKGROUND) != 0) {
-				gc.fillRectangle(cellRect);
-			}
-
-			if ((event.detail & SWT.FOREGROUND) != 0) {
-				int x = bounds.x + MARGIN_X;
-
-				Image image = item.getImage(columnIndex);
-				if (image != null) {
-					final Rectangle imageSize = image.getBounds();
-					gc.drawImage(image, x, bounds.y + (bounds.height - imageSize.height) / 2);
-					x += imageSize.width + GAP;
-				}
-
-				Color foreground = item.getForeground(columnIndex);
-				if (foreground != null) {
-					gc.setForeground(foreground);
-				}
-
-				final String text = item.getText(columnIndex);
-				if (text.length() > 0) {
-					final int fontHeight = gc.getFontMetrics().getHeight();
-					gc.drawText(text, x, bounds.y + (bounds.height - fontHeight) / 2, true);
-				}
-			}
-
-			table.sendEvent(SWT.PaintItem, event);
-			return (event.detail & SWT.FOCUSED) != 0;
-		} finally {
-			gc.setClipping((Rectangle) null);
-		}
-	}
-
 	@Override
 	public Point computeSize(TableItem item, GC gc) {
 		int width = MARGIN_X + MARGIN_X;
@@ -383,6 +325,65 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		if (drawFocusRect) {
 			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
+		}
+	}
+
+	private boolean drawCell(TableItem item, int columnIndex, int detailDefault, Rectangle bounds, int left, GC gc) {
+		final Rectangle cellRect = new Rectangle(left, bounds.y, Math.max(0, bounds.width + bounds.x - left), bounds.height);
+
+		gc.setClipping(cellRect);
+		try {
+			Event event = table.sendMeasureItemMaybeExtendItemHeight(item, columnIndex, gc, cellRect);
+
+			event.detail = detailDefault;
+			event.setBounds(cellRect);
+			table.sendEvent(SWT.EraseItem, event);
+
+			// see Snippet229
+			gc.setAlpha(255);
+
+			if (!event.doit) {
+				event.detail = 0;
+			}
+			event.detail &= detailDefault;
+
+			if ((event.detail & SWT.SELECTED) != 0) {
+				gc.setBackground(SELECTION_COLOR);
+				gc.fillRectangle(cellRect);
+			} else if ((event.detail & SWT.HOT) != 0) {
+				gc.setBackground(HOVER_COLOR);
+				gc.fillRectangle(cellRect);
+			} else if ((event.detail & SWT.BACKGROUND) != 0) {
+				gc.fillRectangle(cellRect);
+			}
+
+			if ((event.detail & SWT.FOREGROUND) != 0) {
+				int x = bounds.x + MARGIN_X;
+
+				Image image = item.getImage(columnIndex);
+				if (image != null) {
+					final Rectangle imageSize = image.getBounds();
+					gc.drawImage(image, x, bounds.y + (bounds.height - imageSize.height) / 2);
+					x += imageSize.width + GAP;
+				}
+
+				Color foreground = item.getForeground(columnIndex);
+				if (foreground != null) {
+					gc.setForeground(foreground);
+				}
+
+				final String text = item.getText(columnIndex);
+				if (text.length() > 0) {
+					final int fontHeight = gc.getFontMetrics().getHeight();
+					gc.drawText(text, x, bounds.y + (bounds.height - fontHeight) / 2, true);
+				}
+			}
+
+			event.setBounds(bounds);
+			table.sendEvent(SWT.PaintItem, event);
+			return (event.detail & SWT.FOCUSED) != 0;
+		} finally {
+			gc.setClipping((Rectangle) null);
 		}
 	}
 
