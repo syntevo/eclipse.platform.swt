@@ -1097,7 +1097,7 @@ public class Table extends CustomComposite {
 		}
 
 		if (!isVirtual()) {
-			updateScrollBarWithTextSize();
+			updateVerticalScrollBar();
 		}
 		final int topIndex = getTopIndex();
 		if (index >= topIndex && index <= getLastVisibleIndex()) {
