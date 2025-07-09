@@ -97,9 +97,6 @@ public class Table extends CustomComposite {
 
 // ------------------------------------------------------------
 
-	static final Color SELECTION_COLOR = new Color(224, 238, 254);
-	static final Color HOVER_COLOR = new Color(234, 244, 255);
-
 	static final int TABLE_INITIAL_RIGHT_SHIFT = 3;
 	static final int TABLE_CHECKBOX_RIGHT_SHIFT = 35;
 

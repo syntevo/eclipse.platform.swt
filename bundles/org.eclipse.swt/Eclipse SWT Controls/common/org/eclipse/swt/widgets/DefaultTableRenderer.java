@@ -5,6 +5,11 @@ import org.eclipse.swt.graphics.*;
 
 public class DefaultTableRenderer extends TableRenderer {
 
+	private static final Color HOVER_COLOR = new Color(234, 244, 255);
+	private static final Color SELECTION_COLOR = new Color(224, 238, 254);
+	private static final Color HEADER_LINE_COLOR = new Color(192, 192, 192);
+	private static final Color HEADER_SORT_INDICATOR_COLOR = new Color(160, 160, 160);
+
 	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
 
 	private static final int HEADER_MARGIN_X = 6;
@@ -84,9 +89,9 @@ public class DefaultTableRenderer extends TableRenderer {
 
 			if ((event.detail & SWT.BACKGROUND) != 0) {
 				if ((event.detail & SWT.SELECTED) != 0) {
-					gc.setBackground(Table.SELECTION_COLOR);
+					gc.setBackground(SELECTION_COLOR);
 				} else if ((event.detail & SWT.HOT) != 0) {
-					gc.setBackground(Table.HOVER_COLOR);
+					gc.setBackground(HOVER_COLOR);
 				}
 				gc.fillRectangle(cellRect);
 			}
@@ -207,11 +212,10 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	private void paintHeader(GC gc) {
 		final Color textColor = gc.getForeground();
-		final Color lineColor = new Color(192, 192, 192);
 
 		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
-		gc.setForeground(lineColor);
+		gc.setForeground(HEADER_LINE_COLOR);
 		drawHLine(gc, 0, ca.width, height - 1);
 
 		final TableColumn[] columns = table.getColumns();
@@ -249,7 +253,7 @@ public class DefaultTableRenderer extends TableRenderer {
 				if (right - left > 10 * size) {
 					final int lineWidth = gc.getLineWidth();
 					final int antialias = gc.getAntialias();
-					gc.setForeground(new Color(160, 160, 160));
+					gc.setForeground(HEADER_SORT_INDICATOR_COLOR);
 					gc.setAntialias(SWT.ON);
 					gc.setLineWidth(textHeight > 20 ? 2 : 1);
 					gc.drawLine(right - 4 * size, y + sizeY,
