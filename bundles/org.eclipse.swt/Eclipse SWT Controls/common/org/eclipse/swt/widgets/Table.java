@@ -471,6 +471,8 @@ public class Table extends CustomComposite {
 			horizontalBar.setMaximum(width + 1);
 			horizontalBar.setMinimum(0);
 			horizontalBar.setThumb(caWidth);
+			horizontalBar.setIncrement(Math.max(1, caWidth / 20));
+			horizontalBar.setPageIncrement(Math.max(1, caWidth * 4 / 5));
 			horizontalBar.setVisible(width > caWidth);
 		}
 	}
