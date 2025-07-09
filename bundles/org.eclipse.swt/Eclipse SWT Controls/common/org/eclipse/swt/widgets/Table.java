@@ -332,9 +332,6 @@ public class Table extends CustomComposite {
 			hScrollPos = horizontalBar.getSelection();
 		}
 
-		updateColumnsX();
-		// TODO also the scrollbars will be handled here
-
 		redraw();
 	}
 
