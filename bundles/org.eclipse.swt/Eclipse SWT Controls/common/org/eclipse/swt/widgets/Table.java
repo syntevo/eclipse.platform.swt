@@ -2982,13 +2982,12 @@ public class Table extends CustomComposite {
 		int index = indexOf(column);
 		if (0 > index || index >= getColumnCount()) return;
 
-		final Rectangle clientArea = getClientArea();
+		final int caWidth = getClientArea().width;
 		final int x = column.getX();
-		final int width = Math.max(column.getWidth(), clientArea.width);
-		final int currentScrollPos = getHScrollPos();
-		int scrollPos = Math.min(currentScrollPos, x);
-		scrollPos = Math.max(scrollPos, x + width - clientArea.width);
-		if (scrollPos != currentScrollPos) {
+		final int width = Math.min(column.getWidth(), caWidth);
+		int scrollPos = Math.min(hScrollPos, x);
+		scrollPos = Math.max(scrollPos, x + width - caWidth);
+		if (scrollPos != hScrollPos) {
 			horizontalBar.setSelection(scrollPos);
 			this.hScrollPos = scrollPos;
 		}
