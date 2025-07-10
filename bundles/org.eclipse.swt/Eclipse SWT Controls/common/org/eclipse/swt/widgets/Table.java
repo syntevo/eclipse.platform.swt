@@ -600,10 +600,11 @@ public class Table extends CustomComposite {
 			}
 			if (shiftPressed) {
 				final int anchor = selectionModel.getAnchor();
-				if (anchor >= 0) {
-					selectionModel.selectRangeTo(index);
-					return;
+				if (anchor < 0 && selectionModel.getCount() > 0 && selectionModel.selectionCount() == 1) {
+					selectionModel.setSelection(selectionModel.getSelectionIndex());
 				}
+				selectionModel.selectRangeTo(index);
+				return;
 			}
 		}
 
