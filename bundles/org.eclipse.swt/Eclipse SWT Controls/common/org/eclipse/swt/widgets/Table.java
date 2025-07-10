@@ -3008,12 +3008,10 @@ public class Table extends CustomComposite {
 		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
 		final int lastFullyVisibleItem = topIndex + fullyVisibleItemCount - 1;
 		if (index < topIndex + margin) {
-			selectionModel.setTopIndex(Math.max(0, index - margin));
-			redraw();
-		} else if (index > lastFullyVisibleItem - margin) {
-			selectionModel.setTopIndex(Math.min(index - fullyVisibleItemCount + 1 + margin,
-			                                    selectionModel.getCount() - fullyVisibleItemCount + 1));
-			redraw();
+			_setTopIndex(Math.max(0, index - margin));
+		} else if (index > lastFullyVisibleItem - margin + 1) {
+			_setTopIndex(Math.min(index - fullyVisibleItemCount + margin,
+					selectionModel.getCount() - fullyVisibleItemCount + 1));
 		}
 	}
 
