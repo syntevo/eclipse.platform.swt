@@ -410,6 +410,31 @@ public class Table extends CustomComposite {
 				redraw();
 				event.doit = false;
 			}
+			case ' ' -> {
+				final int current = selectionModel.getCurrent();
+				if (current >= 0) {
+					if (ctrlOrCmdPressed && !shiftPressed) {
+						selectionModel.toggleSelection(current);
+						sendSelectionEvent(SWT.Selection);
+						redraw();
+						event.doit = false;
+					} else if (shiftPressed && !ctrlOrCmdPressed) {
+						selectionModel.selectRangeTo(current);
+						sendSelectionEvent(SWT.Selection);
+						redraw();
+						event.doit = false;
+					}
+				}
+			}
+			case 'a' -> {
+				if (ctrlOrCmdPressed && !shiftPressed) {
+					selectionModel.setSelection(0);
+					selectionModel.selectRangeTo(selectionModel.getCount() - 1);
+					sendSelectionEvent(SWT.Selection);
+					redraw();
+					event.doit = false;
+				}
+			}
 		}
 	}
 
