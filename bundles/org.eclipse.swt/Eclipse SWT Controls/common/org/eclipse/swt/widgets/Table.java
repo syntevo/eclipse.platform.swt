@@ -2926,7 +2926,7 @@ public class Table extends CustomComposite {
 
 		final int itemCount = getItemCount();
 		if (itemCount == 0) {
-			selectionModel.setTopIndex(0);
+			_setTopIndex(0);
 			return;
 		}
 
@@ -2934,12 +2934,19 @@ public class Table extends CustomComposite {
 			index = itemCount - 1;
 		}
 
-		selectionModel.setTopIndex(index);
-
 		if (mouseHoverElement instanceof TableItem) {
 			mouseHoverElement = null;
 		}
+		_setTopIndex(index);
+	}
 
+	void _setTopIndex(int index) {
+		final int topIndex = selectionModel.getTopIndex();
+		if (topIndex == index) {
+			return;
+		}
+
+		selectionModel.setTopIndex(index);
 		if (verticalBar != null) {
 			verticalBar.setSelection(index);
 		}
