@@ -3196,4 +3196,44 @@ public class Table extends CustomComposite {
 	void itemChanged(TableItem item) {
 		noColumnWidth = 0;
 	}
+
+	void moveColumn(TableColumn columnToMove, TableColumn targetColumn, boolean behindTargetColumn) {
+		final int mouseDownColumnIndex = indexOf(columnToMove);
+		if (mouseDownColumnIndex < 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+
+		final int mouseUpColumnIndex = indexOf(targetColumn);
+		if (mouseUpColumnIndex < 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+		if (mouseDownColumnIndex == mouseUpColumnIndex) {
+			return;
+		}
+
+		final int[] initialColumnOrder = getColumnOrder();
+		final List<Integer> columnOrder = new ArrayList<>();
+		for (int columnIndex : initialColumnOrder) {
+			columnOrder.add(columnIndex);
+		}
+
+		final int sourcePos = columnOrder.indexOf(mouseDownColumnIndex);
+		if (sourcePos < 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+
+		int targetPos = columnOrder.indexOf(mouseUpColumnIndex);
+		if (targetPos < 0) SWT.error(SWT.ERROR_UNSPECIFIED);
+		if (behindTargetColumn) {
+			targetPos++;
+		}
+
+		if (sourcePos < targetPos) {
+			targetPos--;
+		}
+
+		columnOrder.remove(sourcePos);
+		columnOrder.add(targetPos, mouseDownColumnIndex);
+
+		final int[] newColumnOrder = new int[columnOrder.size()];
+		int i = 0;
+		for (int columnIndex : columnOrder) {
+			newColumnOrder[i++] = columnIndex;
+		}
+		setColumnOrder(newColumnOrder);
+	}
 }

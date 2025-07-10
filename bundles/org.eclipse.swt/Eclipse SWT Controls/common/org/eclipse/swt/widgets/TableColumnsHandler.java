@@ -1,5 +1,8 @@
 package org.eclipse.swt.widgets;
 
+import java.util.*;
+import java.util.List;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 
@@ -131,8 +134,19 @@ final class TableColumnsHandler {
 		if (columnResizeActive >= 0) {
 			columnResizeActive = -1;
 		}
-		if (mouseDownColumn != null && !drag) {
-			mouseDownColumn.sendEvent(SWT.Selection);
+		if (mouseDownColumn != null) {
+			if (drag) {
+				final TableColumn mouseUpColumn = getColumnAt(event.x);
+				if (mouseUpColumn != null) {
+					final int left = mouseUpColumn.getXScrolled();
+					final int width = mouseUpColumn.getWidth();
+					final boolean behindTargetColumn = event.x > left + width / 2;
+					table.moveColumn(mouseDownColumn, mouseUpColumn, behindTargetColumn);
+				}
+			}
+			else {
+				mouseDownColumn.sendEvent(SWT.Selection);
+			}
 		}
 		table.setCapture(false);
 	}
