@@ -254,6 +254,8 @@ public class DefaultTableRenderer extends TableRenderer {
 		Rectangle ca = table.getClientArea();
 		final int maxY = ca.y + ca.height;
 
+		final boolean isFocused = table.isFocusControl();
+
 		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
 
@@ -261,7 +263,7 @@ public class DefaultTableRenderer extends TableRenderer {
 				table.checkData(item, i, false);
 			}
 
-			paintItem(item, i, gc);
+			paintItem(item, i, isFocused, gc);
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > maxY) {
@@ -270,7 +272,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		}
 	}
 
-	private void paintItem(TableItem item, int index, GC gc) {
+	private void paintItem(TableItem item, int index, boolean isFocused, GC gc) {
 		final Color tableBackground = table.getBackground();
 		final Color itemBackground = item._getBackground();
 		final int detailDefault = prepareEventDetail(item, index);
@@ -323,7 +325,7 @@ public class DefaultTableRenderer extends TableRenderer {
 			}
 		}
 
-		if (drawFocusRect) {
+		if (isFocused && drawFocusRect) {
 			gc.drawFocus(itemBounds.x, itemBounds.y, itemBounds.width - 1, itemBounds.height - 1);
 		}
 	}
