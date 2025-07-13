@@ -2415,8 +2415,7 @@ public class Table extends CustomComposite {
 		}
 
 		focusItem = getItem(index);
-
-		logNotImplemented();
+		selectionModel.setCurrent(index);
 	}
 
 	/**

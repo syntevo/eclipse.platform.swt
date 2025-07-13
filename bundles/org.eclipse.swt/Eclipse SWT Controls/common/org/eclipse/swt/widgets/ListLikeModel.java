@@ -81,7 +81,7 @@ public final class ListLikeModel {
 	}
 
 	public void setTopIndex(int topIndex) {
-		checkIndex(topIndex);
+		if (topIndex < 0 || topIndex > count) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 		this.topIndex = topIndex;
 	}
 
@@ -217,6 +217,15 @@ public final class ListLikeModel {
 					: Math.min(current + direction, count - 1);
 		}
 		moveSelectionAbsolute(target, shiftPressed, ctrlOrCmdPressed);
+	}
+
+	public void setCurrent(int current) {
+		if (current < 0) {
+			this.current = current;
+		}
+
+		if (current >= count) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+		this.current = current;
 	}
 
 	private boolean isOutOfBounds(int index) {
