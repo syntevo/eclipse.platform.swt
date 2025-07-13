@@ -517,10 +517,15 @@ public class Table extends CustomComposite {
 		final int itemCount = getItemCount();
 		if (itemCount > fullyVisibleItemCount) {
 			verticalBar.setVisible(true);
-			verticalBar.setValues(selectionModel.getTopIndex(), 0, itemCount, fullyVisibleItemCount, 1, fullyVisibleItemCount);
+			int topIndex = selectionModel.getTopIndex();
+			final int maxTopIndex = Math.max(0, itemCount - fullyVisibleItemCount);
+			topIndex = Math.min(topIndex, maxTopIndex);
+			verticalBar.setValues(topIndex, 0, itemCount, fullyVisibleItemCount, 1, fullyVisibleItemCount);
+			_setTopIndex(topIndex);
 		} else {
 			verticalBar.setVisible(false);
 			verticalBar.setValues(0, 0, 0, 1, 1, 1);
+			_setTopIndex(0);
 		}
 	}
 
@@ -3032,11 +3037,15 @@ public class Table extends CustomComposite {
 		final int fullyVisibleItemCount = Math.max(getFullyVisibleItemCount(), 1);
 		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
 		final int lastFullyVisibleItem = topIndex + fullyVisibleItemCount - 1;
+		final int maxTopIndex = Math.max(0, selectionModel.getCount() - fullyVisibleItemCount);
 		if (index < topIndex + margin) {
 			_setTopIndex(Math.max(0, index - margin));
 		} else if (index > lastFullyVisibleItem - margin + 1) {
-			_setTopIndex(Math.min(index - fullyVisibleItemCount + margin,
-					selectionModel.getCount() - fullyVisibleItemCount + 1));
+			final int maxMarginRelatedTopIndex = Math.max(0, index - fullyVisibleItemCount + margin);
+			_setTopIndex(Math.min(maxTopIndex, maxMarginRelatedTopIndex));
+		}
+		else if (topIndex > maxTopIndex) {
+			_setTopIndex(maxTopIndex);
 		}
 	}
 
