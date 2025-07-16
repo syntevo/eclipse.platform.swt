@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2017 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -16,6 +16,7 @@ package org.eclipse.swt.widgets;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.internal.gtk3.*;
 import org.eclipse.swt.internal.gtk4.*;
@@ -118,7 +119,8 @@ long clientHandle () {
  */
 public Rectangle computeTrim (int x, int y, int width, int height) {
 	checkWidget();
-	return computeTrimInPixels(x, y, width, height);
+	Rectangle rect = DPIUtil.autoScaleUp(new Rectangle (x, y, width, height));
+	return DPIUtil.autoScaleDown(computeTrimInPixels(rect.x, rect.y, rect.width, rect.height));
 }
 
 Rectangle computeTrimInPixels (int x, int y, int width, int height) {
@@ -247,7 +249,7 @@ int getBorderWidthInPixels () {
  */
 public Rectangle getClientArea () {
 	checkWidget ();
-	return getClientAreaInPixels();
+	return DPIUtil.autoScaleDown(getClientAreaInPixels());
 }
 
 Rectangle getClientAreaInPixels () {
@@ -645,7 +647,7 @@ void resizeHandle (int width, int height) {
 @Override
 void showWidget () {
 	super.showWidget ();
-	if (scrolledHandle != 0) gtk_widget_show (scrolledHandle);
+	if (scrolledHandle != 0) GTK.gtk_widget_show (scrolledHandle);
 }
 
 @Override

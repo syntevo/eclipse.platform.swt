@@ -35,13 +35,13 @@ import org.eclipse.swt.widgets.Widget;
 
 /**
  * Instances of this class represent a column in a table widget.
- * <dl>
+ * <p><dl>
  * <dt><b>Styles:</b></dt>
  * <dd>LEFT, RIGHT, CENTER</dd>
  * <dt><b>Events:</b></dt>
  * <dd> Move, Resize, Selection</dd>
  * </dl>
- * <p>
+ * </p><p>
  * Note: Only one of the styles LEFT, RIGHT and CENTER may be specified.
  * </p><p>
  * IMPORTANT: This class is <em>not</em> intended to be subclassed.
@@ -679,7 +679,7 @@ public void setMoveable (boolean moveable) {
  * cannot be dragged by the user but may be resized
  * by the programmer.
  *
- * @param value the resize attribute
+ * @param resizable the resize attribute
  *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
@@ -756,7 +756,7 @@ public void setToolTipText (String string) {
 /**
  * Sets the width of the receiver.
  *
- * @param value the new width
+ * @param width the new width
  *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>

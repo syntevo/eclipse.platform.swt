@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -4534,8 +4534,10 @@ class AccessibleObject {
 		} else {
 			GDK.gdk_window_get_origin (gdkResource, origin_x, origin_y);
 		}
-		C.memmove (x, new int[] {origin_x [0]}, 4);
-		C.memmove (y, new int[] {origin_y [0]}, 4);
+		int scaledX = DPIUtil.autoScaleDown (origin_x [0]);
+		int scaledY = DPIUtil.autoScaleDown (origin_y [0]);
+		C.memmove (x, new int[] {scaledX}, 4);
+		C.memmove (y, new int[] {scaledY}, 4);
 		return 0;
 	}
 
@@ -4653,7 +4655,6 @@ class AccessibleObject {
 	}
 
 	void sendEvent(int event, Object eventData) {
-		if(GTK.GTK4) return; //TODO reenable for GTK 4.x
 		switch (event) {
 			case ACC.EVENT_SELECTION_CHANGED:
 				OS.g_signal_emit_by_name (atkHandle, ATK.selection_changed);

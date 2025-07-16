@@ -320,7 +320,7 @@ void addVerifyListener (VerifyListener listener) {
 		bits0 &= ~OS.WS_BORDER;
 		bits1 |= OS.WS_EX_CLIENTEDGE;
 	}
-	adjustWindowRectEx(rect, bits0, false, bits1);
+	OS.AdjustWindowRectEx (rect, bits0, false, bits1);
 	width = rect.right - rect.left;
 	height = rect.bottom - rect.top;
 

@@ -121,7 +121,10 @@ public String[] getValues() {
 }
 /**
  * Opens the dialog in the given state.  Sets <code>Text</code> widget contents
- * and dialog behavior accordingly.
+ * and dialog behaviour accordingly.
+ *
+ * @param 	dialogState	int
+ *					The state the dialog should be opened in.
  */
 public String[] open() {
 	createTextWidgets();

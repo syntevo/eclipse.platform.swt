@@ -5988,10 +5988,9 @@ static long dialogProc(long id, long sel, long arg0) {
 
 	switch (Selector.valueOf(sel)) {
 		case sel_changeColor_: {
-			Object object = OS.JNIGetObject(jniRef[0]);
-			if (object instanceof ColorDialog colorDialog) {
-				colorDialog.changeColor(id, sel, arg0);
-			}
+			ColorDialog dialog = (ColorDialog)OS.JNIGetObject(jniRef[0]);
+			if (dialog == null) return 0;
+			dialog.changeColor(id, sel, arg0);
 			return 0;
 		}
 		case sel_changeFont_: {
@@ -6013,10 +6012,10 @@ static long dialogProc(long id, long sel, long arg0) {
 		}
 		case sel_windowWillClose_: {
 			Object object = OS.JNIGetObject(jniRef[0]);
-			if (object instanceof FontDialog fontDialog) {
-				fontDialog.windowWillClose(id, sel, arg0);
-			} else if (object instanceof ColorDialog colorDialog) {
-				colorDialog.windowWillClose(id, sel, arg0);
+			if (object instanceof FontDialog) {
+				((FontDialog)object).windowWillClose(id, sel, arg0);
+			} else if (object instanceof ColorDialog) {
+				((ColorDialog)object).windowWillClose(id, sel, arg0);
 			}
 			return 0;
 		}
@@ -6866,10 +6865,7 @@ public boolean isRescalingAtRuntime() {
  * @param activate whether rescaling shall be activated or deactivated
  * @return whether activating or deactivating the rescaling was successful
  * @since 3.127
- * @deprecated this method should not be used as it needs to be called already
- *             during instantiation to take proper effect
  */
-@Deprecated(since = "2025-03", forRemoval = true)
 public boolean setRescalingAtRuntime(boolean activate) {
 	// not implemented for Cocoa
 	return false;

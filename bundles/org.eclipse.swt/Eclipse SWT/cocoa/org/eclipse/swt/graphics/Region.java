@@ -436,7 +436,9 @@ void destroy() {
  */
 @Override
 public boolean equals(Object object) {
-	return super.equals(object);
+	if (this == object) return true;
+	if (!(object instanceof Region region)) return false;
+	return handle == region.handle;
 }
 
 /**
@@ -509,7 +511,7 @@ long regionToRects(long message, long rgn, long r, long path) {
  */
 @Override
 public int hashCode() {
-	return super.hashCode();
+	return (int)handle;
 }
 
 /**

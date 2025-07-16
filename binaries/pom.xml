@@ -17,11 +17,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.eclipse.platform</groupId>
+		<groupId>eclipse.platform.swt</groupId>
 		<artifactId>eclipse.platform.swt</artifactId>
-		<version>4.36.0-SNAPSHOT</version>
+		<version>4.35.0-SNAPSHOT</version>
 	</parent>
 
+	<groupId>org.eclipse.swt</groupId>
 	<artifactId>eclipse.platform.swt.binaries</artifactId>
 	<packaging>pom</packaging>
 
@@ -51,7 +52,7 @@
 					<dependency>
 						<groupId>org.apache.maven.surefire</groupId>
 						<artifactId>surefire-junit-platform</artifactId>
-						<version>${surefire.version}</version>
+						<version>3.2.5</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -76,29 +77,6 @@
 				<artifactId>tycho-packaging-plugin</artifactId>
 				<configuration>
 					<timestampProvider>fragment-host</timestampProvider>
-					<archive>
-						<manifestEntries>
-							<Eclipse-Version>${releaseNumberSDK}</Eclipse-Version>
-						</manifestEntries>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<tags combine.children="append">
-						<tag>
-							<name>field</name>
-							<placement>f</placement>
-							<head>Native code field</head>
-						</tag>
-						<tag>
-							<name>method</name>
-							<placement>m</placement>
-							<head>Native code method</head>
-						</tag>
-					</tags>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -172,25 +150,8 @@
 								</configuration>
 							</execution>
 							<execution>
-								<id>prepare-translation-files</id>
-								<phase>process-classes</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<target>
-										<!-- Prepare translationfiles for inclusion by renaming '*._properties' to '*.properties' -->
-										<move todir="${project.build.outputDirectory}" failonerror="true" preservelastmodified="true">
-											<fileset dir="${project.build.outputDirectory}" includes="**/*._properties"/>
-											<mapper type="glob" from="*._properties" to="*.properties" />
-										</move>
-									</target>
-								</configuration>
-							</execution>
-							<execution>
 								<id>package-swt-download-zip</id>
-								<!-- Pack this zip after the swt.jar has been signed.-->
-								<phase>verify</phase>
+								<phase>package</phase>
 								<goals>
 									<goal>run</goal>
 								</goals>
@@ -198,12 +159,23 @@
 									<target>
 										<property name="temp.folder" value="${project.build.directory}/swtdownload-temp" />
 										<mkdir dir="${temp.folder}/swtdownload/" />
+										<!-- Prepare translationfiles for inclusion -->
+										<copy todir="${temp.folder}/@dot.src" failonerror="true" overwrite="true">
+											<fileset dir="${swtMainProject}/Eclipse SWT/common/" includes="**/*._properties"/>
+											<mapper type="glob" from="*._properties" to="*.properties" />
+										</copy>
 										<!-- Prepare nested swt.jar and src.jar -->
 										<property name="mavenBuiltJarName" value="${project.build.directory}/org.eclipse.swt.${ws}.${os}.${arch}-${project.version}" />
 										<copy file="${mavenBuiltJarName}.jar" tofile="${temp.folder}/swtdownload/swt.jar"/>
+										<jar jarfile="${temp.folder}/swtdownload/swt.jar" update="true" basedir="${temp.folder}/@dot.src">
+											<manifest>
+												<attribute name="Eclipse-Version" value="${releaseNumberSDK}"/>
+											</manifest>
+										</jar>
 										<zip zipfile="${temp.folder}/swtdownload/src.zip" duplicate="preserve">
 											<zipfileset src="${mavenBuiltJarName}-sources.jar" includes="**/*.sh" filemode="755"/>
 											<zipfileset src="${mavenBuiltJarName}-sources.jar" excludes="META-INF/**,OSGI-INF/**" />
+											<fileset dir="${temp.folder}/@dot.src"/>
 										</zip>
 										<!--Assemple nested SWT-zip -->
 										<zip zipfile="${project.build.directory}/swt-${buildid}-${ws}-${os}-${arch}.zip">

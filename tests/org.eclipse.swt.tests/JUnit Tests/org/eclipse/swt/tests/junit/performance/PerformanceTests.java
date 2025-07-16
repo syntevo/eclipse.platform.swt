@@ -13,14 +13,15 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit.performance;
 
-import org.junit.platform.suite.api.SelectClasses;
-import org.junit.platform.suite.api.Suite;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * Suite for running SWT performance test cases.
  */
-@Suite
-@SelectClasses({
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
 	Test_situational.class
 })
 public class PerformanceTests {

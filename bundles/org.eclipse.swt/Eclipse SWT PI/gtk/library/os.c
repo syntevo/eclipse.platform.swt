@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2024 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -4729,92 +4729,6 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1expander_1set_1label_1widget)
 }
 #endif
 
-#ifndef NO_gtk_1file_1chooser_1add_1filter
-JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1add_1filter)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1add_1filter_FUNC);
-	gtk_file_chooser_add_filter((GtkFileChooser *)arg0, (GtkFileFilter *)arg1);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1add_1filter_FUNC);
-}
-#endif
-
-#ifndef NO_gtk_1file_1chooser_1get_1filter
-JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1file_1chooser_1get_1filter)
-	(JNIEnv *env, jclass that, jlong arg0)
-{
-	jlong rc = 0;
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1get_1filter_FUNC);
-	rc = (jlong)gtk_file_chooser_get_filter((GtkFileChooser *)arg0);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1get_1filter_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_gtk_1file_1chooser_1native_1new
-JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1file_1chooser_1native_1new)
-	(JNIEnv *env, jclass that, jbyteArray arg0, jlong arg1, jint arg2, jbyteArray arg3, jbyteArray arg4)
-{
-	jbyte *lparg0=NULL;
-	jbyte *lparg3=NULL;
-	jbyte *lparg4=NULL;
-	jlong rc = 0;
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1native_1new_FUNC);
-	if (arg0) if ((lparg0 = (*env)->GetByteArrayElements(env, arg0, NULL)) == NULL) goto fail;
-	if (arg3) if ((lparg3 = (*env)->GetByteArrayElements(env, arg3, NULL)) == NULL) goto fail;
-	if (arg4) if ((lparg4 = (*env)->GetByteArrayElements(env, arg4, NULL)) == NULL) goto fail;
-/*
-	rc = (jlong)gtk_file_chooser_native_new((const gchar *)lparg0, (GtkWindow *)arg1, arg2, (const gchar *)lparg3, (const gchar *)lparg4);
-*/
-	{
-		GTK_LOAD_FUNCTION(fp, gtk_file_chooser_native_new)
-		if (fp) {
-			rc = (jlong)((jlong (CALLING_CONVENTION*)(const gchar *, GtkWindow *, jint, const gchar *, const gchar *))fp)((const gchar *)lparg0, (GtkWindow *)arg1, arg2, (const gchar *)lparg3, (const gchar *)lparg4);
-		}
-	}
-fail:
-	if (arg4 && lparg4) (*env)->ReleaseByteArrayElements(env, arg4, lparg4, JNI_ABORT);
-	if (arg3 && lparg3) (*env)->ReleaseByteArrayElements(env, arg3, lparg3, JNI_ABORT);
-	if (arg0 && lparg0) (*env)->ReleaseByteArrayElements(env, arg0, lparg0, JNI_ABORT);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1native_1new_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_gtk_1file_1chooser_1set_1current_1name
-JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1current_1name)
-	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1)
-{
-	jbyte *lparg1=NULL;
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1set_1current_1name_FUNC);
-	if (arg1) if ((lparg1 = (*env)->GetByteArrayElements(env, arg1, NULL)) == NULL) goto fail;
-	gtk_file_chooser_set_current_name((GtkFileChooser *)arg0, (const gchar *)lparg1);
-fail:
-	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, 0);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1current_1name_FUNC);
-}
-#endif
-
-#ifndef NO_gtk_1file_1chooser_1set_1filter
-JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1filter)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1set_1filter_FUNC);
-	gtk_file_chooser_set_filter((GtkFileChooser *)arg0, (GtkFileFilter *)arg1);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1filter_FUNC);
-}
-#endif
-
-#ifndef NO_gtk_1file_1chooser_1set_1select_1multiple
-JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1select_1multiple)
-	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
-{
-	GTK_NATIVE_ENTER(env, that, gtk_1file_1chooser_1set_1select_1multiple_FUNC);
-	gtk_file_chooser_set_select_multiple((GtkFileChooser *)arg0, (gboolean)arg1);
-	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1select_1multiple_FUNC);
-}
-#endif
-
 #ifndef NO_gtk_1file_1filter_1add_1pattern
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1filter_1add_1pattern)
 	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1)
@@ -9352,6 +9266,16 @@ JNIEXPORT jboolean JNICALL GTK_NATIVE(gtk_1widget_1has_1focus)
 }
 #endif
 
+#ifndef NO_gtk_1widget_1hide
+JNIEXPORT void JNICALL GTK_NATIVE(gtk_1widget_1hide)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	GTK_NATIVE_ENTER(env, that, gtk_1widget_1hide_FUNC);
+	gtk_widget_hide((GtkWidget *)arg0);
+	GTK_NATIVE_EXIT(env, that, gtk_1widget_1hide_FUNC);
+}
+#endif
+
 #ifndef NO_gtk_1widget_1insert_1action_1group
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1widget_1insert_1action_1group)
 	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1, jlong arg2)
@@ -9667,6 +9591,16 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1widget_1set_1visible)
 	GTK_NATIVE_ENTER(env, that, gtk_1widget_1set_1visible_FUNC);
 	gtk_widget_set_visible((GtkWidget *)arg0, (gboolean)arg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1widget_1set_1visible_FUNC);
+}
+#endif
+
+#ifndef NO_gtk_1widget_1show
+JNIEXPORT void JNICALL GTK_NATIVE(gtk_1widget_1show)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	GTK_NATIVE_ENTER(env, that, gtk_1widget_1show_FUNC);
+	gtk_widget_show((GtkWidget *)arg0);
+	GTK_NATIVE_EXIT(env, that, gtk_1widget_1show_FUNC);
 }
 #endif
 
@@ -12625,33 +12559,6 @@ JNIEXPORT void JNICALL OS_NATIVE(g_1unsetenv)
 fail:
 	if (arg0 && lparg0) (*env)->ReleaseByteArrayElements(env, arg0, lparg0, JNI_ABORT);
 	OS_NATIVE_EXIT(env, that, g_1unsetenv_FUNC);
-}
-#endif
-
-#ifndef NO_g_1uri_1parse
-JNIEXPORT jlong JNICALL OS_NATIVE(g_1uri_1parse)
-	(JNIEnv *env, jclass that, jbyteArray arg0, jlong arg1, jlongArray arg2)
-{
-	jbyte *lparg0=NULL;
-	jlong *lparg2=NULL;
-	jlong rc = 0;
-	OS_NATIVE_ENTER(env, that, g_1uri_1parse_FUNC);
-	if (arg0) if ((lparg0 = (*env)->GetByteArrayElements(env, arg0, NULL)) == NULL) goto fail;
-	if (arg2) if ((lparg2 = (*env)->GetLongArrayElements(env, arg2, NULL)) == NULL) goto fail;
-/*
-	rc = (jlong)g_uri_parse((const gchar *)lparg0, arg1, (GError **)lparg2);
-*/
-	{
-		OS_LOAD_FUNCTION(fp, g_uri_parse)
-		if (fp) {
-			rc = (jlong)((jlong (CALLING_CONVENTION*)(const gchar *, jlong, GError **))fp)((const gchar *)lparg0, arg1, (GError **)lparg2);
-		}
-	}
-fail:
-	if (arg2 && lparg2) (*env)->ReleaseLongArrayElements(env, arg2, lparg2, 0);
-	if (arg0 && lparg0) (*env)->ReleaseByteArrayElements(env, arg0, lparg0, 0);
-	OS_NATIVE_EXIT(env, that, g_1uri_1parse_FUNC);
-	return rc;
 }
 #endif
 

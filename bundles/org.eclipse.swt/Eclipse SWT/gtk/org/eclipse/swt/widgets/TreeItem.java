@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2019 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -407,7 +407,12 @@ public Color getBackground (int index) {
  */
 public Rectangle getBounds (int index) {
 	checkWidget ();
+	return DPIUtil.autoScaleDown (getBoundsInPixels (index));
+}
+
+Rectangle getBoundsInPixels (int index) {
 	// TODO fully test on early and later versions of GTK
+	checkWidget();
 	if (!parent.checkData (this)) error (SWT.ERROR_WIDGET_DISPOSED);
 	long parentHandle = parent.handle;
 	long column = 0;
@@ -449,8 +454,13 @@ public Rectangle getBounds (int index) {
  */
 public Rectangle getBounds () {
 	checkWidget ();
+	return DPIUtil.autoScaleDown (getBoundsInPixels ());
+}
+
+Rectangle getBoundsInPixels () {
 	// TODO fully test on early and later versions of GTK
 	// shifted a bit too far right on later versions of GTK - however, old Tree also had this problem
+	checkWidget ();
 	if (!parent.checkData (this)) error (SWT.ERROR_WIDGET_DISPOSED);
 	long parentHandle = parent.handle;
 	long column = GTK.gtk_tree_view_get_column (parentHandle, 0);
@@ -684,7 +694,12 @@ public Image getImage (int index) {
  */
 public Rectangle getImageBounds (int index) {
 	checkWidget ();
+	return DPIUtil.autoScaleDown(getImageBoundsInPixels(index));
+}
+
+Rectangle getImageBoundsInPixels (int index) {
 	// TODO fully test on early and later versions of GTK
+	checkWidget ();
 	if (!parent.checkData (this)) error (SWT.ERROR_WIDGET_DISPOSED);
 	long parentHandle = parent.handle;
 	long column = 0;
@@ -913,6 +928,11 @@ public String getText (int index) {
  */
 public Rectangle getTextBounds (int index) {
 	checkWidget ();
+	return DPIUtil.autoScaleDown(getTextBoundsInPixels(index));
+}
+
+Rectangle getTextBoundsInPixels (int index) {
+	checkWidget ();
 	if (!parent.checkData (this)) error (SWT.ERROR_WIDGET_DISPOSED);
 	int count = Math.max (1, parent.getColumnCount ());
 	if (0 > index || index > count - 1) return new Rectangle (0, 0, 0, 0);
@@ -971,7 +991,11 @@ public Rectangle getTextBounds (int index) {
 	Image image = _getImage(index);
 	int imageWidth = 0;
 	if (image != null) {
-		imageWidth = image.getBounds ().width;
+		if (DPIUtil.useCairoAutoScale()) {
+			imageWidth = image.getBounds ().width;
+		} else {
+			imageWidth = image.getBoundsInPixels ().width;
+		}
 	}
 	if (x [0] < imageWidth) {
 		rect.x += imageWidth;
@@ -1504,8 +1528,14 @@ public void setImage(int index, Image image) {
 	GTK.gtk_cell_renderer_get_fixed_size (pixbufRenderer, currentWidth, currentHeight);
 	if (!parent.pixbufSizeSet) {
 		if (image != null) {
-			int	iWidth = image.getBounds ().width;
-			int	iHeight = image.getBounds ().height;
+			int iWidth, iHeight;
+			if (DPIUtil.useCairoAutoScale()) {
+				iWidth = image.getBounds ().width;
+				iHeight = image.getBounds ().height;
+			} else {
+				iWidth = image.getBoundsInPixels ().width;
+				iHeight = image.getBoundsInPixels ().height;
+			}
 			if (iWidth > currentWidth [0] || iHeight > currentHeight [0]) {
 				GTK.gtk_cell_renderer_set_fixed_size (pixbufRenderer, iWidth, iHeight);
 				parent.pixbufSizeSet = true;

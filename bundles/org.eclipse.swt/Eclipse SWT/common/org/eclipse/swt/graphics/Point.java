@@ -41,7 +41,7 @@ import java.io.*;
  * @see <a href="http://www.eclipse.org/swt/">Sample code and further information</a>
  */
 
-public sealed class Point implements Serializable permits MonitorAwarePoint {
+public final class Point implements Serializable {
 
 	/**
 	 * the x coordinate of the point
@@ -78,16 +78,9 @@ public Point (int x, int y) {
  */
 @Override
 public boolean equals (Object object) {
-	if (object == null) {
-		return false;
-	}
-	if (object == this) {
-		return true;
-	}
-	if (!(object instanceof Point other)) {
-		return false;
-	}
-	return (other.x == this.x) && (other.y == this.y);
+	if (object == this) return true;
+	if (!(object instanceof Point p)) return false;
+	return (p.x == this.x) && (p.y == this.y);
 }
 
 /**

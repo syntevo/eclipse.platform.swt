@@ -13,15 +13,16 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.ColorDialog;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.widgets.ColorDialog
@@ -33,7 +34,7 @@ public class Test_org_eclipse_swt_widgets_ColorDialog extends Test_org_eclipse_s
 ColorDialog colorDialog;
 
 @Override
-@BeforeEach
+@Before
 public void setUp() {
 	super.setUp();
 	colorDialog = new ColorDialog(shell, SWT.NULL);
@@ -44,26 +45,36 @@ public void setUp() {
 public void test_ConstructorLorg_eclipse_swt_widgets_Shell() {
 	new ColorDialog(shell);
 
-	assertThrows(IllegalArgumentException.class,()-> new ColorDialog(null),"No exception thrown for parent == null");
+	try {
+		new ColorDialog(null);
+		fail("No exception thrown for parent == null");
+	}
+	catch (IllegalArgumentException e) {
+	}
 }
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_widgets_ShellI() {
 	new ColorDialog(shell, SWT.NULL);
 
-	assertThrows(IllegalArgumentException.class,()-> new ColorDialog(null, SWT.NULL),"No exception thrown for parent == null");
+	try {
+		new ColorDialog(null, SWT.NULL);
+		fail("No exception thrown for parent == null");
+	}
+	catch (IllegalArgumentException e) {
+	}
 }
 
 @Test
 public void test_setRGBLorg_eclipse_swt_graphics_RGB() {
 	RGB rgb = new RGB(0, 0, 0);
 
-	assertNull(colorDialog.getRGB());
+	assertNull(":a:", colorDialog.getRGB());
 
 	colorDialog.setRGB(rgb);
-	assertTrue(colorDialog.getRGB() == rgb);
+	assertTrue(":b:", colorDialog.getRGB() == rgb);
 
 	colorDialog.setRGB(null);
-	assertNull(colorDialog.getRGB());
+	assertNull(":c:", colorDialog.getRGB());
 }
 }

@@ -126,7 +126,7 @@ public Rectangle getBounds () {
 
 Rectangle getBoundsInPixels () {
 	if (image != null) {
-		Rectangle rect = DPIUtil.scaleUp(image.getBounds(), getZoom());
+		Rectangle rect = image.getBoundsInPixels ();
 		return new Rectangle (getXInPixels(), getYInPixels(), rect.width, rect.height);
 	}
 	if (width == 0) {
@@ -152,7 +152,7 @@ public Font getFont () {
 	checkWidget();
 	if (font == null) {
 		long hFont = defaultFont ();
-		return Font.win32_new (display, hFont, getNativeZoom());
+		return Font.win32_new (display, hFont, getZoom());
 	}
 	return font;
 }
@@ -220,7 +220,7 @@ public Point getSize () {
 
 Point getSizeInPixels () {
 	if (image != null) {
-		Rectangle rect = DPIUtil.scaleUp(image.getBounds(), getZoom());
+		Rectangle rect = image.getBoundsInPixels ();
 		return new Point (rect.width, rect.height);
 	}
 	if (width == 0) {
@@ -478,7 +478,8 @@ public void setFont (Font font) {
 	if (font != null && font.isDisposed ()) {
 		error (SWT.ERROR_INVALID_ARGUMENT);
 	}
-	this.font = font == null ? null : Font.win32_new(font, getNativeZoom());
+	Shell shell = parent.getShell();
+	this.font = font == null ? null : Font.win32_new(font, shell.nativeZoom);
 	if (hasFocus ()) setIMEFont ();
 }
 
@@ -509,7 +510,7 @@ public void setImage (Image image) {
 void setIMEFont () {
 	if (!OS.IsDBLocale) return;
 	long hFont = 0;
-	if (font != null) hFont = SWTFontProvider.getFontHandle(font, getNativeZoom());
+	if (font != null) hFont = font.handle;
 	if (hFont == 0) hFont = defaultFont ();
 	long hwnd = parent.handle;
 	long hIMC = OS.ImmGetContext (hwnd);
@@ -662,10 +663,9 @@ public void setVisible (boolean visible) {
  */
 public static void win32_setHeight(Caret caret, int height) {
 	caret.checkWidget();
-	if(caret.height != height) {
-		caret.height = height;
-		caret.resized = true;
-	}
+	if(caret.height == height && caret.isCurrentCaret()) return;
+	caret.height = height;
+	caret.resized = true;
 	if(caret.isVisible && caret.hasFocus()) caret.resize();
 }
 

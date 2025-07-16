@@ -11,10 +11,6 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-    types: [opened, reopened, synchronize, labeled]
-
-env:
-  SWT_GTK4: "${{ contains(github.event.pull_request.labels.*.name, 'gtk4') && '1' || '0' }}"
 
 jobs:
   event_file:
@@ -22,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Upload
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: Event File
         path: ${{ github.event_path }}
@@ -54,7 +50,7 @@ jobs:
       run: |
         git lfs pull --include='/binaries/org.eclipse.swt.win32.win32.x86_64/WebView2Loader.dll'
     - name: Set up Java ${{ matrix.java }}
-      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+      uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
       with:
         java-version: ${{ matrix.java }}
         distribution: 'temurin'
@@ -64,15 +60,13 @@ jobs:
       with:
         maven-version: 3.9.9
     - name: Build
-      env:
-        GTK_XCFLAGS: '-Wno-deprecated-declarations'
       run: >-
         ${{ contains(matrix.config.native, 'linux') && 'xvfb-run' || '' }}
         mvn --batch-mode -V -U -e
         --threads 1C
         -DforkCount=1
         '-Dnative=${{ matrix.config.native }}'
-        -Papi-check -Pjavadoc
+        -Papi-check
         '-Dtycho.baseline.replace=none'
         --fail-at-end
         -DskipNativeTests=false
@@ -92,10 +86,9 @@ jobs:
         integration-test
     - name: Upload Test Results for ${{ matrix.config.name }} / Java-${{ matrix.java }}
       if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: test-results-${{ matrix.config.native }}-java${{ matrix.java }}
         if-no-files-found: warn
         path: |
           ${{ github.workspace }}/**/target/surefire-reports/*.xml
-          ${{ github.workspace }}/**/hs_err_pid*.log

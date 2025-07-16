@@ -17,19 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.eclipse.swt.internal.*;
-import org.eclipse.swt.widgets.*;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 
-@ExtendWith(PlatformSpecificExecutionExtension.class)
-@ExtendWith(WithMonitorSpecificScalingExtension.class)
-class TextLayoutWin32Tests {
+class TextLayoutWin32Tests extends Win32AutoscaleTestBase {
 	final static String text = "This is a text for testing.";
 
 	@Test
 	public void testGetBoundPublicAPIshouldReturnTheSameValueRegardlessOfZoomLevel() {
-		Display display = Display.getDefault();
-
 		final TextLayout layout = new TextLayout(display);
 		GCData unscaledData = new GCData();
 		unscaledData.nativeZoom = DPIUtil.getNativeDeviceZoom();
@@ -50,9 +44,6 @@ class TextLayoutWin32Tests {
 
 	@Test
 	public void testCalculateGetBoundsWithVerticalIndent() {
-		Display display = Display.getDefault();
-		Shell shell = new Shell(display);
-
 		TextLayout layout = new TextLayout(display);
 		layout.setVerticalIndent(16);
 		layout.setText(text);
@@ -60,7 +51,7 @@ class TextLayoutWin32Tests {
 
 		int scalingFactor = 2;
 		int newZoom = DPIUtil.getNativeDeviceZoom() * scalingFactor;
-		DPITestUtil.changeDPIZoom(shell, newZoom);
+		changeDPIZoom(newZoom);
 		TextLayout scaledLayout = new TextLayout(display);
 		scaledLayout.setVerticalIndent(16);
 		scaledLayout.setText(text);

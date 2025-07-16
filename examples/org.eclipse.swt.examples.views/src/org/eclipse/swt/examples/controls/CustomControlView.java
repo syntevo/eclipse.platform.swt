@@ -14,9 +14,8 @@
 package org.eclipse.swt.examples.controls;
 
 
-import org.eclipse.swt.examples.controlexample.CustomControlExample;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.part.ViewPart;
+import org.eclipse.swt.examples.controlexample.*;
+import org.eclipse.swt.widgets.*;
 
 /**
  * <code>CustomControls</code> is a simple demonstration
@@ -31,7 +30,7 @@ public class CustomControlView extends ControlView {
 	/**
 	 * Create the example
 	 * 
-	 * @see ViewPart#createPartControl(Composite)
+	 * @see ViewPart#createPartControl
 	 */
 	@Override
 	public void createPartControl(Composite frame) {

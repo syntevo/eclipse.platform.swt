@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2024 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -376,12 +376,6 @@ typedef enum {
 	gtk_1expander_1new_FUNC,
 	gtk_1expander_1set_1expanded_FUNC,
 	gtk_1expander_1set_1label_1widget_FUNC,
-	gtk_1file_1chooser_1add_1filter_FUNC,
-	gtk_1file_1chooser_1get_1filter_FUNC,
-	gtk_1file_1chooser_1native_1new_FUNC,
-	gtk_1file_1chooser_1set_1current_1name_FUNC,
-	gtk_1file_1chooser_1set_1filter_FUNC,
-	gtk_1file_1chooser_1set_1select_1multiple_FUNC,
 	gtk_1file_1filter_1add_1pattern_FUNC,
 	gtk_1file_1filter_1get_1name_FUNC,
 	gtk_1file_1filter_1new_FUNC,
@@ -748,6 +742,7 @@ typedef enum {
 	gtk_1widget_1grab_1focus_FUNC,
 	gtk_1widget_1has_1default_FUNC,
 	gtk_1widget_1has_1focus_FUNC,
+	gtk_1widget_1hide_FUNC,
 	gtk_1widget_1insert_1action_1group_FUNC,
 	gtk_1widget_1is_1focus_FUNC,
 	gtk_1widget_1mnemonic_1activate_FUNC,
@@ -773,6 +768,7 @@ typedef enum {
 	gtk_1widget_1set_1valign_FUNC,
 	gtk_1widget_1set_1vexpand_FUNC,
 	gtk_1widget_1set_1visible_FUNC,
+	gtk_1widget_1show_FUNC,
 	gtk_1widget_1unparent_FUNC,
 	gtk_1window_1fullscreen_FUNC,
 	gtk_1window_1get_1default_1size_FUNC,
@@ -1019,7 +1015,6 @@ typedef enum {
 	g_1type_1parent_FUNC,
 	g_1type_1register_1static_FUNC,
 	g_1unsetenv_FUNC,
-	g_1uri_1parse_FUNC,
 	g_1utf16_1offset_1to_1pointer_FUNC,
 	g_1utf16_1offset_1to_1utf8_1offset_FUNC,
 	g_1utf16_1pointer_1to_1offset_FUNC,

@@ -20,9 +20,7 @@ import java.nio.file.*;
 import java.nio.file.Path;
 import java.time.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import org.eclipse.swt.*;
@@ -35,7 +33,6 @@ import org.eclipse.swt.widgets.*;
 class Edge extends WebBrowser {
 	static {
 		Library.loadLibrary("WebView2Loader");
-		setupLocationForCustomTextPage();
 	}
 
 	// WebView2Loader.dll compatible version. This is NOT the minimal required version.
@@ -45,12 +42,10 @@ class Edge extends WebBrowser {
 	static final String APPLOCAL_DIR_KEY = "org.eclipse.swt.internal.win32.appLocalDir";
 	static final String EDGE_USER_DATA_FOLDER = "org.eclipse.swt.internal.win32.Edge.userDataFolder";
 	static final String EDGE_USE_DARK_PREFERED_COLOR_SCHEME = "org.eclipse.swt.internal.win32.Edge.useDarkPreferedColorScheme"; //$NON-NLS-1$
-	static final String WEB_VIEW_OPERATION_TIMEOUT = "org.eclipse.swt.internal.win32.Edge.timeout"; //$NON-NLS-1$
 
 	// System.getProperty() keys
 	static final String BROWSER_DIR_PROP = "org.eclipse.swt.browser.EdgeDir";
 	static final String BROWSER_ARGS_PROP = "org.eclipse.swt.browser.EdgeArgs";
-	static final String ALLOW_SINGLE_SIGN_ON_USING_OS_PRIMARY_ACCOUNT_PROP = "org.eclipse.swt.browser.Edge.allowSingleSignOnUsingOSPrimaryAccount";
 	static final String DATA_DIR_PROP = "org.eclipse.swt.browser.EdgeDataDir";
 	static final String LANGUAGE_PROP = "org.eclipse.swt.browser.EdgeLanguage";
 	static final String VERSIONT_PROP = "org.eclipse.swt.browser.EdgeVersion";
@@ -59,15 +54,12 @@ class Edge extends WebBrowser {
 	 * by Edge browser to navigate to for setting html content in the
 	 * DOM of the browser to enable it to load local resources.
 	 */
-	static URI URI_FOR_CUSTOM_TEXT_PAGE;
+	private static final URI URI_FOR_CUSTOM_TEXT_PAGE = setupAndGetLocationForCustomTextPage();
 	private static final String ABOUT_BLANK = "about:blank";
 
-	private static final int MAXIMUM_CREATION_RETRIES = 5;
-	private static final Duration MAXIMUM_OPERATION_TIME = Duration.ofMillis(Integer.getInteger(WEB_VIEW_OPERATION_TIMEOUT, 5_000));
-
-	private record WebViewEnvironment(ICoreWebView2Environment environment, List<Edge> instances) {
+	private record WebViewEnvironment(ICoreWebView2Environment environment, ArrayList<Edge> instances) {
 		public WebViewEnvironment(ICoreWebView2Environment environment) {
-			this (environment, new CopyOnWriteArrayList<>());
+			this (environment, new ArrayList<>());
 		}
 	}
 
@@ -80,12 +72,10 @@ class Edge extends WebBrowser {
 
 	WebViewEnvironment containingEnvironment;
 
-	static int inCallback;
+	static boolean inCallback;
 	boolean inNewWindow;
-	private boolean inEvaluate;
 	HashMap<Long, LocationEvent> navigations = new HashMap<>();
-	private boolean ignoreGotFocus;
-	private boolean ignoreFocusIn;
+	private boolean ignoreFocus;
 	private String lastCustomText;
 
 	private static record CursorPosition(Point location, boolean isInsideBrowser) {};
@@ -198,14 +188,16 @@ class Edge extends WebBrowser {
 		};
 	}
 
-static void setupLocationForCustomTextPage() {
+private static URI setupAndGetLocationForCustomTextPage() {
+	URI absolutePath;
 	try {
-		Path tempFile = Files.createTempFile(Path.of(System.getProperty("java.io.tmpdir")), "base", ".html");
-		URI_FOR_CUSTOM_TEXT_PAGE = URI.create(tempFile.toUri().toASCIIString());
+		Path tempFile = Files.createTempFile("base", ".html");
+		absolutePath = tempFile.toUri();
 		tempFile.toFile().deleteOnExit();
 	} catch (IOException e) {
-		URI_FOR_CUSTOM_TEXT_PAGE = URI.create(ABOUT_BLANK);
+		absolutePath = URI.create(ABOUT_BLANK);
 	}
+	return absolutePath;
 }
 
 static String wstrToString(long psz, boolean free) {
@@ -235,11 +227,11 @@ static void error(int code, int hr) {
 
 static IUnknown newCallback(ICoreWebView2SwtCallback handler) {
 	long punk = COM.CreateSwtWebView2Callback((arg0, arg1) -> {
-		inCallback++;
+		inCallback = true;
 		try {
 			return handler.Invoke(arg0, arg1);
 		} finally {
-			inCallback--;
+			inCallback = false;
 		}
 	});
 	if (punk == 0) error(SWT.ERROR_NO_HANDLES, COM.E_OUTOFMEMORY);
@@ -266,14 +258,14 @@ static int callAndWait(long[] ppv, ToIntFunction<IUnknown> callable) {
 	phr[0] = callable.applyAsInt(completion);
 	// "completion" callback may be called asynchronously,
 	// so keep processing next OS message that may call it
-	processOSMessagesUntil(() -> phr[0] != COM.S_OK || ppv[0] != 0, exception -> {
-		throw exception;
-	}, Display.getCurrent());
+	while (phr[0] == COM.S_OK && ppv[0] == 0) {
+		processNextOSMessage();
+	}
 	completion.Release();
 	return phr[0];
 }
 
-int callAndWait(String[] pstr, ToIntFunction<IUnknown> callable) {
+static int callAndWait(String[] pstr, ToIntFunction<IUnknown> callable) {
 	int[] phr = new int[1];
 	IUnknown completion = newCallback((result, pszJson) -> {
 		phr[0] = (int)result;
@@ -286,187 +278,152 @@ int callAndWait(String[] pstr, ToIntFunction<IUnknown> callable) {
 	phr[0] = callable.applyAsInt(completion);
 	// "completion" callback may be called asynchronously,
 	// so keep processing next OS message that may call it
-	processOSMessagesUntil(() -> phr[0] != COM.S_OK || pstr[0] != null, exception -> {
-		throw exception;
-	}, browser.getDisplay());
+	while (phr[0] == COM.S_OK && pstr[0] == null) {
+		processNextOSMessage();
+	}
 	completion.Release();
 	return phr[0];
 }
 
-class WebViewWrapper {
-	private ICoreWebView2 webView;
-	private ICoreWebView2_2 webView_2;
-	private ICoreWebView2_10 webView_10;
-	private ICoreWebView2_11 webView_11;
-	private ICoreWebView2_12 webView_12;
-	private ICoreWebView2_13 webView_13;
-
-	void releaseWebViews() {
-		if(webView != null) {
-			webView.Release();
-			webView = null;
-		}
-		if(webView_2 != null) {
-			webView_2.Release();
-			webView_2 = null;
-		}
-		if(webView_10 != null) {
-			webView_10.Release();
-			webView_10 = null;
-		}
-		if(webView_11 != null) {
-			webView_11.Release();
-			webView_11 = null;
-		}
-		if(webView_12 != null) {
-			webView_12.Release();
-			webView_12 = null;
-		}
-		if(webView_13 != null) {
-			webView_13.Release();
-			webView_13 = null;
-		}
-	}
-}
-
 class WebViewProvider {
-	private CompletableFuture<WebViewWrapper> webViewWrapperFuture = wakeDisplayAfterFuture(new CompletableFuture<>());
-	private CompletableFuture<Void> lastWebViewTask = webViewWrapperFuture.thenRun(() -> {});
+
+	private CompletableFuture<ICoreWebView2> webViewFuture = new CompletableFuture<>();
+	private CompletableFuture<ICoreWebView2_2> webView_2Future = new CompletableFuture<>();
+	private CompletableFuture<ICoreWebView2_10> webView_10Future = new CompletableFuture<>();
+	private CompletableFuture<ICoreWebView2_11> webView_11Future = new CompletableFuture<>();
+	private CompletableFuture<ICoreWebView2_12> webView_12Future = new CompletableFuture<>();
+	private CompletableFuture<ICoreWebView2_13> webView_13Future = new CompletableFuture<>();
+
+	private CompletableFuture<Void> lastWebViewTask = webViewFuture.thenRun(() -> {});
 
 	ICoreWebView2 initializeWebView(ICoreWebView2Controller controller) {
 		long[] ppv = new long[1];
 		controller.get_CoreWebView2(ppv);
 		final ICoreWebView2 webView = new ICoreWebView2(ppv[0]);
-		final WebViewWrapper webViewWrapper = new WebViewWrapper();
-		webViewWrapper.webView = webView;
-		webViewWrapper.webView_2 = initializeWebView_2(webView);
-		webViewWrapper.webView_10 = initializeWebView_10(webView);
-		webViewWrapper.webView_11 = initializeWebView_11(webView);
-		webViewWrapper.webView_12 = initializeWebView_12(webView);
-		webViewWrapper.webView_13 = initializeWebView_13(webView);
-		boolean success = webViewWrapperFuture.complete(webViewWrapper);
-		// Release the webViews if the webViewWrapperFuture has already timed out and completed exceptionally
-		if(!success && webViewWrapperFuture.isCompletedExceptionally()) {
-			webViewWrapper.releaseWebViews();
-			return null;
-		}
+		initializeWebView_2(webView);
+		initializeWebView_10(webView);
+		initializeWebView_11(webView);
+		initializeWebView_12(webView);
+		initializeWebView_13(webView);
+		webViewFuture.complete(webView);
 		return webView;
 	}
 
-	private void abortInitialization() {
-		webViewWrapperFuture.cancel(true);
-	}
-
-	void releaseWebView() {
-		getWebViewWrapper().releaseWebViews();
-	}
-
-	private ICoreWebView2_2 initializeWebView_2(ICoreWebView2 webView) {
+	private void initializeWebView_2(ICoreWebView2 webView) {
 		long[] ppv = new long[1];
 		int hr = webView.QueryInterface(COM.IID_ICoreWebView2_2, ppv);
 		if (hr == COM.S_OK) {
-			return new ICoreWebView2_2(ppv[0]);
+			webView_2Future.complete(new ICoreWebView2_2(ppv[0]));
+		} else {
+			webView_2Future.cancel(true);
 		}
-		return null;
 	}
 
-	private ICoreWebView2_10 initializeWebView_10(ICoreWebView2 webView) {
+	private void initializeWebView_10(ICoreWebView2 webView) {
 		long[] ppv = new long[1];
 		int hr = webView.QueryInterface(COM.IID_ICoreWebView2_10, ppv);
 		if (hr == COM.S_OK) {
-			return new ICoreWebView2_10(ppv[0]);
+			webView_10Future.complete(new ICoreWebView2_10(ppv[0]));
+		} else {
+			webView_10Future.cancel(true);
 		}
-		return null;
 	}
 
-	private ICoreWebView2_11 initializeWebView_11(ICoreWebView2 webView) {
+	private void initializeWebView_11(ICoreWebView2 webView) {
 		long[] ppv = new long[1];
 		int hr = webView.QueryInterface(COM.IID_ICoreWebView2_11, ppv);
 		if (hr == COM.S_OK) {
-			return new ICoreWebView2_11(ppv[0]);
+			webView_11Future.complete(new ICoreWebView2_11(ppv[0]));
+		} else {
+			webView_11Future.cancel(true);
 		}
-		return null;
 	}
 
-	private ICoreWebView2_12 initializeWebView_12(ICoreWebView2 webView) {
+	private void initializeWebView_12(ICoreWebView2 webView) {
 		long[] ppv = new long[1];
 		int hr = webView.QueryInterface(COM.IID_ICoreWebView2_12, ppv);
 		if (hr == COM.S_OK) {
-			return new ICoreWebView2_12(ppv[0]);
+			webView_12Future.complete(new ICoreWebView2_12(ppv[0]));
+		} else {
+			webView_12Future.cancel(true);
 		}
-		return null;
 	}
 
-	private ICoreWebView2_13 initializeWebView_13(ICoreWebView2 webView) {
+	private void initializeWebView_13(ICoreWebView2 webView) {
 		long[] ppv = new long[1];
 		int hr = webView.QueryInterface(COM.IID_ICoreWebView2_13, ppv);
 		if (hr == COM.S_OK) {
-			return new ICoreWebView2_13(ppv[0]);
+			webView_13Future.complete(new ICoreWebView2_13(ppv[0]));
+		} else {
+			webView_13Future.cancel(true);
 		}
-		return null;
-	}
-
-	private WebViewWrapper getWebViewWrapper(boolean waitForPendingWebviewTasksToFinish) {
-		WebViewWrapper webViewWrapper = getWebViewWrapper();
-		if(waitForPendingWebviewTasksToFinish) {
-			processOSMessagesUntil(lastWebViewTask::isDone, exception -> {
-				lastWebViewTask.completeExceptionally(exception);
-				throw exception;
-			}, browser.getDisplay());
-		}
-		return webViewWrapper;
-	}
-
-	private WebViewWrapper getWebViewWrapper() {
-		processOSMessagesUntil(webViewWrapperFuture::isDone, exception -> {
-			webViewWrapperFuture.completeExceptionally(exception);
-			throw exception;
-		}, browser.getDisplay());
-		return webViewWrapperFuture.join();
 	}
 
 	ICoreWebView2 getWebView(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webViewFuture.join();
 	}
 
 	ICoreWebView2_2 getWebView_2(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView_2;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webView_2Future.join();
 	}
 
 	boolean isWebView_2Available() {
-		return getWebViewWrapper().webView_2 != null;
+		waitForFutureToFinish(webView_2Future);
+		return !webView_2Future.isCancelled();
 	}
 
 	ICoreWebView2_10 getWebView_10(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView_10;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webView_10Future.join();
 	}
 
 	boolean isWebView_10Available() {
-		return getWebViewWrapper().webView_10 != null;
+		waitForFutureToFinish(webView_10Future);
+		return !webView_10Future.isCancelled();
 	}
 
 	ICoreWebView2_11 getWebView_11(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView_11;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webView_11Future.join();
 	}
 
 	boolean isWebView_11Available() {
-		return getWebViewWrapper().webView_11 != null;
+		waitForFutureToFinish(webView_11Future);
+		return !webView_11Future.isCancelled();
 	}
 
 	ICoreWebView2_12 getWebView_12(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView_12;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webView_12Future.join();
 	}
 
 	boolean isWebView_12Available() {
-		return getWebViewWrapper().webView_12 != null;
+		waitForFutureToFinish(webView_12Future);
+		return !webView_12Future.isCancelled();
 	}
 
 	ICoreWebView2_13 getWebView_13(boolean waitForPendingWebviewTasksToFinish) {
-		return getWebViewWrapper(waitForPendingWebviewTasksToFinish).webView_13;
+		if(waitForPendingWebviewTasksToFinish) {
+			waitForFutureToFinish(lastWebViewTask);
+		}
+		return webView_13Future.join();
 	}
 
 	boolean isWebView_13Available() {
-		return getWebViewWrapper().webView_13 != null;
+		waitForFutureToFinish(webView_13Future);
+		return !webView_13Future.isCancelled();
 	}
 
 	/*
@@ -474,30 +431,23 @@ class WebViewProvider {
 	 * has finished all the pending tasks queued before it.
 	 */
 	void scheduleWebViewTask(Runnable action) {
-		lastWebViewTask = wakeDisplayAfterFuture(lastWebViewTask.thenRun(action::run));
-	}
-
-	private <T> CompletableFuture<T> wakeDisplayAfterFuture(CompletableFuture<T> future) {
-		return future.handle((nil1, nil2) -> {
-			Display display = browser.getDisplay();
-			if (!display.isDisposed()) {
-				try {
-					display.wake();
-				} catch (SWTException e) {
-					// ignore then, this can happen due to the async nature between our check for
-					// disposed and the actual call to wake the display can be disposed
-				}
-			}
-			return null;
+		lastWebViewTask = lastWebViewTask.thenRun(() -> {
+			action.run();
 		});
 	}
+
+	private <T> void waitForFutureToFinish(CompletableFuture<T> future) {
+		while(!future.isDone()) {
+			processNextOSMessage();
+		}
+	}
+
 }
 
 /**
- * Processes single OS messages using {@link Display#readAndDispatch()}. This
+ * Processes a single OS message using {@link Display#readAndDispatch()}. This
  * is required for processing the OS events during browser initialization, since
- * Edge browser initialization happens asynchronously. Messages are processed
- * until the given condition is fulfilled or a timeout occurs.
+ * Edge browser initialization happens asynchronously.
  * <p>
  * {@link Display#readAndDispatch()} also processes events scheduled for
  * asynchronous execution via {@link Display#asyncExec(Runnable)}. This may
@@ -505,27 +455,14 @@ class WebViewProvider {
  * leads to a failure in browser initialization if processed in between the OS
  * events for initialization. Thus, this method does not implement an ordinary
  * readAndDispatch loop, but waits for an OS event to be processed.
- * @throws Throwable
  */
-private static void processOSMessagesUntil(Supplier<Boolean> condition, Consumer<SWTException> timeoutHandler, Display display) {
+private static void processNextOSMessage() {
+	Display display = Display.getCurrent();
 	MSG msg = new MSG();
-	AtomicBoolean timeoutOccurred = new AtomicBoolean();
-	// The timer call also wakes up the display to avoid being stuck in display.sleep()
-	display.timerExec((int) MAXIMUM_OPERATION_TIME.toMillis(), () -> timeoutOccurred.set(true));
-	while (!display.isDisposed() && !condition.get() && !timeoutOccurred.get()) {
-		if (OS.PeekMessage(msg, 0, 0, 0, OS.PM_NOREMOVE | OS.PM_QS_POSTMESSAGE)) {
-			display.readAndDispatch();
-		} else {
-			display.sleep();
-		}
+	while (!OS.PeekMessage (msg, 0, 0, 0, OS.PM_NOREMOVE)) {
+		display.sleep();
 	}
-	if (!condition.get()) {
-		timeoutHandler.accept(createTimeOutException());
-	}
-}
-
-private static SWTException createTimeOutException() {
-	return new SWTException(SWT.ERROR_UNSPECIFIED, "Waiting for Edge operation to terminate timed out");
+	display.readAndDispatch();
 }
 
 static ICoreWebView2CookieManager getCookieManager() {
@@ -552,7 +489,7 @@ void checkDeadlock() {
 	// and JavaScript callbacks are serialized. An event handler waiting
 	// for a completion of another handler will deadlock. Detect this
 	// situation and throw an exception instead.
-	if (inCallback > 0 || inNewWindow) {
+	if (inCallback || inNewWindow) {
 		SWT.error(SWT.ERROR_FAILED_EVALUATE, null, " [WebView2: deadlock detected]");
 	}
 }
@@ -566,9 +503,6 @@ WebViewEnvironment createEnvironment() {
 	String browserDir = System.getProperty(BROWSER_DIR_PROP);
 	String browserArgs = System.getProperty(BROWSER_ARGS_PROP);
 	String language = System.getProperty(LANGUAGE_PROP);
-
-	boolean allowSSO = Boolean.getBoolean(ALLOW_SINGLE_SIGN_ON_USING_OS_PRIMARY_ACCOUNT_PROP);
-
 	String dataDir = getDataDir(display);
 
 	// Initialize options
@@ -584,11 +518,6 @@ WebViewEnvironment createEnvironment() {
 	if (language != null) {
 		char[] pLanguage = stringToWstr(language);
 		options.put_Language(pLanguage);
-	}
-
-	if (allowSSO) {
-		int[] pAllowSSO = new int[]{1};
-		options.put_AllowSingleSignOnUsingOSPrimaryAccount(pAllowSSO);
 	}
 
 	// Create the environment
@@ -638,79 +567,41 @@ private String getDataDir(Display display) {
 
 @Override
 public void create(Composite parent, int style) {
-	createInstance(0);
-}
-
-private void createInstance(int previousAttempts) {
 	containingEnvironment = createEnvironment();
 	containingEnvironment.instances().add(this);
 	long[] ppv = new long[1];
 	int hr = containingEnvironment.environment().QueryInterface(COM.IID_ICoreWebView2Environment2, ppv);
 	if (hr == COM.S_OK) environment2 = new ICoreWebView2Environment2(ppv[0]);
 	// The webview calls are queued to be executed when it is done executing the current task.
-	containingEnvironment.environment().CreateCoreWebView2Controller(browser.handle, createControllerInitializationCallback(previousAttempts));
-}
-
-private IUnknown createControllerInitializationCallback(int previousAttempts) {
-	Runnable initializationAbortion = () -> {
-		webViewProvider.abortInitialization();
-		releaseEnvironment();
-	};
-	return newCallback((resultAsLong, pv) -> {
-		int result = (int) resultAsLong;
-		if (browser.isDisposed()) {
-			initializationAbortion.run();
-			return COM.S_OK;
-		}
-		if (result == OS.HRESULT_FROM_WIN32(OS.ERROR_INVALID_STATE)) {
-			initializationAbortion.run();
-			SWT.error(SWT.ERROR_INVALID_ARGUMENT, null,
-					" Edge instance with same data folder but different environment options already exists");
-		}
-		switch (result) {
-		case COM.S_OK:
+	IUnknown setupBrowserCallback = newCallback((result, pv) -> {
+		if ((int)result == COM.S_OK) {
 			new IUnknown(pv).AddRef();
-			setupBrowser(result, pv);
-			break;
-		case COM.E_WRONG_THREAD:
-			initializationAbortion.run();
-			error(SWT.ERROR_THREAD_INVALID_ACCESS, result);
-			break;
-		case COM.E_ABORT:
-			initializationAbortion.run();
-			break;
-		default:
-			releaseEnvironment();
-			if (previousAttempts < MAXIMUM_CREATION_RETRIES) {
-				System.err.println(String.format("Edge initialization failed, retrying (attempt %d / %d)", previousAttempts + 1, MAXIMUM_CREATION_RETRIES));
-				createInstance(previousAttempts + 1);
-			} else {
-				SWT.error(SWT.ERROR_UNSPECIFIED, null,
-						String.format(" Aborting Edge initialiation after %d retries with result %d", MAXIMUM_CREATION_RETRIES, result));
-			}
-			break;
 		}
+		setupBrowser((int)result, pv);
 		return COM.S_OK;
 	});
-}
-
-private void releaseEnvironment() {
-	if (environment2 != null) {
-		environment2.Release();
-		environment2 = null;
-	}
-	containingEnvironment.instances().remove(this);
+	containingEnvironment.environment().CreateCoreWebView2Controller(browser.handle, setupBrowserCallback);
 }
 
 void setupBrowser(int hr, long pv) {
+	if(browser.isDisposed()) {
+		browserDispose(new Event());
+		return;
+	}
+	switch (hr) {
+	case COM.S_OK:
+		break;
+	case COM.E_WRONG_THREAD:
+		containingEnvironment.instances().remove(this);
+		error(SWT.ERROR_THREAD_INVALID_ACCESS, hr);
+		break;
+	default:
+		containingEnvironment.instances().remove(this);
+		error(SWT.ERROR_NO_HANDLES, hr);
+	}
 	long[] ppv = new long[] {pv};
 	controller = new ICoreWebView2Controller(ppv[0]);
 	final ICoreWebView2 webView = webViewProvider.initializeWebView(controller);
-	if(webView == null) {
-		controller.Release();
-		releaseEnvironment();
-		return;
-	}
 	webView.get_Settings(ppv);
 	settings = new ICoreWebView2Settings(ppv[0]);
 
@@ -815,13 +706,16 @@ void setupBrowser(int hr, long pv) {
 void browserDispose(Event event) {
 	containingEnvironment.instances.remove(this);
 	webViewProvider.scheduleWebViewTask(() -> {
-		webViewProvider.releaseWebView();
+		webViewProvider.getWebView(false).Release();
 		if (environment2 != null) environment2.Release();
 		if (settings != null) settings.Release();
+		if (webViewProvider.isWebView_2Available()) webViewProvider.getWebView_2(false).Release();
+		if (webViewProvider.isWebView_11Available()) webViewProvider.getWebView_11(false).Release();
+		if (webViewProvider.isWebView_12Available()) webViewProvider.getWebView_12(false).Release();
 		if(controller != null) {
 			// Bug in WebView2. Closing the controller from an event handler results
 			// in a crash. The fix is to delay the closure with asyncExec.
-			if (inCallback > 0) {
+			if (inCallback) {
 				ICoreWebView2Controller controller1 = controller;
 				controller.put_IsVisible(false);
 				browser.getDisplay().asyncExec(() -> {
@@ -840,17 +734,8 @@ void browserDispose(Event event) {
 }
 
 void browserFocusIn(Event event) {
-	if (ignoreFocusIn) return;
+	if (ignoreFocus) return;
 	// TODO: directional traversals
-
-	// https://github.com/eclipse-platform/eclipse.platform.swt/issues/1848
-	// When we call ICoreWebView2Controller.MoveFocus(int) here,
-	// WebView2 will call us back in handleGotFocus() asynchronously.
-	// We need to ignore that next event, as in the meantime the user might
-	// have moved focus to some other control and reacting on that event
-	// would bring us back to the Browser.
-	ignoreGotFocus = true;
-
 	controller.MoveFocus(COM.COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
 }
 
@@ -916,29 +801,11 @@ public Object evaluate(String script) throws SWTException {
 	// Feature in WebView2. ExecuteScript works regardless of IsScriptEnabled setting.
 	// Disallow programmatic execution manually.
 	if (!jsEnabled) return null;
-	return evaluateInternal(script);
-}
 
-/**
- * Unconditional script execution, bypassing {@link WebBrowser#jsEnabled} flag /
- * {@link Browser#setJavascriptEnabled(boolean)}.
- */
-private Object evaluateInternal(String script) throws SWTException {
-	if(inCallback > 0) {
-		// Execute script, but do not wait for async call to complete as otherwise it
-		// can cause a deadlock if execute inside a WebView callback.
-		execute(script);
-		return null;
-	}
 	String script2 = "(function() {try { " + script + " } catch (e) { return '" + ERROR_ID + "' + e.message; } })();\0";
 	String[] pJson = new String[1];
-	inEvaluate = true;
-	try {
-		int hr = callAndWait(pJson, completion -> webViewProvider.getWebView(true).ExecuteScript(script2.toCharArray(), completion));
-		if (hr != COM.S_OK) error(SWT.ERROR_FAILED_EVALUATE, hr);
-	} finally {
-		inEvaluate = false;
-	}
+	int hr = callAndWait(pJson, completion -> webViewProvider.getWebView(true).ExecuteScript(script2.toCharArray(), completion));
+	if (hr != COM.S_OK) error(SWT.ERROR_FAILED_EVALUATE, hr);
 
 	Object data = JSON.parse(pJson[0]);
 	if (data instanceof String && ((String) data).startsWith(ERROR_ID)) {
@@ -973,7 +840,7 @@ String getJavaCallDeclaration() {
 
 @Override
 public String getText() {
-	return (String)evaluateInternal("return document.documentElement.outerHTML;");
+	return (String)evaluate("return document.documentElement.outerHTML;");
 }
 
 @Override
@@ -1025,15 +892,12 @@ long handleCallJava(int index, long bstrToken, long bstrArgsJson) {
 	String token = bstrToString(bstrToken);
 	BrowserFunction function = functions.get(index);
 	if (function != null && token.equals (function.token)) {
-		inCallback++;
 		try {
 			String argsJson = bstrToString(bstrArgsJson);
 			Object args = JSON.parse(argsJson.toCharArray());
 			result = function.function ((Object[]) args);
 		} catch (Throwable e) {
 			result = WebBrowser.CreateErrorString(e.getLocalizedMessage());
-		} finally {
-			inCallback--;
 		}
 	}
 	String json = JSON.stringify(result);
@@ -1350,13 +1214,13 @@ int handleNewWindowRequested(long pView, long pArgs) {
 	args.GetDeferral(ppv);
 	ICoreWebView2Deferral deferral = new ICoreWebView2Deferral(ppv[0]);
 	inNewWindow = true;
-	Runnable openWindowHandler = () -> {
+	browser.getDisplay().asyncExec(() -> {
 		try {
 			if (browser.isDisposed()) return;
 			WindowEvent openEvent = new WindowEvent(browser);
 			openEvent.display = browser.getDisplay();
 			openEvent.widget = browser;
-			openEvent.required = false;
+			openEvent.required = true;
 			for (OpenWindowListener openListener : openWindowListeners) {
 				openListener.open(openEvent);
 				if (browser.isDisposed()) return;
@@ -1386,30 +1250,11 @@ int handleNewWindowRequested(long pView, long pArgs) {
 			args.Release();
 			inNewWindow = false;
 		}
-	};
-
-	// Creating a new browser instance within the same environment from inside the OpenWindowListener of another browser
-	// can lead to a deadlock. To prevent this, handlers should typically run asynchronously.
-	// However, if a new window is opened using `evaluate(window.open)`, running the handler asynchronously in that context
-	// may also result in a deadlock.
-	// Therefore, whether the listener runs synchronously or asynchronously should depend on the `inEvaluate` condition.
-	// That said, combining both situations—opening a window via `evaluate` and launching a new browser inside the OpenWindowListener—
-	// should be avoided altogether, as it significantly increases the risk of deadlocks.
-	if (inEvaluate) {
-		openWindowHandler.run();
-	} else {
-		browser.getDisplay().asyncExec(openWindowHandler);
-	}
-
+	});
 	return COM.S_OK;
 }
 
 int handleGotFocus(long pView, long pArg) {
-	if (ignoreGotFocus) {
-		ignoreGotFocus = false;
-		return COM.S_OK;
-	}
-	// https://github.com/eclipse-platform/eclipse.platform.swt/issues/1139
 	// browser.forceFocus() does not result in
 	// Shell#setActiveControl(Control)
 	// being called and therefore no SWT.FocusIn event being dispatched,
@@ -1417,9 +1262,9 @@ int handleGotFocus(long pView, long pArg) {
 	// The solution is to explicitly send a WM_SETFOCUS
 	// to the browser, and, while doing so, ignoring any recursive
 	// calls in #browserFocusIn(Event).
-	ignoreFocusIn = true;
+	ignoreFocus = true;
 	OS.SendMessage (browser.handle, OS.WM_SETFOCUS, 0, 0);
-	ignoreFocusIn = false;
+	ignoreFocus = false;
 	return COM.S_OK;
 }
 
@@ -1532,19 +1377,17 @@ public void stop() {
 	webViewProvider.scheduleWebViewTask(() -> webViewProvider.getWebView(false).Stop());
 }
 
-static boolean isLocationForCustomText(String location) {
+private boolean isLocationForCustomText(String location) {
 		try {
-			URI locationUri = new URI(location);
-			return "file".equals(locationUri.getScheme())
-					&& Path.of(URI_FOR_CUSTOM_TEXT_PAGE).equals(Path.of(locationUri));
-		} catch (URISyntaxException | IllegalArgumentException e) {
+			return URI_FOR_CUSTOM_TEXT_PAGE.equals(new URI(location));
+		} catch (URISyntaxException e) {
 			return false;
 		}
 }
 
 @Override
 public boolean setText(String html, boolean trusted) {
-	return setWebpageData(URI_FOR_CUSTOM_TEXT_PAGE.toString(), null, null, html);
+	return setWebpageData(URI_FOR_CUSTOM_TEXT_PAGE.toASCIIString(), null, null, html);
 }
 
 private boolean setWebpageData(String url, String postData, String[] headers, String html) {

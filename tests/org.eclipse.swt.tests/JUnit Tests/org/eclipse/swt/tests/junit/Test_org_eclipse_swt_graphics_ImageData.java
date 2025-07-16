@@ -27,6 +27,7 @@ import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,10 +60,9 @@ public void setUp() {
 /**
  * Tests {@link ImageData#blit}:
  * creates a random image and tests over all combinations of depth,format,scale
- * @throws Exception
  */
 @Test
-public void test_blit() throws Exception {
+public void test_blit() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 	List<BlitTestInfo> tests = new ArrayList<>();
 
 	// Compose a list of all supported formats
@@ -117,10 +117,9 @@ public void test_blit() throws Exception {
 /**
  * Tests {@link ImageData#blit}:
  * Ensures that (MSB_FIRST, LSB_FIRST) round trip produces original.
- * @throws Exception
  */
 @Test
-public void test_blit_MsbLsb() throws Exception {
+public void test_blit_MsbLsb() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 	List<BlitTestInfo> tests = new ArrayList<>();
 	{
 		for (int depth : indexedDepths) {
@@ -219,8 +218,10 @@ public void test_ConstructorLjava_io_InputStream() throws IOException {
 			assertThrows("No exception thrown for invalid InputStream", SWTException.class, () ->new ImageData(stream1));
 		}
 
+		int numFormats = SwtTestUtil.imageFormats.length;
 		String fileName = SwtTestUtil.imageFilenames[0];
-		for (String format : SwtTestUtil.imageFormats) {
+		for (int i=0; i<numFormats; i++) {
+			String format = SwtTestUtil.imageFormats[i];
 			try (InputStream stream2 = SwtTestUtil.class.getResourceAsStream(fileName + "." + format)) {
 				new ImageData(stream2);
 			}

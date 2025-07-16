@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,17 +14,12 @@
 package org.eclipse.swt.graphics;
 
 
-import static org.eclipse.swt.internal.image.ImageColorTransformer.DEFAULT_DISABLED_IMAGE_TRANSFORMER;
-
 import java.io.*;
-import java.util.*;
-import java.util.function.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cocoa.*;
 import org.eclipse.swt.internal.graphics.*;
-import org.eclipse.swt.internal.image.*;
 
 /**
  * Instances of this class are graphics which have been prepared
@@ -139,11 +134,6 @@ public final class Image extends Resource implements Drawable {
 	 * ImageDataProvider to provide ImageData at various Zoom levels
 	 */
 	private ImageDataProvider imageDataProvider;
-
-	/**
-	 * ImageGcDrawer to provide a callback to draw on a GC for various zoom levels
-	 */
-	private ImageGcDrawer imageGcDrawer;
 
 	/**
 	 * Style flag used to differentiate normal, gray-scale and disabled images based
@@ -394,9 +384,8 @@ public Image(Device device, Image srcImage, int flag) {
 
 		imageFileNameProvider = srcImage.imageFileNameProvider;
 		imageDataProvider = srcImage.imageDataProvider;
-		imageGcDrawer = srcImage.imageGcDrawer;
 		this.styleFlag = srcImage.styleFlag | flag;
-		if (imageFileNameProvider != null || imageDataProvider != null ||srcImage.imageGcDrawer != null) {
+		if (imageFileNameProvider != null || imageDataProvider != null) {
 			/* If source image has 200% representation then create the 200% representation for the new image & apply flag */
 			NSBitmapImageRep rep200 = srcImage.getRepresentation (200);
 			if (rep200 != null) createRepFromSourceAndApplyFlag(rep200, srcWidth * 2, srcHeight * 2, flag);
@@ -437,14 +426,12 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 	long data = rep.bitmapData();
 	C.memmove(data, srcData, srcWidth * srcHeight * 4);
 	if (flag != SWT.IMAGE_COPY) {
-		final int redOffset, greenOffset, blueOffset, alphaOffset;
+		final int redOffset, greenOffset, blueOffset;
 		if (srcBpp == 32 && (srcBitmapFormat & OS.NSAlphaFirstBitmapFormat) == 0) {
 			redOffset = 0;
 			greenOffset = 1;
 			blueOffset = 2;
-			alphaOffset = 3;
 		} else {
-			alphaOffset = 0;
 			redOffset = 1;
 			greenOffset = 2;
 			blueOffset = 3;
@@ -452,6 +439,16 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 		/* Apply transformation */
 		switch (flag) {
 		case SWT.IMAGE_DISABLE: {
+			Color zeroColor = this.device.getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
+			RGB zeroRGB = zeroColor.getRGB();
+			byte zeroRed = (byte)zeroRGB.red;
+			byte zeroGreen = (byte)zeroRGB.green;
+			byte zeroBlue = (byte)zeroRGB.blue;
+			Color oneColor = this.device.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
+			RGB oneRGB = oneColor.getRGB();
+			byte oneRed = (byte)oneRGB.red;
+			byte oneGreen = (byte)oneRGB.green;
+			byte oneBlue = (byte)oneRGB.blue;
 			byte[] line = new byte[(int)srcBpr];
 			for (int y=0; y<srcHeight; y++) {
 				C.memmove(line, data + (y * srcBpr), srcBpr);
@@ -460,12 +457,16 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
 					int red = line[offset+redOffset] & 0xFF;
 					int green = line[offset+greenOffset] & 0xFF;
 					int blue = line[offset+blueOffset] & 0xFF;
-					int alpha = line[offset+alphaOffset] & 0xFF;
-					RGBA result = DEFAULT_DISABLED_IMAGE_TRANSFORMER.adaptPixelValue(red, green, blue, alpha);
-					line[offset+redOffset] = (byte) result.rgb.red;
-					line[offset+greenOffset] = (byte) result.rgb.green;
-					line[offset+blueOffset] = (byte) result.rgb.blue;
-					line[offset+alphaOffset] = (byte) result.alpha;
+					int intensity = red * red + green * green + blue * blue;
+					if (intensity < 98304) {
+						line[offset+redOffset] = zeroRed;
+						line[offset+greenOffset] = zeroGreen;
+						line[offset+blueOffset] = zeroBlue;
+					} else {
+						line[offset+redOffset] = oneRed;
+						line[offset+greenOffset] = oneGreen;
+						line[offset+blueOffset] = oneBlue;
+					}
 					offset += 4;
 				}
 				C.memmove(data + (y * srcBpr), line, srcBpr);
@@ -527,10 +528,7 @@ private void createRepFromSourceAndApplyFlag(NSBitmapImageRep srcRep, int srcWid
  * </ul>
  *
  * @see #dispose()
- *
- * @deprecated use {@link Image#Image(Device, int, int)} instead
  */
-@Deprecated(since = "2025-06", forRemoval = true)
 public Image(Device device, Rectangle bounds) {
 	super(device);
 	if (bounds == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
@@ -684,18 +682,11 @@ public Image(Device device, ImageData source, ImageData mask) {
  */
 public Image(Device device, InputStream stream) {
 	super(device);
-	if (stream == null) {
-		SWT.error(SWT.ERROR_NULL_ARGUMENT);
-	}
 	NSAutoreleasePool pool = null;
 	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
 	try {
-		byte[] input = stream.readAllBytes();
-		initWithSupplier(zoom -> ImageDataLoader.canLoadAtZoom(new ByteArrayInputStream(input), FileFormat.DEFAULT_ZOOM, zoom),
-				zoom -> ImageDataLoader.load(new ByteArrayInputStream(input), FileFormat.DEFAULT_ZOOM, zoom).element());
+		init(new ImageData(stream));
 		init();
-	} catch (IOException e) {
-		SWT.error(SWT.ERROR_INVALID_ARGUMENT, e);
 	} finally {
 		if (pool != null) pool.release();
 	}
@@ -740,10 +731,7 @@ public Image(Device device, String filename) {
 	try {
 		if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 		initNative(filename);
-		if (this.handle == null) {
-			initWithSupplier(zoom -> ImageDataLoader.canLoadAtZoom(filename, FileFormat.DEFAULT_ZOOM, zoom),
-					zoom -> ImageDataLoader.load(filename, FileFormat.DEFAULT_ZOOM, zoom).element());
-		}
+		if (this.handle == null) init(new ImageData(filename));
 		init();
 	} finally {
 		if (pool != null) pool.release();
@@ -789,7 +777,7 @@ public Image(Device device, ImageFileNameProvider imageFileNameProvider) {
 	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
 	try {
 		initNative(filename);
-		if (this.handle == null) init(ImageDataLoader.load(filename, 100, 100).element());
+		if (this.handle == null) init(new ImageData(filename));
 		init();
 		String filename2x = imageFileNameProvider.getImagePath(200);
 		if (filename2x != null) {
@@ -797,13 +785,6 @@ public Image(Device device, ImageFileNameProvider imageFileNameProvider) {
 			id id = NSImageRep.imageRepWithContentsOfFile(NSString.stringWith(filename2x));
 			NSImageRep rep = new NSImageRep(id);
 			handle.addRepresentation(rep);
-		} else if (ImageDataLoader.canLoadAtZoom(filename, 100, 200)) {
-			// Try to natively scale up the image (e.g. possible if it's an SVG)
-			ImageData imageData2x = ImageDataLoader.load(filename, 100, 200).element();
-			alphaInfo_200 = new AlphaInfo();
-			NSBitmapImageRep rep = createRepresentation (imageData2x, alphaInfo_200);
-			handle.addRepresentation(rep);
-			rep.release();
 		}
 	} finally {
 		if (pool != null) pool.release();
@@ -859,72 +840,6 @@ public Image(Device device, ImageDataProvider imageDataProvider) {
 		}
 	} finally {
 		if (pool != null) pool.release();
-	}
-}
-
-/**
- * The provided ImageGcDrawer will be called on demand whenever a new variant of the
- * Image for an additional zoom is required. Depending on the OS-specific implementation
- * these calls will be done during the instantiation or later when a new variant is
- * requested.
- *
- * @param device the device on which to create the image
- * @param imageGcDrawer the ImageGcDrawer object to be called when a new image variant
- * for another zoom is required.
- * @param width the width of the new image in points
- * @param height the height of the new image in points
- *
- * @exception IllegalArgumentException <ul>
- *    <li>ERROR_NULL_ARGUMENT - if device is null and there is no current device</li>
- *    <li>ERROR_NULL_ARGUMENT - if the ImageGcDrawer is null</li>
- * </ul>
- * @since 3.129
- */
-public Image(Device device, ImageGcDrawer imageGcDrawer, int width, int height) {
-	super(device);
-	if (imageGcDrawer == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
-	this.imageGcDrawer = imageGcDrawer;
-	this.width = width;
-	this.height = height;
-	ImageData data = drawWithImageGcDrawer(imageGcDrawer, width, height, 100);
-	if (data == null) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
-	NSAutoreleasePool pool = null;
-	if (!NSThread.isMainThread()) pool = (NSAutoreleasePool) new NSAutoreleasePool().alloc().init();
-	try {
-		init (data);
-		init ();
-		ImageData data2x = drawWithImageGcDrawer(imageGcDrawer, width, height, 200);
-		if (data2x != null) {
-			alphaInfo_200 = new AlphaInfo();
-			NSBitmapImageRep rep = createRepresentation (data2x, alphaInfo_200);
-			handle.addRepresentation(rep);
-			rep.release();
-		}
-	} finally {
-		if (pool != null) pool.release();
-	}
-}
-
-private ImageData drawWithImageGcDrawer(ImageGcDrawer imageGcDrawer, int width, int height, int zoom) {
-	int gcStyle = imageGcDrawer.getGcStyle();
-	Image image;
-	if ((gcStyle & SWT.TRANSPARENT) != 0) {
-		/* Create a 24 bit image data with alpha channel */
-		final ImageData resultData = new ImageData (width, height, 24, new PaletteData (0xFF, 0xFF00, 0xFF0000));
-		resultData.alphaData = new byte [width * height];
-		image = new Image(device, resultData);
-	} else {
-		image = new Image(device, width, height);
-	}
-	GC gc = new GC(image, gcStyle);
-	try {
-		imageGcDrawer.drawOn(gc, width, height);
-		ImageData imageData = image.getImageData(zoom);
-		imageGcDrawer.postProcess(imageData);
-		return imageData;
-	} finally {
-		gc.dispose();
-		image.dispose();
 	}
 }
 
@@ -1206,9 +1121,6 @@ public boolean equals (Object object) {
 		return styleFlag == image.styleFlag && imageDataProvider.equals (image.imageDataProvider);
 	} else if (imageFileNameProvider != null && image.imageFileNameProvider != null) {
 		return styleFlag == image.styleFlag && imageFileNameProvider.equals (image.imageFileNameProvider);
-	} else if (imageGcDrawer != null && image.imageGcDrawer != null) {
-		return styleFlag == image.styleFlag && imageGcDrawer.equals(image.imageGcDrawer) && width == image.width
-				&& height == image.height;
 	} else {
 		return handle == image.handle;
 	}
@@ -1445,8 +1357,6 @@ public int hashCode () {
 		return imageDataProvider.hashCode();
 	} else if (imageFileNameProvider != null) {
 		return imageFileNameProvider.hashCode();
-	} else if (imageGcDrawer != null) {
-		return Objects.hash(imageGcDrawer, height, width);
 	} else {
 		return handle != null ? (int)handle.id : 0;
 	}
@@ -1492,19 +1402,6 @@ void init(ImageData image) {
 	rep.release();
 	handle.setCacheMode(OS.NSImageCacheNever);
 }
-
-private void initWithSupplier(Function<Integer, Boolean> canLoadAtZoom, Function<Integer, ImageData> zoomToImageData) {
-	ImageData imageData = zoomToImageData.apply(100);
-	init(imageData);
-	if (canLoadAtZoom.apply(200)) {
-		ImageData imageData2x = zoomToImageData.apply(200);
-		alphaInfo_200 = new AlphaInfo();
-		NSBitmapImageRep rep = createRepresentation (imageData2x, alphaInfo_200);
-		handle.addRepresentation(rep);
-		rep.release();
-	}
-}
-
 
 void initAlpha_200(NSBitmapImageRep nativeRep) {
 	NSAutoreleasePool pool = null;
@@ -1811,29 +1708,6 @@ public void setBackground(Color color) {
 public String toString () {
 	if (isDisposed()) return "Image {*DISPOSED*}";
 	return "Image {" + handle + "}";
-}
-
-/**
- * <b>IMPORTANT:</b> This method is not part of the public
- * API for Image. It is marked public only so that it
- * can be shared within the packages provided by SWT.
- *
- * Draws a scaled image using the GC by another image.
- *
- * @param gc the GC to draw on the resulting image
- * @param original the image which is supposed to be scaled and drawn on the resulting image
- * @param width the width of the original image
- * @param height the height of the original image
- * @param scaleFactor the factor with which the image is supposed to be scaled
- *
- * @noreference This method is not intended to be referenced by clients.
- */
-public static void drawScaled(GC gc, Image original, int width, int height, float scaleFactor) {
-	gc.drawImage (original, 0, 0, DPIUtil.autoScaleDown (width), DPIUtil.autoScaleDown (height),
-			/* E.g. destWidth here is effectively DPIUtil.autoScaleDown (scaledWidth), but avoiding rounding errors.
-			 * Nevertheless, we still have some rounding errors due to the point-based API GC#drawImage(..).
-			 */
-			0, 0, Math.round (DPIUtil.autoScaleDown (width * scaleFactor)), Math.round (DPIUtil.autoScaleDown (height * scaleFactor)));
 }
 
 }

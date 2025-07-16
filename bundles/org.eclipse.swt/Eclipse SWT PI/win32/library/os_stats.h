@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2024 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -29,7 +29,7 @@ typedef enum {
 	ActivateActCtx_FUNC,
 	ActivateKeyboardLayout_FUNC,
 	AddFontResourceEx_FUNC,
-	AdjustWindowRectExForDpi_FUNC,
+	AdjustWindowRectEx_FUNC,
 	AllowDarkModeForWindow_FUNC,
 	AllowSetForegroundWindow_FUNC,
 	AlphaBlend_FUNC,
@@ -202,7 +202,6 @@ typedef enum {
 	GetDlgItem_FUNC,
 	GetDoubleClickTime_FUNC,
 	GetDpiForMonitor_FUNC,
-	GetDpiForWindow_FUNC,
 	GetFocus_FUNC,
 	GetFontLanguageInfo_FUNC,
 	GetForegroundWindow_FUNC,
@@ -365,7 +364,6 @@ typedef enum {
 	LoadCursor_FUNC,
 	LoadIcon_FUNC,
 	LoadIconMetric_FUNC,
-	LoadIconWithScaleDown_FUNC,
 	LoadImage_FUNC,
 	LoadKeyboardLayout_FUNC,
 	LocalFree_FUNC,
@@ -499,6 +497,7 @@ typedef enum {
 	NONCLIENTMETRICS_1sizeof_FUNC,
 	NOTIFYICONDATA_1V2_1SIZE_FUNC,
 	NotifyWinEvent_FUNC,
+	OSVERSIONINFOEX_1sizeof_FUNC,
 	OUTLINETEXTMETRIC_1sizeof_FUNC,
 	OffsetRect_FUNC,
 	OffsetRgn_FUNC,
@@ -553,6 +552,7 @@ typedef enum {
 	ReplyMessage_FUNC,
 	RestoreDC_FUNC,
 	RoundRect_FUNC,
+	RtlGetVersion_FUNC,
 	SAFEARRAYBOUND_1sizeof_FUNC,
 	SAFEARRAY_1sizeof_FUNC,
 	SCRIPT_1ANALYSIS_1sizeof_FUNC,
@@ -566,7 +566,6 @@ typedef enum {
 	SCROLLBARINFO_1sizeof_FUNC,
 	SCROLLINFO_1sizeof_FUNC,
 	SHDRAGIMAGE_1sizeof_FUNC,
-	SHDefExtractIcon_FUNC,
 	SHELLEXECUTEINFO_1sizeof_FUNC,
 	SHFILEINFO_1sizeof_FUNC,
 	SHGetFileInfo_FUNC,

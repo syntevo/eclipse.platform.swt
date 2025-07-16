@@ -282,7 +282,7 @@ public class ColorMenu {
 		 *
 		 * @param cl
 		 *            A ColorListener
-		 * @see org.eclipse.swt.examples.graphics.ColorListener
+		 * @see org.eclipse.swt.examples.graphics.ColorListener.java
 		 */
 		public void setColorListener(ColorListener cl) {
 			this.colorListener = cl;

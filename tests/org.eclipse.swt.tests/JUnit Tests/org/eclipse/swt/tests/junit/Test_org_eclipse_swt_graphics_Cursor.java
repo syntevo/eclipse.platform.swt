@@ -137,8 +137,10 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceI() {
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_ImageDataLorg_eclipse_swt_graphics_ImageDataII() {
 	// Test new Cursor(Device device, ImageData source, ImageData mask, int hotspotX, int hotspotY)
+	int numFormats = SwtTestUtil.imageFormats.length;
 	String fileName = SwtTestUtil.imageFilenames[0];
-	for (String format : SwtTestUtil.imageFormats) {
+	for (int i=0; i<numFormats; i++) {
+		String format = SwtTestUtil.imageFormats[i];
 		ImageLoader loader = new ImageLoader();
 		try (InputStream stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format)) {
 			ImageData source = loader.load(stream)[0];

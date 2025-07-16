@@ -33,8 +33,6 @@ import org.eclipse.swt.widgets.*;
  */
 public abstract class Device implements Drawable {
 
-	static boolean strictChecks = System.getProperty("org.eclipse.swt.internal.enableStrictChecks") != null;
-
 	/* Debugging */
 	public static boolean DEBUG;
 	boolean debug = DEBUG;
@@ -260,33 +258,20 @@ void checkGDIP() {
 protected void create (DeviceData data) {
 }
 
-int computePixels(float height, int zoom) {
+int computePixels(float height) {
 	long hDC = internal_new_GC (null);
-	int pixels = -(int)(0.5f + (height / calculateFontConversionFactor(hDC, zoom)));
+	int pixels = -(int)(0.5f + (height * OS.GetDeviceCaps(hDC, OS.LOGPIXELSY) / 72f));
 	internal_dispose_GC (hDC, null);
 	return pixels;
 }
 
 float computePoints(LOGFONT logFont, long hFont) {
-	return computePoints(logFont, hFont, SWT.DEFAULT);
+	return computePoints(logFont, hFont, -1);
 }
 
-private float calculateFontConversionFactor(long hDC, int zoom) {
-	float conversionFactor = 72f;
-	if (isAutoScalable() && zoom != SWT.DEFAULT) {
-		// For auto scalable devices we need to use a dynamic
-		// DPI value that is extracted from the zoom
-		conversionFactor /= DPIUtil.mapZoomToDPI(zoom);
-	} else {
-		conversionFactor /= OS.GetDeviceCaps(hDC, OS.LOGPIXELSY);
-	}
-	return conversionFactor;
-}
-
-float computePoints(LOGFONT logFont, long hFont, int zoom) {
+float computePoints(LOGFONT logFont, long hFont, int currentFontDPI) {
 	long hDC = internal_new_GC (null);
-
-	float conversionFactor = calculateFontConversionFactor(hDC, zoom);
+	int logPixelsY = OS.GetDeviceCaps(hDC, OS.LOGPIXELSY);
 	int pixels = 0;
 	if (logFont.lfHeight > 0) {
 		/*
@@ -305,7 +290,14 @@ float computePoints(LOGFONT logFont, long hFont, int zoom) {
 		pixels = -logFont.lfHeight;
 	}
 	internal_dispose_GC (hDC, null);
-	return pixels * conversionFactor;
+	float adjustedZoomFactor = 1.0f;
+	if (currentFontDPI > 0) {
+		// as Device::computePoints will always return point on the basis of the
+		// primary monitor zoom, a custom zoomFactor must be calculated if the font
+		// is used for a different zoom level
+		adjustedZoomFactor *= (float) logPixelsY / (float) currentFontDPI;
+	}
+	return adjustedZoomFactor * pixels * 72f / logPixelsY;
 }
 
 /**

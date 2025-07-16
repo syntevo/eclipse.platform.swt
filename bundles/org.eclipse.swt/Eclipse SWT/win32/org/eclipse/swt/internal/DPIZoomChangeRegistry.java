@@ -15,14 +15,13 @@ package org.eclipse.swt.internal;
 
 import java.util.*;
 import java.util.Map.*;
-import java.util.concurrent.*;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.widgets.*;
 
 public class DPIZoomChangeRegistry {
 
-	private static Map<Class<? extends Widget>, DPIZoomChangeHandler> dpiZoomChangeHandlers =  new ConcurrentSkipListMap<>(
+	private static Map<Class<? extends Widget>, DPIZoomChangeHandler> dpiZoomChangeHandlers =  new TreeMap<>(
 			(o1, o2) -> {
 	            if(o1.isAssignableFrom(o2)) {
 	            	return -1;

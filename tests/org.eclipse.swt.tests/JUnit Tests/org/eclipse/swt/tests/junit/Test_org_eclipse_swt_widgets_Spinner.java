@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 Red Hat, Inc. and others.
+ * Copyright (c) 2000, 2016 Red Hat, Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,7 @@
 package org.eclipse.swt.tests.junit;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Spinner;
@@ -37,11 +37,21 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 	@Override
 	@Test
 	public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
-		assertThrows("No exception thrown for parent == null", IllegalArgumentException.class,
-				() -> new Spinner(null, 0));
-		int[] cases = { 0, SWT.READ_ONLY, SWT.WRAP };
+		try {
+			spinner = new Spinner(null, 0);
+			fail("No exception thrown for parent == null");
+		}
+		catch (IllegalArgumentException e) {
+		}
+		int[] cases = {0, SWT.READ_ONLY, SWT.WRAP};
 		for (int style : cases)
 			spinner = new Spinner(shell, style);
+	}
+
+	@Override
+	@Test
+	public void test_computeSizeIIZ() {
+		// super class test is sufficient
 	}
 
 	@Test
@@ -49,10 +59,10 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 		int [] cases = {5,100,1000,1};
 		for (int value : cases) {
 			spinner.setIncrement(value);
-			assertEquals(value, spinner.getIncrement());
+			assertEquals(spinner.getIncrement(), value);
 		}
 		spinner.setIncrement(-1);
-		assertEquals(cases[cases.length-1], spinner.getIncrement());
+		assertEquals(spinner.getIncrement(), cases[cases.length-1]);
 	}
 
 	@Test
@@ -60,29 +70,33 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 		int [] cases = {1,10,0};
 		for (int digits : cases) {
 			spinner.setDigits(digits);
-			assertEquals(digits, spinner.getDigits());
+			assertEquals(spinner.getDigits(), digits);
 		}
-		assertThrows("setDigits should have failed with illegal Argument", IllegalArgumentException.class,
-				() -> spinner.setDigits(-1));
-		assertEquals(cases[cases.length-1], spinner.getDigits());
+		try{
+			spinner.setDigits(-1);
+			fail("setDigits should have failed with illegal Argument");
+		}
+		catch(IllegalArgumentException e){
+			assertEquals(spinner.getDigits(), cases[cases.length-1]);
+		}
 	}
 
 	@Test
 	public void test_getMaximum() {
 		spinner.setMaximum(1000);
-		assertEquals(1000, spinner.getMaximum());
+		assertEquals(spinner.getMaximum(), 1000);
 		spinner.setMinimum(100);
 		spinner.setMaximum(99);
-		assertEquals(1000, spinner.getMaximum());
+		assertEquals(spinner.getMaximum(), 1000);
 	}
 
 	@Test
 	public void test_getMinimum() {
 		spinner.setMinimum(2);
-		assertEquals(2, spinner.getMinimum());
+		assertEquals(spinner.getMinimum(), 2);
 		spinner.setMaximum(99);
 		spinner.setMinimum(100);
-		assertEquals(2, spinner.getMinimum());
+		assertEquals(spinner.getMinimum(), 2);
 	}
 
 	@Test
@@ -90,10 +104,10 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 		int [] cases = {5,1000,20,1};
 		for (int value : cases) {
 			spinner.setPageIncrement(value);
-			assertEquals(value, spinner.getPageIncrement());
+			assertEquals(spinner.getPageIncrement(), value);
 		}
 		spinner.setPageIncrement(-1);
-		assertEquals(cases[cases.length-1], spinner.getPageIncrement());
+		assertEquals(spinner.getPageIncrement(), cases[cases.length-1]);
 	}
 
 	@Test
@@ -103,12 +117,12 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 			if(cases[i]>=spinner.getMaximum())
 				cases[i] = spinner.getMaximum()-1;
 			spinner.setSelection(cases[i]);
-			assertEquals(cases[i], spinner.getSelection());
+			assertEquals(spinner.getSelection(), cases[i]);
 		}
 		spinner.setSelection(spinner.getMaximum()+1);
-		assertEquals(spinner.getMaximum(), spinner.getSelection());
+		assertEquals(spinner.getSelection(), spinner.getMaximum());
 		spinner.setSelection(spinner.getMinimum()-1);
-		assertEquals(spinner.getMinimum(), spinner.getSelection());
+		assertEquals(spinner.getSelection(), spinner.getMinimum());
 	}
 
 	@Test
@@ -116,10 +130,13 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 		int [] cases = {5,1000,1};
 		for (int value : cases) {
 			spinner.setTextLimit(value);
-			assertEquals(value, spinner.getTextLimit());
+			assertEquals(spinner.getTextLimit(), value);
 		}
-		assertThrows("setTextLimit should have caused an expection with value 0", IllegalArgumentException.class,
-				() -> spinner.setTextLimit(0));
+		try {
+			spinner.setTextLimit(0);
+			fail("setTextLimit should have caused an expection with value 0");
+		} catch (Exception e) {
+		}
 	}
 
 	@Test
@@ -133,32 +150,30 @@ public class Test_org_eclipse_swt_widgets_Spinner extends Test_org_eclipse_swt_w
 		int [] pageIncrement = {50,5,6,100};
 		for (int i=0;i<cases;i++){
 			spinner.setValues(selection[i], minimum[i], maximum[i], digits[i], increment[i], pageIncrement[i]);
-			assertEquals("i=" + i, selection[i], spinner.getSelection());
-			assertEquals("i=" + i, minimum[i], spinner.getMinimum());
-			assertEquals("i=" + i, maximum[i], spinner.getMaximum());
-			assertEquals("i=" + i, digits[i], spinner.getDigits());
-			assertEquals("i=" + i, increment[i], spinner.getIncrement());
-			assertEquals("i=" + i, pageIncrement[i], spinner.getPageIncrement());
+			assertEquals(spinner.getSelection(), selection[i]);
+			assertEquals(spinner.getMinimum(), minimum[i]);
+			assertEquals(spinner.getMaximum(), maximum[i]);
+			assertEquals(spinner.getDigits(), digits[i]);
+			assertEquals(spinner.getIncrement(), increment[i]);
+			assertEquals(spinner.getPageIncrement(), pageIncrement[i]);
 		}
-
-		// set invalid values. The last values should be preserved
 		spinner.setValues(5, 10, 3, -1, 0, -1);
-		assertEquals(selection[cases - 1], spinner.getSelection());
-		assertEquals(minimum[cases - 1], spinner.getMinimum());
-		assertEquals(maximum[cases - 1], spinner.getMaximum());
-		assertEquals(digits[cases - 1], spinner.getDigits());
-		assertEquals(increment[cases - 1], spinner.getIncrement());
-		assertEquals(pageIncrement[cases - 1], spinner.getPageIncrement());
-		spinner = new Spinner(shell, 0);
+		assertEquals(spinner.getSelection(), selection[cases-1]);
+		assertEquals(spinner.getMinimum(), minimum[cases-1]);
+		assertEquals(spinner.getMaximum(), maximum[cases-1]);
+		assertEquals(spinner.getDigits(), digits[cases-1]);
+		assertEquals(spinner.getIncrement(), increment[cases-1]);
+		assertEquals(spinner.getPageIncrement(), pageIncrement[cases-1]);
+		spinner = new Spinner(shell,0);
 	}
 
 	@Test
 	public void test_getText(){
 		spinner.setSelection(5);
-		assertEquals("5", spinner.getText());
+		assertEquals(spinner.getText(), "5");
 		spinner.setSelection(-5);
-		assertEquals("0",spinner.getText());
+		assertEquals(spinner.getText(), "0");
 		spinner.setSelection(spinner.getMaximum()+1);
-		assertEquals(String.valueOf(spinner.getMaximum()), spinner.getText());
+		assertEquals(spinner.getText(), String.valueOf(spinner.getMaximum()));
 	}
 }

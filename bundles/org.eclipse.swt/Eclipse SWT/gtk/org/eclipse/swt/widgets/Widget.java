@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2024 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -806,9 +806,7 @@ long gtk_button_release_event (long widget, long event) {
  * @param y the y coordinate, in widget allocation coordinates
  * @param event the GdkEvent captured
  */
-int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
-	return GTK4.GTK_EVENT_SEQUENCE_NONE;
-}
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {}
 
 /**
  * @param gesture the corresponding controller responsible for capturing the event
@@ -817,9 +815,7 @@ int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long 
  * @param y the y coordinate, in widget allocation coordinates
  * @param event the GdkEvent captured
  */
-int gtk_gesture_release_event(long gesture, int n_press, double x, double y, long event) {
-	return GTK4.GTK_EVENT_SEQUENCE_NONE;
-}
+void gtk_gesture_release_event(long gesture, int n_press, double x, double y, long event) {}
 
 /**
  * @param controller the corresponding controller responsible for capturing the event
@@ -2535,20 +2531,15 @@ boolean keyPressReleaseProc(long controller, int keyval, int keycode, int state,
 
 void gesturePressReleaseProc(long gesture, int n_press, double x, double y, long user_data) {
 	long event = GTK4.gtk_event_controller_get_current_event(gesture);
-	long sequence = GTK4.gtk_gesture_get_last_updated_sequence(gesture);
-
-	int result = GTK4.GTK_EVENT_SEQUENCE_NONE;
 
 	switch ((int)user_data) {
 		case GESTURE_PRESSED:
-			result = gtk_gesture_press_event(gesture, n_press, x, y, event);
+			gtk_gesture_press_event(gesture, n_press, x, y, event);
 			break;
 		case GESTURE_RELEASED:
-			result = gtk_gesture_release_event(gesture, n_press, x, y, event);
+			gtk_gesture_release_event(gesture, n_press, x, y, event);
 			break;
 	}
-
-	GTK4.gtk_gesture_set_sequence_state(gesture, sequence, result);
 }
 
 void leaveProc(long controller, long handle, long user_data) {
@@ -2757,16 +2748,6 @@ void notifyDisposalTracker() {
 	if (WidgetSpy.isEnabled) {
 		WidgetSpy.getInstance().widgetDisposed(this);
 	}
-}
-
-void gtk_widget_hide(long widget) {
-	if (GTK.GTK4) GTK.gtk_widget_set_visible(widget, false);
-	else GTK3.gtk_widget_hide(widget);
-}
-
-void gtk_widget_show(long widget) {
-	if (GTK.GTK4) GTK.gtk_widget_set_visible(widget, true);
-	else GTK3.gtk_widget_show(widget);
 }
 
 }

@@ -14,14 +14,10 @@
 package org.eclipse.swt.graphics;
 
 
-import java.util.*;
-import java.util.stream.*;
-
 import org.eclipse.swt.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gdip.*;
 import org.eclipse.swt.internal.win32.*;
-import org.eclipse.swt.widgets.*;
 
 /**
  * Class <code>GC</code> is where all of the drawing capabilities that are
@@ -186,28 +182,7 @@ static int checkStyle(int style) {
 	return style & (SWT.LEFT_TO_RIGHT | SWT.RIGHT_TO_LEFT);
 }
 
-private void validateGCState() {
-	if (drawable == null) {
-		return;
-	}
-	try {
-		GCData newData = new GCData();
-		long newHdc = drawable.internal_new_GC(newData);
-
-		if (data.nativeZoom != newData.nativeZoom) {
-			System.err.println("***WARNING: Zoom of the underlying Drawable of the GC has changed. This indicates a "
-					+ "long running GC that should be recreated.");
-		}
-		drawable.internal_dispose_GC(newHdc, newData);
-	} catch (Exception e) {
-		// ignore if recreation fails
-	}
-}
-
 void checkGC(int mask) {
-	if (Device.strictChecks) {
-		validateGCState();
-	}
 	int state = data.state;
 	if ((state & mask) == mask) return;
 	state = (state ^ mask) & mask;
@@ -337,10 +312,10 @@ void checkGC(int mask) {
 			}
 		}
 		if ((state & FONT) != 0) {
-			long fontHandle = SWTFontProvider.getFontHandle(data.font, data.nativeZoom);
-			OS.SelectObject(handle, fontHandle);
+			Font font = data.font;
+			OS.SelectObject(handle, font.handle);
 			long[] hFont = new long[1];
-			long gdipFont = createGdipFont(handle, fontHandle, gdipGraphics, device.fontCollection, null, hFont);
+			long gdipFont = createGdipFont(handle, font.handle, gdipGraphics, device.fontCollection, null, hFont);
 			if (hFont[0] != 0) OS.SelectObject(handle, hFont[0]);
 			if (data.hGDIFont != 0) OS.DeleteObject(data.hGDIFont);
 			data.hGDIFont = hFont[0];
@@ -458,8 +433,8 @@ void checkGC(int mask) {
 		OS.SetTextColor(handle, data.foreground);
 	}
 	if ((state & FONT) != 0) {
-		long fontHandle = SWTFontProvider.getFontHandle(data.font, data.nativeZoom);
-		OS.SelectObject(handle, fontHandle);
+		Font font = data.font;
+		OS.SelectObject(handle, font.handle);
 	}
 }
 
@@ -491,7 +466,7 @@ void copyAreaInPixels(Image image, int x, int y) {
 	if (image == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	if (image.type != SWT.BITMAP || image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 	/* Copy the bitmap area */
-	Rectangle rect = image.getBounds(getZoom());
+	Rectangle rect = image.getBoundsInPixels();
 	long memHdc = OS.CreateCompatibleDC(handle);
 	long hOldBitmap = OS.SelectObject(memHdc, Image.win32_getHandle(image, getZoom()));
 	OS.BitBlt(memHdc, 0, 0, rect.width, rect.height, handle, x, y, OS.SRCCOPY);
@@ -537,10 +512,14 @@ public void copyArea (int srcX, int srcY, int width, int height, int destX, int 
  * @since 3.1
  */
 public void copyArea (int srcX, int srcY, int width, int height, int destX, int destY, boolean paint) {
-	int zoom = getZoom();
-	Rectangle sourceRect = DPIUtil.scaleUp(drawable, new Rectangle(srcX, srcY, width, height), zoom);
-	Rectangle destRect = DPIUtil.scaleUp(drawable, new Rectangle(destX, destY, width, height), zoom);
-	copyAreaInPixels(sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height, destRect.x, destRect.y, paint);
+	int deviceZoom = getZoom();
+	srcX = DPIUtil.scaleUp(drawable, srcX, deviceZoom);
+	srcY = DPIUtil.scaleUp(drawable, srcY, deviceZoom);
+	width = DPIUtil.scaleUp(drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp(drawable, height, deviceZoom);
+	destX = DPIUtil.scaleUp(drawable, destX, deviceZoom);
+	destY = DPIUtil.scaleUp(drawable, destY, deviceZoom);
+	copyAreaInPixels(srcX, srcY, width, height, destX, destY, paint);
 }
 
 void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int destY, boolean paint) {
@@ -780,8 +759,12 @@ void disposeGdip() {
  * </ul>
  */
 public void drawArc (int x, int y, int width, int height, int startAngle, int arcAngle) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	drawArcInPixels(rect.x, rect.y, rect.width, rect.height, startAngle, arcAngle);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp(drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp(drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp(drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp(drawable, height, deviceZoom);
+	drawArcInPixels(x, y, width, height, startAngle, arcAngle);
 }
 
 void drawArcInPixels (int x, int y, int width, int height, int startAngle, int arcAngle) {
@@ -860,8 +843,12 @@ void drawArcInPixels (int x, int y, int width, int height, int startAngle, int a
  * @see #drawRectangle(int, int, int, int)
  */
 public void drawFocus (int x, int y, int width, int height) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	drawFocusInPixels(rect.x, rect.y, rect.width, rect.height);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	drawFocusInPixels(x, y, width, height);
 }
 
 void drawFocusInPixels (int x, int y, int width, int height) {
@@ -989,77 +976,36 @@ public void drawImage (Image image, int srcX, int srcY, int srcWidth, int srcHei
 	if (image == null) SWT.error (SWT.ERROR_NULL_ARGUMENT);
 	if (image.isDisposed()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 
-	int gcZoom = getZoom();
-	int srcImageZoom = calculateZoomForImage(gcZoom, srcWidth, srcHeight, destWidth, destHeight);
-	drawImage(image, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, gcZoom, srcImageZoom);
-}
-
-private Collection<Integer> getAllCurrentMonitorZooms() {
-	if (device instanceof Display display) {
-		return Arrays.stream(display.getMonitors())
-			.map(Monitor::getZoom)
-			.collect(Collectors.toSet());
-	}
-	return Collections.emptySet();
-}
-
-private int calculateZoomForImage(int gcZoom, int srcWidth, int srcHeight, int destWidth, int destHeight) {
-	if (srcWidth == 1 && srcHeight == 1) {
-		// One pixel images can use the GC zoom
-		return gcZoom;
-	}
-	if (destWidth == srcWidth && destHeight == srcHeight) {
-		// unscaled images can use the GC zoom
-		return gcZoom;
-	}
-
-	float imageScaleFactor = 1f * destWidth / srcWidth;
-	int imageZoom = Math.round(gcZoom * imageScaleFactor);
-	if (getAllCurrentMonitorZooms().contains(imageZoom)) {
-		return imageZoom;
-	}
-	if (imageZoom > 150) {
-		return 200;
-	}
-	return 100;
-}
-
-private void drawImage(Image image, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY,
-		int destWidth, int destHeight, int imageZoom, int scaledImageZoom) {
-	Rectangle src = DPIUtil.scaleUp(drawable, new Rectangle(srcX, srcY, srcWidth, srcHeight), scaledImageZoom);
-	Rectangle dest = DPIUtil.scaleUp(drawable, new Rectangle(destX, destY, destWidth, destHeight), imageZoom);
-	if (scaledImageZoom != 100) {
+	int deviceZoom = getZoom();
+	Rectangle src = DPIUtil.scaleUp(drawable, new Rectangle(srcX, srcY, srcWidth, srcHeight), deviceZoom);
+	Rectangle dest = DPIUtil.scaleUp(drawable, new Rectangle(destX, destY, destWidth, destHeight), deviceZoom);
+	if (deviceZoom != 100) {
 		/*
 		 * This is a HACK! Due to rounding errors at fractional scale factors,
 		 * the coordinates may be slightly off. The workaround is to restrict
 		 * coordinates to the allowed bounds.
 		 */
-		Rectangle b = image.getBounds(scaledImageZoom);
+		Rectangle b = image.getBounds(deviceZoom);
 		int errX = src.x + src.width - b.width;
 		int errY = src.y + src.height - b.height;
 		if (errX != 0 || errY != 0) {
-			if (errX <= scaledImageZoom / 100 && errY <= scaledImageZoom / 100) {
+			if (errX <= deviceZoom / 100 && errY <= deviceZoom / 100) {
 				src.intersect(b);
 			} else {
 				SWT.error (SWT.ERROR_INVALID_ARGUMENT);
 			}
 		}
 	}
-	drawImage(image, src.x, src.y, src.width, src.height, dest.x, dest.y, dest.width, dest.height, false, scaledImageZoom);
+	drawImage(image, src.x, src.y, src.width, src.height, dest.x, dest.y, dest.width, dest.height, false);
 }
 
 void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
-	drawImage(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple, getZoom());
-}
-
-void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple, int imageZoom) {
 	if (data.gdipGraphics != 0) {
 		//TODO - cache bitmap
-		long [] gdipImage = srcImage.createGdipImage(imageZoom);
+		long [] gdipImage = srcImage.createGdipImage(getZoom());
 		long img = gdipImage[0];
 		int imgWidth = Gdip.Image_GetWidth(img);
 		int imgHeight = Gdip.Image_GetHeight(img);
-
 		if (simple) {
 			srcWidth = destWidth = imgWidth;
 			srcHeight = destHeight = imgHeight;
@@ -1110,18 +1056,17 @@ void drawImage(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, 
 		}
 		return;
 	}
-	long imageHandle = Image.win32_getHandle(srcImage, imageZoom);
 	switch (srcImage.type) {
 		case SWT.BITMAP:
-			drawBitmap(srcImage, imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
+			drawBitmap(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
 			break;
 		case SWT.ICON:
-			drawIcon(imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
+			drawIcon(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
 			break;
 	}
 }
 
-void drawIcon(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+void drawIcon(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
 	int technology = OS.GetDeviceCaps(handle, OS.TECHNOLOGY);
 
 	boolean drawIcon = true;
@@ -1145,14 +1090,14 @@ void drawIcon(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight,
 	/* Simple case: no stretching, entire icon */
 	if (simple && technology != OS.DT_RASPRINTER && drawIcon) {
 		if (offsetX != 0 || offsetY != 0) OS.SetWindowOrgEx(handle, 0, 0, null);
-		OS.DrawIconEx(handle, destX - offsetX, destY - offsetY, imageHandle, 0, 0, 0, 0, flags);
+		OS.DrawIconEx(handle, destX - offsetX, destY - offsetY, Image.win32_getHandle(srcImage, getZoom()), 0, 0, 0, 0, flags);
 		if (offsetX != 0 || offsetY != 0) OS.SetWindowOrgEx(handle, offsetX, offsetY, null);
 		return;
 	}
 
 	/* Get the icon info */
 	ICONINFO srcIconInfo = new ICONINFO();
-	OS.GetIconInfo(imageHandle, srcIconInfo);
+	OS.GetIconInfo(Image.win32_getHandle(srcImage, getZoom()), srcIconInfo);
 
 	/* Get the icon width and height */
 	long hBitmap = srcIconInfo.hbmColor;
@@ -1174,11 +1119,11 @@ void drawIcon(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight,
 			srcWidth == destWidth && srcHeight == destHeight &&
 			srcWidth == iconWidth && srcHeight == iconHeight;
 		if (!drawIcon) {
-			drawBitmapMask(srcIconInfo.hbmColor, srcIconInfo.hbmMask, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple, iconWidth, iconHeight, false);
+			drawBitmapMask(srcImage, srcIconInfo.hbmColor, srcIconInfo.hbmMask, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple, iconWidth, iconHeight, false);
 		} else if (simple && technology != OS.DT_RASPRINTER) {
 			/* Simple case: no stretching, entire icon */
 			if (offsetX != 0 || offsetY != 0) OS.SetWindowOrgEx(handle, 0, 0, null);
-			OS.DrawIconEx(handle, destX - offsetX, destY - offsetY, imageHandle, 0, 0, 0, 0, flags);
+			OS.DrawIconEx(handle, destX - offsetX, destY - offsetY, Image.win32_getHandle(srcImage, getZoom()), 0, 0, 0, 0, flags);
 			if (offsetX != 0 || offsetY != 0) OS.SetWindowOrgEx(handle, offsetX, offsetY, null);
 		} else {
 			/* Create the icon info and HDC's */
@@ -1251,9 +1196,9 @@ void drawIcon(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight,
 	if (failed) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
 }
 
-void drawBitmap(Image srcImage, long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+void drawBitmap(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
 	BITMAP bm = new BITMAP();
-	OS.GetObject(imageHandle, BITMAP.sizeof, bm);
+	OS.GetObject(Image.win32_getHandle(srcImage, getZoom()), BITMAP.sizeof, bm);
 	int imgWidth = bm.bmWidth;
 	int imgHeight = bm.bmHeight;
 	if (simple) {
@@ -1281,19 +1226,19 @@ void drawBitmap(Image srcImage, long imageHandle, int srcX, int srcY, int srcWid
 	boolean isDib = bm.bmBits != 0;
 	int depth = bm.bmPlanes * bm.bmBitsPixel;
 	if (isDib && depth == 32) {
-		drawBitmapAlpha(imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
+		drawBitmapAlpha(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
 	} else if (srcImage.transparentPixel != -1) {
-		drawBitmapTransparent(srcImage, imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple, bm, imgWidth, imgHeight);
+		drawBitmapTransparent(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple, bm, imgWidth, imgHeight);
 	} else {
-		drawBitmapColor(imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
+		drawBitmapColor(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
 	}
 	if (mustRestore) {
-		long hOldBitmap = OS.SelectObject(memGC.handle, imageHandle);
+		long hOldBitmap = OS.SelectObject(memGC.handle, Image.win32_getHandle(srcImage, getZoom()));
 		memGC.data.hNullBitmap = hOldBitmap;
 	}
 }
 
-void drawBitmapAlpha(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+void drawBitmapAlpha(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
 	boolean alphaBlendSupport = true;
 	boolean isPrinter = OS.GetDeviceCaps(handle, OS.TECHNOLOGY) == OS.DT_RASPRINTER;
 	int sourceAlpha = -1;
@@ -1301,7 +1246,7 @@ void drawBitmapAlpha(long imageHandle, int srcX, int srcY, int srcWidth, int src
 		int caps = OS.GetDeviceCaps(handle, OS.SHADEBLENDCAPS);
 		if (caps != 0) {
 			long srcHdc = OS.CreateCompatibleDC(handle);
-			long oldSrcBitmap = OS.SelectObject(srcHdc, imageHandle);
+			long oldSrcBitmap = OS.SelectObject(srcHdc, Image.win32_getHandle(srcImage, getZoom()));
 			long memDib = Image.createDIB(srcWidth, srcHeight, 32);
 			if (memDib == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			long memHdc = OS.CreateCompatibleDC(handle);
@@ -1328,7 +1273,7 @@ void drawBitmapAlpha(long imageHandle, int srcX, int srcY, int srcWidth, int src
 			if (sourceAlpha != -1) {
 				if (sourceAlpha == 0) return;
 				if (sourceAlpha == 255) {
-					drawBitmapColor(imageHandle, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
+					drawBitmapColor(srcImage, srcX, srcY, srcWidth, srcHeight, destX, destY, destWidth, destHeight, simple);
 					return;
 				}
 				alphaBlendSupport = (caps & OS.SB_CONST_ALPHA) != 0;
@@ -1342,7 +1287,7 @@ void drawBitmapAlpha(long imageHandle, int srcX, int srcY, int srcWidth, int src
 		BLENDFUNCTION blend = new BLENDFUNCTION();
 		blend.BlendOp = OS.AC_SRC_OVER;
 		long srcHdc = OS.CreateCompatibleDC(handle);
-		long oldSrcBitmap = OS.SelectObject(srcHdc, imageHandle);
+		long oldSrcBitmap = OS.SelectObject(srcHdc, Image.win32_getHandle(srcImage, getZoom()));
 		blend.SourceConstantAlpha = (byte)sourceAlpha;
 		blend.AlphaFormat = OS.AC_SRC_ALPHA;
 		OS.AlphaBlend(handle, destX, destY, destWidth, destHeight, srcHdc, srcX, srcY, srcWidth, srcHeight, blend);
@@ -1375,7 +1320,7 @@ void drawBitmapAlpha(long imageHandle, int srcX, int srcY, int srcWidth, int src
 
 	/* Create resources */
 	long srcHdc = OS.CreateCompatibleDC(handle);
-	long oldSrcBitmap = OS.SelectObject(srcHdc, imageHandle);
+	long oldSrcBitmap = OS.SelectObject(srcHdc, Image.win32_getHandle(srcImage, getZoom()));
 	long memHdc = OS.CreateCompatibleDC(handle);
 	long memDib = Image.createDIB(Math.max(srcWidth, destWidth), Math.max(srcHeight, destHeight), 32);
 	if (memDib == 0) SWT.error(SWT.ERROR_NO_HANDLES);
@@ -1491,7 +1436,7 @@ void drawBitmapTransparentByClipping(long srcHdc, long maskHdc, int srcX, int sr
 	OS.DeleteObject(rgn);
 }
 
-void drawBitmapMask(long srcColor, long srcMask, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple, int imgWidth, int imgHeight, boolean offscreen) {
+void drawBitmapMask(Image srcImage, long srcColor, long srcMask, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple, int imgWidth, int imgHeight, boolean offscreen) {
 	int srcColorY = srcY;
 	if (srcColor == 0) {
 		srcColor = srcMask;
@@ -1543,11 +1488,11 @@ void drawBitmapMask(long srcColor, long srcMask, int srcX, int srcY, int srcWidt
 	OS.DeleteDC(srcHdc);
 }
 
-void drawBitmapTransparent(Image srcImage, long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple, BITMAP bm, int imgWidth, int imgHeight) {
+void drawBitmapTransparent(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple, BITMAP bm, int imgWidth, int imgHeight) {
 
 	/* Find the RGB values for the transparent pixel. */
 	boolean isDib = bm.bmBits != 0;
-	long hBitmap = imageHandle;
+	long hBitmap = Image.win32_getHandle(srcImage, getZoom());
 	long srcHdc = OS.CreateCompatibleDC(handle);
 	long oldSrcBitmap = OS.SelectObject(srcHdc, hBitmap);
 	byte[] originalColors = null;
@@ -1592,7 +1537,7 @@ void drawBitmapTransparent(Image srcImage, long imageHandle, int srcX, int srcY,
 				bmiHeader.biBitCount = bm.bmBitsPixel;
 				byte[] bmi = new byte[BITMAPINFOHEADER.sizeof + numColors * 4];
 				OS.MoveMemory(bmi, bmiHeader, BITMAPINFOHEADER.sizeof);
-				OS.GetDIBits(srcHdc, imageHandle, 0, 0, null, bmi, OS.DIB_RGB_COLORS);
+				OS.GetDIBits(srcHdc, Image.win32_getHandle(srcImage, getZoom()), 0, 0, null, bmi, OS.DIB_RGB_COLORS);
 				int offset = BITMAPINFOHEADER.sizeof + 4 * srcImage.transparentPixel;
 				transRed = bmi[offset + 2] & 0xFF;
 				transGreen = bmi[offset + 1] & 0xFF;
@@ -1665,13 +1610,13 @@ void drawBitmapTransparent(Image srcImage, long imageHandle, int srcX, int srcY,
 		OS.DeleteObject(maskBitmap);
 	}
 	OS.SelectObject(srcHdc, oldSrcBitmap);
-	if (hBitmap != imageHandle) OS.DeleteObject(hBitmap);
+	if (hBitmap != Image.win32_getHandle(srcImage, getZoom())) OS.DeleteObject(hBitmap);
 	OS.DeleteDC(srcHdc);
 }
 
-void drawBitmapColor(long imageHandle, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
+void drawBitmapColor(Image srcImage, int srcX, int srcY, int srcWidth, int srcHeight, int destX, int destY, int destWidth, int destHeight, boolean simple) {
 	long srcHdc = OS.CreateCompatibleDC(handle);
-	long oldSrcBitmap = OS.SelectObject(srcHdc, imageHandle);
+	long oldSrcBitmap = OS.SelectObject(srcHdc, Image.win32_getHandle(srcImage, getZoom()));
 	int dwRop = OS.GetROP2(handle) == OS.R2_XORPEN ? OS.SRCINVERT : OS.SRCCOPY;
 	if (!simple && (srcWidth != destWidth || srcHeight != destHeight)) {
 		int mode = OS.SetStretchBltMode(handle, OS.COLORONCOLOR);
@@ -1751,8 +1696,12 @@ void drawLineInPixels (int x1, int y1, int x2, int y2) {
  * </ul>
  */
 public void drawOval (int x, int y, int width, int height) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	drawOvalInPixels(rect.x, rect.y, rect.width, rect.height);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	drawOvalInPixels(x, y, width, height);
 }
 
 void drawOvalInPixels (int x, int y, int width, int height) {
@@ -1961,7 +1910,12 @@ void drawPolylineInPixels(int[] pointArray) {
  * </ul>
  */
 public void drawRectangle (int x, int y, int width, int height) {
-	drawRectangle(new Rectangle(x, y, width, height));
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	drawRectangleInPixels(x, y, width, height);
 }
 
 void drawRectangleInPixels (int x, int y, int width, int height) {
@@ -2042,11 +1996,14 @@ public void drawRectangle (Rectangle rect) {
  * </ul>
  */
 public void drawRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
-	int zoom = getZoom();
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), zoom);
-	arcWidth = DPIUtil.scaleUp (drawable, arcWidth, zoom);
-	arcHeight = DPIUtil.scaleUp (drawable, arcHeight, zoom);
-	drawRoundRectangleInPixels(rect.x, rect.y, rect.width, rect.height, arcWidth, arcHeight);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	arcWidth = DPIUtil.scaleUp (drawable, arcWidth, deviceZoom);
+	arcHeight = DPIUtil.scaleUp (drawable, arcHeight, deviceZoom);
+	drawRoundRectangleInPixels(x, y, width, height, arcWidth, arcHeight);
 }
 
 void drawRoundRectangleInPixels (int x, int y, int width, int height, int arcWidth, int arcHeight) {
@@ -2434,7 +2391,7 @@ void drawText(long gdipGraphics, String string, int x, int y, int flags, Point s
 	char[] chars = string.toCharArray();
 	long hdc = Gdip.Graphics_GetHDC(gdipGraphics);
 	long hFont = data.hGDIFont;
-	if (hFont == 0 && data.font != null) hFont = SWTFontProvider.getFontHandle(data.font, data.nativeZoom);
+	if (hFont == 0 && data.font != null) hFont = data.font.handle;
 	long oldFont = 0;
 	if (hFont != 0) oldFont = OS.SelectObject(hdc, hFont);
 	TEXTMETRIC lptm = new TEXTMETRIC();
@@ -2524,7 +2481,7 @@ RectF drawText(long gdipGraphics, char[] buffer, int start, int length, int x, i
 	}
 	long hdc = Gdip.Graphics_GetHDC(gdipGraphics);
 	long hFont = data.hGDIFont;
-	if (hFont == 0 && data.font != null) hFont = SWTFontProvider.getFontHandle(data.font, data.nativeZoom);
+	if (hFont == 0 && data.font != null) hFont = data.font.handle;
 	long oldFont = 0;
 	if (hFont != 0) oldFont = OS.SelectObject(hdc, hFont);
 	if (start != 0) {
@@ -2730,8 +2687,12 @@ public boolean equals (Object object) {
  * @see #drawArc
  */
 public void fillArc (int x, int y, int width, int height, int startAngle, int arcAngle) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	fillArcInPixels(rect.x, rect.y, rect.width, rect.height, startAngle, arcAngle);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	fillArcInPixels(x, y, width, height, startAngle, arcAngle);
 }
 
 void fillArcInPixels (int x, int y, int width, int height, int startAngle, int arcAngle) {
@@ -2806,8 +2767,12 @@ void fillArcInPixels (int x, int y, int width, int height, int startAngle, int a
  * @see #drawRectangle(int, int, int, int)
  */
 public void fillGradientRectangle (int x, int y, int width, int height, boolean vertical) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	fillGradientRectangleInPixels(rect.x, rect.y, rect.width, rect.height, vertical);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	fillGradientRectangleInPixels(x, y, width, height, vertical);
 }
 
 void fillGradientRectangleInPixels(int x, int y, int width, int height, boolean vertical) {
@@ -2921,8 +2886,12 @@ void fillGradientRectangleInPixels(int x, int y, int width, int height, boolean 
  * @see #drawOval
  */
 public void fillOval (int x, int y, int width, int height) {
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), getZoom());
-	fillOvalInPixels(rect.x, rect.y, rect.width, rect.height);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	fillOvalInPixels(x, y, width, height);
 }
 
 void fillOvalInPixels (int x, int y, int width, int height) {
@@ -3041,7 +3010,12 @@ void fillPolygonInPixels (int[] pointArray) {
  * @see #drawRectangle(int, int, int, int)
  */
 public void fillRectangle (int x, int y, int width, int height) {
-	fillRectangle(new Rectangle(x, y, width, height));
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	fillRectangleInPixels(x, y, width, height);
 }
 
 void fillRectangleInPixels (int x, int y, int width, int height) {
@@ -3102,11 +3076,14 @@ public void fillRectangle (Rectangle rect) {
  * @see #drawRoundRectangle
  */
 public void fillRoundRectangle (int x, int y, int width, int height, int arcWidth, int arcHeight) {
-	int zoom = getZoom();
-	Rectangle rect = DPIUtil.scaleUp(drawable, new Rectangle(x, y, width, height), zoom);
-	arcWidth = DPIUtil.scaleUp (drawable, arcWidth, zoom);
-	arcHeight = DPIUtil.scaleUp (drawable, arcHeight, zoom);
-	fillRoundRectangleInPixels(rect.x, rect.y, rect.width, rect.height, arcWidth, arcHeight);
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp (drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp (drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp (drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp (drawable, height, deviceZoom);
+	arcWidth = DPIUtil.scaleUp (drawable, arcWidth, deviceZoom);
+	arcHeight = DPIUtil.scaleUp (drawable, arcHeight, deviceZoom);
+	fillRoundRectangleInPixels(x, y, width, height, arcWidth, arcHeight);
 }
 
 void fillRoundRectangleInPixels (int x, int y, int width, int height, int arcWidth, int arcHeight) {
@@ -3944,18 +3921,18 @@ void init(Drawable drawable, GCData data, long hDC) {
 		data.background = OS.GetBkColor(hDC);
 	}
 	data.state &= ~(NULL_BRUSH | NULL_PEN);
-	if (data.nativeZoom == 0) {
-		data.nativeZoom = extractZoom(hDC);
-	}
 	Font font = data.font;
 	if (font != null) {
 		data.state &= ~FONT;
 	} else {
-		data.font = SWTFontProvider.getFont(device, OS.GetCurrentObject(hDC, OS.OBJ_FONT), data.nativeZoom);
+		data.font = Font.win32_new(device, OS.GetCurrentObject(hDC, OS.OBJ_FONT));
+	}
+	if (data.nativeZoom == 0) {
+		data.nativeZoom = extractZoom(hDC);
 	}
 	Image image = data.image;
 	if (image != null) {
-		data.hNullBitmap = OS.SelectObject(hDC, Image.win32_getHandle(image, data.nativeZoom));
+		data.hNullBitmap = OS.SelectObject(hDC, Image.win32_getHandle(image, DPIUtil.getZoomForAutoscaleProperty(data.nativeZoom)));
 		image.memGC = this;
 	}
 	int layout = data.layout;
@@ -3973,10 +3950,6 @@ void init(Drawable drawable, GCData data, long hDC) {
 }
 
 private static int extractZoom(long hDC) {
-	if (Device.strictChecks) {
-		System.err.println("***WARNING: GC is initialized with a missing zoom. This indicates an "
-				+ "incompatible custom Drawable implementation.");
-	}
 	long hwnd = OS.WindowFromDC(hDC);
 	long parentWindow = OS.GetAncestor(hwnd, OS.GA_ROOT);
 	long monitorParent = OS.MonitorFromWindow(parentWindow, OS.MONITOR_DEFAULTTONEAREST);
@@ -4304,7 +4277,12 @@ void setClipping(long clipRgn) {
  * </ul>
  */
 public void setClipping (int x, int y, int width, int height) {
-	setClipping(new Rectangle(x, y, width, height));
+	int deviceZoom = getZoom();
+	x = DPIUtil.scaleUp(drawable, x, deviceZoom);
+	y = DPIUtil.scaleUp(drawable, y, deviceZoom);
+	width = DPIUtil.scaleUp(drawable, width, deviceZoom);
+	height = DPIUtil.scaleUp(drawable, height, deviceZoom);
+	setClippingInPixels(x, y, width, height);
 }
 
 void setClippingInPixels (int x, int y, int width, int height) {

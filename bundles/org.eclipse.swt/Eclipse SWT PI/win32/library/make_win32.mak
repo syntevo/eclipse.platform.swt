@@ -31,10 +31,6 @@ SWT_OBJS    = swt.obj callback.obj c.obj c_stats.obj \
 	os.obj os_structs.obj os_custom.obj os_stats.obj \
 	com_structs.obj com.obj com_stats.obj com_custom.obj
 
-OSVERSION_PREFIX  = swt-osversion
-OSVERSION_LIB     = $(OSVERSION_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
-OSVERSION_OBJS    = osversion.obj osversion_structs.obj osversion_stats.obj
-
 GDIP_PREFIX  = swt-gdip
 GDIP_LIB     = $(GDIP_PREFIX)-$(WS_PREFIX)-$(SWT_VERSION).dll
 GDIP_LIBS    = gdiplus.lib
@@ -52,16 +48,16 @@ WGL_OBJS   = wgl.obj wgl_structs.obj wgl_stats.obj
 
 #CFLAGS = $(cdebug) $(cflags) $(cvarsmt) $(CFLAGS) \
 CFLAGS = -O1 /WX /W4 -DNDEBUG -DUNICODE -D_UNICODE /c $(cflags) $(cvarsmt) $(CFLAGS) \
-	-DUSE_ASSEMBLER \
+	-DSWT_VERSION=$(maj_ver)$(min_ver) -DSWT_REVISION=$(rev) -DUSE_ASSEMBLER \
 	/I"$(SWT_JAVA_HOME)\include" /I"$(SWT_JAVA_HOME)\include\win32" /I.
 
-RCFLAGS = $(rcflags) $(rcvars) $(RCFLAGS)
+RCFLAGS = $(rcflags) $(rcvars) $(RCFLAGS) -DSWT_FILE_VERSION=\"$(maj_ver).$(min_ver).$(rev).0\" -DSWT_COMMA_VERSION=$(comma_ver)
 ldebug = /RELEASE  /INCREMENTAL:NO /NOLOGO
 dlllflags = -dll /WX
 guilibsmt = kernel32.lib  ws2_32.lib mswsock.lib advapi32.lib bufferoverflowu.lib user32.lib gdi32.lib comdlg32.lib winspool.lib
 olelibsmt = ole32.lib uuid.lib oleaut32.lib $(guilibsmt)
 
-all: make_osversion make_swt make_awt make_gdip make_wgl
+all: make_swt make_awt make_gdip make_wgl
 
 .c.obj:
 	cl $(CFLAGS) $*.c
@@ -75,14 +71,6 @@ make_swt: $(SWT_OBJS) swt.res
 	echo $(SWT_OBJS) >>templrf
 	echo swt.res >>templrf
 	echo -out:$(SWT_LIB) >>templrf
-	link @templrf
-	del templrf
-
-make_osversion: $(OSVERSION_OBJS) swt_osversion.res
-	echo $(ldebug) $(dlllflags) $(guilibsmt) >templrf
-	echo $(OSVERSION_OBJS) >>templrf
-	echo swt_osversion.res >>templrf
-	echo -out:$(OSVERSION_LIB) >>templrf
 	link @templrf
 	del templrf
 
@@ -115,9 +103,6 @@ make_wgl: $(WGL_OBJS) swt_wgl.res
 
 swt.res:
 	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(SWT_LIB)\" -r -fo swt.res swt.rc
-
-swt_osversion.res:
-	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(OSVERSION_LIB)\" -r -fo swt_osversion.res swt_osversion.rc
 
 swt_gdip.res:
 	rc $(RCFLAGS) -DSWT_ORG_FILENAME=\"$(GDIP_LIB)\" -r -fo swt_gdip.res swt_gdip.rc

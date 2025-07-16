@@ -166,11 +166,11 @@ Optional<String> openNativeChooserDialog () {
 	long shellHandle = parent.topHandle ();
 	Display display = parent != null ? parent.getDisplay (): Display.getCurrent ();
 	long handle;
-	if (GTK.GTK_VERSION >= OS.VERSION(4, 10, 0)) {
+	if (GTK.GTK4) {
 		handle = GTK4.gtk_file_dialog_new();
 		GTK4.gtk_file_dialog_set_title(handle, titleBytes);
 	} else {
-		handle = GTK.gtk_file_chooser_native_new(titleBytes, shellHandle, GTK.GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, null, null);
+		handle = GTK3.gtk_file_chooser_native_new(titleBytes, shellHandle, GTK.GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, null, null);
 	}
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
 
@@ -191,11 +191,7 @@ Optional<String> openNativeChooserDialog () {
 		if (ptr != 0) {
 			if (GTK.GTK4) {
 				long file = OS.g_file_new_for_path(buffer);
-				if (GTK.GTK_VERSION >= OS.VERSION(4, 10, 0)) {
-					GTK4.gtk_file_dialog_set_initial_folder (handle, file);
-				} else {
-					GTK4.gtk_file_chooser_set_current_folder (handle, file, 0);
-				}
+				GTK4.gtk_file_dialog_set_initial_folder (handle, file);
 				OS.g_object_unref(file);
 			} else {
 				GTK3.gtk_file_chooser_set_current_folder (handle, ptr);
@@ -218,22 +214,18 @@ Optional<String> openNativeChooserDialog () {
 	int response;
 	long file = 0;
 	if (GTK.GTK4) {
-		if (GTK.GTK_VERSION >= OS.VERSION(4, 10, 0)) {
-			file = SyncDialogUtil.run(display, new AsyncReadyCallback() {
-				@Override
-				public void async(long result) {
-					GTK4.gtk_file_dialog_select_folder(handle, shellHandle, 0, result, 0);
-				}
+		file = SyncDialogUtil.run(display, new AsyncReadyCallback() {
+			@Override
+			public void async(long result) {
+				GTK4.gtk_file_dialog_select_folder(handle, shellHandle, 0, result, 0);
+			}
 
-				@Override
-				public long await(long result) {
-					return GTK4.gtk_file_dialog_select_folder_finish(handle, result, null);
-				}
-			});
-			response = file != 0 ? GTK.GTK_RESPONSE_ACCEPT : GTK.GTK_RESPONSE_CANCEL;
-		} else {
-			response = SyncDialogUtil.run(display, handle, true);
-		}
+			@Override
+			public long await(long result) {
+				return GTK4.gtk_file_dialog_select_folder_finish(handle, result, null);
+			}
+		});
+		response = file != 0 ? GTK.GTK_RESPONSE_ACCEPT : GTK.GTK_RESPONSE_CANCEL;
 	} else {
 		display.externalEventLoop = true;
 		display.sendPreExternalEventDispatchEvent ();
@@ -248,9 +240,6 @@ Optional<String> openNativeChooserDialog () {
 	if (response == GTK.GTK_RESPONSE_ACCEPT) {
 		long path;
 		if (GTK.GTK4) {
-			if (GTK.GTK_VERSION < OS.VERSION(4, 10, 0)) {
-				file = GTK4.gtk_file_chooser_get_file (handle);
-			}
 			path = OS.g_file_get_path(file);
 		} else {
 			path = GTK3.gtk_file_chooser_get_filename (handle);
@@ -275,7 +264,7 @@ Optional<String> openNativeChooserDialog () {
 			}
 		}
 	}
-
+	
 	Optional<String> result = Optional.empty();
 	if (response == GTK.GTK_RESPONSE_ACCEPT) {
 		result = Optional.ofNullable(selectedPath);
@@ -306,7 +295,7 @@ void GTK3setNativeDialogMessage(long handle, String message) {
 		if (label == 0) error(SWT.ERROR_NO_HANDLES);
 
 		GTK3.gtk_container_add(box, label);
-		GTK3.gtk_widget_show(label);
+		GTK.gtk_widget_show(label);
 		GTK3.gtk_label_set_line_wrap(label, true);
 
 		GTK.gtk_box_set_homogeneous(box, false);

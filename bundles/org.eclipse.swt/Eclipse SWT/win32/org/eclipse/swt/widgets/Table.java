@@ -59,7 +59,7 @@ import org.eclipse.swt.internal.win32.*;
  * </p>
  * <dl>
  * <dt><b>Styles:</b></dt>
- * <dd>SINGLE, MULTI, CHECK, FULL_SELECTION, HIDE_SELECTION, VIRTUAL, NO_SCROLL, NO_SEARCH</dd>
+ * <dd>SINGLE, MULTI, CHECK, FULL_SELECTION, HIDE_SELECTION, VIRTUAL, NO_SCROLL</dd>
  * <dt><b>Events:</b></dt>
  * <dd>Selection, DefaultSelection, SetData, MeasureItem, EraseItem, PaintItem</dd>
  * </dl>
@@ -6971,10 +6971,10 @@ LRESULT wmNotifyHeader (NMHDR hdr, long wParam, long lParam) {
 							GCData data = new GCData();
 							data.device = display;
 							GC gc = createNewGC(nmcd.hdc, data);
-							int y = Math.max (0, (nmcd.bottom - DPIUtil.scaleUp(columns[i].image.getBounds(), getZoom()).height) / 2);
+							int y = Math.max (0, (nmcd.bottom - columns[i].image.getBoundsInPixels().height) / 2);
 							int zoom = getZoom();
 							gc.drawImage (columns[i].image, DPIUtil.scaleDown(x, zoom), DPIUtil.scaleDown(y, zoom));
-							x += DPIUtil.scaleUp(columns[i].image.getBounds(), getZoom()).width + 12;
+							x += columns[i].image.getBoundsInPixels().width + 12;
 							gc.dispose ();
 						}
 
@@ -7298,7 +7298,7 @@ LRESULT wmNotifyToolTip (NMTTCUSTOMDRAW nmcd, long lParam) {
 					if (pinfo.iSubItem != 0) x -= gridWidth;
 					Image image = item.getImage (pinfo.iSubItem);
 					if (image != null) {
-						Rectangle rect = DPIUtil.scaleUp(image.getBounds(), getZoom());
+						Rectangle rect = image.getBoundsInPixels ();
 						RECT imageRect = item.getBounds (pinfo.iItem, pinfo.iSubItem, false, true, false, false, hDC);
 						Point size = imageList == null ? new Point (rect.width, rect.height) : imageList.getImageSize ();
 						int y = imageRect.top + Math.max (0, (imageRect.bottom - imageRect.top - size.y) / 2);
@@ -7361,12 +7361,6 @@ private static void handleDPIChange(Widget widget, int newZoom, float scalingFac
 		display.releaseImageList(imageList);
 		table.imageList = null;
 	}
-
-	// if the item height was set at least once programmatically with CDDS_SUBITEMPREPAINT,
-	// the item height of the table is not managed by the OS anymore e.g. when the zoom
-	// on the monitor is changed, the height of the item will stay at the fixed size.
-	// Resetting it will re-enable the default behavior again
-	table.setItemHeight(-1);
 
 	for (TableItem item : table.getItems()) {
 		DPIZoomChangeRegistry.applyChange(item, newZoom, scalingFactor);

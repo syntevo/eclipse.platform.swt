@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2018 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,6 +18,7 @@ import org.eclipse.swt.*;
 import org.eclipse.swt.accessibility.*;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.internal.gtk3.*;
 import org.eclipse.swt.internal.gtk4.*;
@@ -129,12 +130,12 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	//TEMPORARY CODE
 	if (wHint == 0) {
 		layout.setWidth (1);
-		Rectangle rect = layout.getBounds ();
+		Rectangle rect = DPIUtil.autoScaleUp(layout.getBounds ());
 		width = 0;
 		height = rect.height;
 	} else {
-		layout.setWidth (wHint);
-		Rectangle rect = layout.getBounds ();
+		layout.setWidth (DPIUtil.autoScaleDown(wHint));
+		Rectangle rect = DPIUtil.autoScaleUp(layout.getBounds ());
 		width = rect.width;
 		height = rect.height;
 	}
@@ -191,7 +192,8 @@ void drawWidget(GC gc) {
 	layout.draw (gc, 0, 0, selStart, selEnd, null, null);
 	if (hasFocus () && focusIndex != -1) {
 		Rectangle [] rects = getRectanglesInPixels (focusIndex);
-		for (Rectangle rect : rects) {
+		for (int i = 0; i < rects.length; i++) {
+			Rectangle rect = DPIUtil.autoScaleDown(rects [i]);
 			gc.drawFocus (rect.x, rect.y, rect.width, rect.height);
 		}
 	}
@@ -301,13 +303,13 @@ Rectangle [] getRectanglesInPixels (int linkIndex) {
 	while (point.y > lineOffsets [lineEnd]) lineEnd++;
 	int index = 0;
 	if (lineStart == lineEnd) {
-		rects [index++] = layout.getBounds (point.x, point.y);
+		rects [index++] = DPIUtil.autoScaleUp (layout.getBounds (point.x, point.y));
 	} else {
-		rects [index++] = layout.getBounds (point.x, lineOffsets [lineStart]-1);
-		rects [index++] = layout.getBounds (lineOffsets [lineEnd-1], point.y);
+		rects [index++] = DPIUtil.autoScaleUp (layout.getBounds (point.x, lineOffsets [lineStart]-1));
+		rects [index++] = DPIUtil.autoScaleUp (layout.getBounds (lineOffsets [lineEnd-1], point.y));
 		if (lineEnd - lineStart > 1) {
 			for (int i = lineStart; i < lineEnd - 1; i++) {
-				rects [index++] = layout.getLineBounds (i);
+				rects [index++] = DPIUtil.autoScaleUp (layout.getLineBounds (i));
 			}
 		}
 	}
@@ -363,7 +365,7 @@ long gtk_button_press_event (long widget, long event) {
 		int x = (int) eventX[0];
 		int y = (int) eventY[0];
 		if ((style & SWT.MIRRORED) != 0) x = getClientWidth () - x;
-		int offset = layout.getOffset (x, y, null);
+		int offset = DPIUtil.autoScaleUp(layout.getOffset (x, y, null));
 		int oldSelectionX = selection.x;
 		int oldSelectionY = selection.y;
 		selection.x = offset;
@@ -374,8 +376,8 @@ long gtk_button_press_event (long widget, long event) {
 				oldSelectionX = oldSelectionY;
 				oldSelectionY = temp;
 			}
-			Rectangle rect = layout.getBounds (oldSelectionX, oldSelectionY);
-			redraw (rect.x, rect.y, rect.width, rect.height, false);
+			Rectangle rect = DPIUtil.autoScaleUp(layout.getBounds (oldSelectionX, oldSelectionY));
+			redrawInPixels (rect.x, rect.y, rect.width, rect.height, false);
 		}
 		for (int j = 0; j < offsets.length; j++) {
 			Rectangle [] rects = getRectanglesInPixels (j);
@@ -542,7 +544,7 @@ long gtk_motion_notify_event (long widget, long event) {
 	if ((style & SWT.MIRRORED) != 0) x = getClientWidth () - x;
 	if ((state[0] & GDK.GDK_BUTTON1_MASK) != 0) {
 		int oldSelection = selection.y;
-		selection.y = layout.getOffset (x, y, null);
+		selection.y = DPIUtil.autoScaleUp(layout.getOffset (x, y, null));
 		if (selection.y != oldSelection) {
 			int newSelection = selection.y;
 			if (oldSelection > newSelection) {
@@ -551,7 +553,7 @@ long gtk_motion_notify_event (long widget, long event) {
 				newSelection = temp;
 			}
 			Rectangle rect = layout.getBounds (oldSelection, newSelection);
-			redraw (rect.x, rect.y, rect.width, rect.height, false);
+			redrawInPixels (rect.x, rect.y, rect.width, rect.height, false);
 		}
 	} else {
 		for (int j = 0; j < offsets.length; j++) {
@@ -808,7 +810,7 @@ int parseMnemonics (char[] buffer, int start, int end, StringBuilder result) {
 int setBounds(int x, int y, int width, int height, boolean move, boolean resize) {
 	int result = super.setBounds (x, y, width,height, move, resize);
 	if ((result & RESIZED) != 0) {
-		layout.setWidth ((width > 0 ? width : -1));
+		layout.setWidth (DPIUtil.autoScaleDown((width > 0 ? width : -1)));
 		redraw ();
 	}
 	return result;

@@ -721,7 +721,7 @@ int defaultBackground () {
 }
 
 long defaultFont() {
-	return SWTFontProvider.getSystemFontHandle(display, getNativeZoom());
+	return display.getSystemFont(getShell().nativeZoom).handle;
 }
 
 int defaultForeground () {
@@ -1315,7 +1315,7 @@ public Font getFont () {
 	if (font != null) return font;
 	long hFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
 	if (hFont == 0) hFont = defaultFont ();
-	return SWTFontProvider.getFont(display, hFont, getNativeZoom());
+	return Font.win32_new (display, hFont, getShell().nativeZoom);
 }
 
 /**
@@ -1353,15 +1353,10 @@ public Object getLayoutData () {
 }
 
 /**
- * Returns a point describing the receiver's location relative to its parent in
- * points (or its display if its parent is null), unless the receiver is a
- * shell. In this case, the point is usually relative to the display.
- * <p>
- * <b>Warning:</b> When executing this operation on a shell, it may not yield a
- * value with the expected meaning on some platforms. For example, executing
- * this operation on a shell when the environment uses the Wayland protocol, the
- * result is <b>not</b> a coordinate relative to the display. It will not change
- * when moving the shell.
+ * Returns a point describing the receiver's location relative
+ * to its parent in points (or its display if its parent is null), unless
+ * the receiver is a shell. In this case, the point is
+ * relative to the display.
  *
  * @return the receiver's location
  *
@@ -1753,18 +1748,14 @@ public long internal_new_GC (GCData data) {
 			}
 		}
 		data.device = display;
-		data.nativeZoom = getNativeZoom();
+		data.nativeZoom = nativeZoom;
 		int foreground = getForegroundPixel ();
 		if (foreground != OS.GetTextColor (hDC)) data.foreground = foreground;
 		Control control = findBackgroundControl ();
 		if (control == null) control = this;
 		int background = control.getBackgroundPixel ();
 		if (background != OS.GetBkColor (hDC)) data.background = background;
-		if (font != null) {
-			data.font = font;
-		} else {
-			data.font = SWTFontProvider.getFont(display, OS.SendMessage (hwnd, OS.WM_GETFONT, 0, 0), data.nativeZoom);
-		}
+		data.font = font != null ? font : Font.win32_new (display, OS.SendMessage (hwnd, OS.WM_GETFONT, 0, 0));
 		data.uiState = (int)OS.SendMessage (hwnd, OS.WM_QUERYUISTATE, 0, 0);
 	}
 	return hDC;
@@ -2228,13 +2219,7 @@ public boolean print (GC gc) {
 	}
 	int flags = OS.RDW_UPDATENOW | OS.RDW_ALLCHILDREN;
 	OS.RedrawWindow (topHandle, null, 0, flags);
-	int printWindowFlags = 0;
-	/*
-	 * Undocumented flag in windows, which also allows the capturing
-	 * of GPU-drawn areas, e.g. an embedded Edge WebView2.
-	 */
-	printWindowFlags |= OS.PW_RENDERFULLCONTENT;
-	printWidget (topHandle, hdc, gc, printWindowFlags);
+	printWidget (topHandle, hdc, gc);
 	if (gdipGraphics != 0) {
 		OS.RestoreDC(hdc, state);
 		Gdip.Graphics_ReleaseHDC(gdipGraphics, hdc);
@@ -2242,7 +2227,7 @@ public boolean print (GC gc) {
 	return true;
 }
 
-void printWidget (long hwnd, long hdc, GC gc, int printWindowFlags) {
+void printWidget (long hwnd, long hdc, GC gc) {
 	/*
 	* Bug in Windows.  For some reason, PrintWindow()
 	* returns success but does nothing when it is called
@@ -2326,7 +2311,7 @@ void printWidget (long hwnd, long hdc, GC gc, int printWindowFlags) {
 		if ((bits1 & OS.WS_VISIBLE) == 0) {
 			OS.ShowWindow (hwnd, OS.SW_SHOW);
 		}
-		success = OS.PrintWindow (hwnd, hdc, printWindowFlags);
+		success = OS.PrintWindow (hwnd, hdc, 0);
 		if ((bits1 & OS.WS_VISIBLE) == 0) {
 			OS.ShowWindow (hwnd, OS.SW_HIDE);
 		}
@@ -2449,11 +2434,14 @@ public void redraw () {
 public void redraw (int x, int y, int width, int height, boolean all) {
 	checkWidget ();
 	int zoom = getZoom();
+	x = DPIUtil.scaleUp(x, zoom);
+	y = DPIUtil.scaleUp(y, zoom);
+	width = DPIUtil.scaleUp(width, zoom);
+	height = DPIUtil.scaleUp(height, zoom);
 	if (width <= 0 || height <= 0) return;
-	Rectangle rectangle = DPIUtil.scaleUp(new Rectangle(x, y, width, height), zoom);
 
 	RECT rect = new RECT ();
-	OS.SetRect (rect, rectangle.x, rectangle.y, rectangle.x + rectangle.width, rectangle.y + rectangle.height);
+	OS.SetRect (rect, x, y, x + width, y + height);
 
 	redrawInPixels(rect, all);
 }
@@ -3188,7 +3176,13 @@ void setBackgroundPixel (int pixel) {
  * </ul>
  */
 public void setBounds(int x, int y, int width, int height) {
-	setBounds(new Rectangle(x, y, width, height));
+	checkWidget ();
+	int zoom = getZoom();
+	x = DPIUtil.scaleUp(x, zoom);
+	y = DPIUtil.scaleUp(y, zoom);
+	width = DPIUtil.scaleUp(width, zoom);
+	height = DPIUtil.scaleUp(height, zoom);
+	setBoundsInPixels(x, y, width, height);
 }
 
 void setBoundsInPixels (int x, int y, int width, int height) {
@@ -3265,8 +3259,7 @@ void setBoundsInPixels (int x, int y, int width, int height, int flags, boolean 
 public void setBounds (Rectangle rect) {
 	checkWidget ();
 	if (rect == null) error (SWT.ERROR_NULL_ARGUMENT);
-	int zoom = autoScaleDisabled ? parent.getZoom() : getZoom();
-	setBoundsInPixels(DPIUtil.scaleUp(rect, zoom));
+	setBoundsInPixels(DPIUtil.scaleUp(rect, getZoom()));
 }
 
 void setBoundsInPixels (Rectangle rect) {
@@ -3341,7 +3334,7 @@ public void setCursor (Cursor cursor) {
 }
 
 void setDefaultFont () {
-	long hFont = SWTFontProvider.getSystemFontHandle(display, getNativeZoom());
+	long hFont = display.getSystemFont (getShell().nativeZoom).handle;
 	OS.SendMessage (handle, OS.WM_SETFONT, hFont, 0);
 }
 
@@ -3443,12 +3436,12 @@ public void setFont (Font font) {
 	Font newFont = font;
 	if (newFont != null) {
 		if (newFont.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		newFont = Font.win32_new(newFont, getNativeZoom());
+		newFont = Font.win32_new(newFont, getShell().nativeZoom);
 	}
 	long hFont = 0;
 	if (newFont != null) {
 		if (newFont.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		hFont = Font.win32_getHandle(newFont);
+		hFont = newFont.handle;
 	}
 	this.font = newFont;
 	if (hFont == 0) hFont = defaultFont ();
@@ -3504,14 +3497,11 @@ public void setLayoutData (Object layoutData) {
 }
 
 /**
- * Sets the receiver's location to the point specified by the arguments which
- * are relative to the receiver's parent (or its display if its parent is null),
- * unless the receiver is a shell. In this case, the point is relative to the
- * display.
- * <p>
- * <b>Warning:</b> When executing this operation on a shell, it may not have the
- * intended effect on some platforms. For example, executing this operation on a
- * shell when the environment uses the Wayland protocol, nothing will happen.
+ * Sets the receiver's location to the point specified by
+ * the arguments which are relative to the receiver's
+ * parent (or its display if its parent is null), unless
+ * the receiver is a shell. In this case, the point is
+ * relative to the display.
  *
  * @param x the new x coordinate for the receiver
  * @param y the new y coordinate for the receiver
@@ -3535,14 +3525,11 @@ void setLocationInPixels (int x, int y) {
 }
 
 /**
- * Sets the receiver's location to the point specified by the argument which
- * is relative to the receiver's parent (or its display if its parent is null),
- * unless the receiver is a shell. In this case, the point is relative to the
- * display.
- * <p>
- * <b>Warning:</b> When executing this operation on a shell, it may not have the
- * intended effect on some platforms. For example, executing this operation on a
- * shell when the environment uses the Wayland protocol, nothing will happen.
+ * Sets the receiver's location to the point specified by
+ * the arguments which are relative to the receiver's
+ * parent (or its display if its parent is null), unless
+ * the receiver is a shell. In this case, the point is
+ * relative to the display.
  *
  * @param location the new location for the receiver
  *
@@ -3665,8 +3652,8 @@ public void setRedraw (boolean redraw) {
 	 *
 	 * https://github.com/eclipse-platform/eclipse.platform.swt/issues/1122
 	 */
-	if (!redraw && embedsWin32Control()) {
-		drawCount++;
+	boolean isShown = isVisible() && !isDisposed();
+	if (!redraw && isShown && embedsWin32Control()) {
 		return;
 	}
 
@@ -3707,9 +3694,6 @@ public void setRedraw (boolean redraw) {
 }
 
 private boolean embedsWin32Control () {
-	if (this.isDisposed() || !this.isVisible()) {
-		return false;
-	}
 //	if (this instanceof Browser browser) {
 //		// The Edge browser embeds webView2
 //		return "edge".equals(browser.getBrowserType());
@@ -4880,7 +4864,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		case OS.WM_XBUTTONDOWN:			result = WM_XBUTTONDOWN (wParam, lParam); break;
 		case OS.WM_XBUTTONUP:			result = WM_XBUTTONUP (wParam, lParam); break;
 		case OS.WM_DPICHANGED:			result = WM_DPICHANGED (wParam, lParam); break;
-		case OS.WM_DISPLAYCHANGE:		result = WM_DISPLAYCHANGE(wParam, lParam); break;
 	}
 	if (result != null) return result.value;
 	// widget could be disposed at this point
@@ -4958,22 +4941,21 @@ LRESULT WM_DESTROY (long wParam, long lParam) {
 	return null;
 }
 
-void handleMonitorSpecificDpiChange(int newNativeZoom, Rectangle newBoundsInPixels) {
-	float scalingFactor = 1f * DPIUtil.getZoomForAutoscaleProperty(newNativeZoom) / DPIUtil.getZoomForAutoscaleProperty(nativeZoom);
-	DPIUtil.setDeviceZoom (newNativeZoom);
-	DPIZoomChangeRegistry.applyChange(this, newNativeZoom, scalingFactor);
-	this.setBoundsInPixels(newBoundsInPixels.x, newBoundsInPixels.y, newBoundsInPixels.width, newBoundsInPixels.height);
-}
-
 LRESULT WM_DPICHANGED (long wParam, long lParam) {
 	// Map DPI to Zoom and compare
 	int newNativeZoom = DPIUtil.mapDPIToZoom (OS.HIWORD (wParam));
 	if (getDisplay().isRescalingAtRuntime()) {
 		Device.win32_destroyUnusedHandles(getDisplay());
-		if (newNativeZoom != nativeZoom) {
+		int oldNativeZoom = nativeZoom;
+		if (newNativeZoom != oldNativeZoom) {
+			DPIUtil.setDeviceZoom (newNativeZoom);
+
+			float scalingFactor = 1f * DPIUtil.getZoomForAutoscaleProperty(newNativeZoom) / DPIUtil.getZoomForAutoscaleProperty(oldNativeZoom);
+			DPIZoomChangeRegistry.applyChange(this, newNativeZoom, scalingFactor);
+
 			RECT rect = new RECT ();
 			COM.MoveMemory(rect, lParam, RECT.sizeof);
-			handleMonitorSpecificDpiChange(newNativeZoom, new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom-rect.top));
+			this.setBoundsInPixels(rect.left, rect.top, rect.right - rect.left, rect.bottom-rect.top);
 			return LRESULT.ZERO;
 		}
 	} else {
@@ -4989,14 +4971,6 @@ LRESULT WM_DPICHANGED (long wParam, long lParam) {
 			notifyListeners(SWT.ZoomChanged, event);
 			return LRESULT.ZERO;
 		}
-	}
-	return LRESULT.ONE;
-}
-
-LRESULT WM_DISPLAYCHANGE (long wParam, long lParam) {
-	if (getDisplay().isRescalingAtRuntime()) {
-		Device.win32_destroyUnusedHandles(getDisplay());
-		return LRESULT.ZERO;
 	}
 	return LRESULT.ONE;
 }
@@ -5482,7 +5456,7 @@ LRESULT WM_SETCURSOR (long wParam, long lParam) {
 		if (control == null) return null;
 		Cursor cursor = control.findCursor ();
 		if (cursor != null) {
-			OS.SetCursor (Cursor.win32_getHandle(cursor, getNativeZoom()));
+			OS.SetCursor (Cursor.win32_getHandle(cursor, getZoom()));
 			return LRESULT.ONE;
 		}
 	}
@@ -5880,7 +5854,7 @@ private static void handleDPIChange(Widget widget, int newZoom, float scalingFac
 	if (!(widget instanceof Control control)) {
 		return;
 	}
-	resizeFont(control, control.getNativeZoom());
+	resizeFont(control, control.getShell().nativeZoom);
 
 	Image image = control.backgroundImage;
 	if (image != null) {
@@ -5901,7 +5875,8 @@ private static void resizeFont(Control control, int newZoom) {
 	if (font == null) {
 		long currentFontHandle = OS.SendMessage (control.handle, OS.WM_GETFONT, 0, 0);
 		if (currentFontHandle != 0) {
-			long newFontHandle = SWTFontProvider.getSystemFontHandle(display, newZoom);
+			Font newFont  = display.getSystemFont(newZoom);
+			long newFontHandle = newFont.handle;
 			OS.SendMessage(control.handle, OS.WM_SETFONT, newFontHandle, 1);
 		}
 	} else {

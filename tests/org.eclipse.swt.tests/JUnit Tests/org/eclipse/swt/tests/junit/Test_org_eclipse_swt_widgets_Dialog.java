@@ -13,15 +13,15 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Shell;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.widgets.Dialog
@@ -30,19 +30,19 @@ import org.junit.jupiter.api.Test;
  */
 public class Test_org_eclipse_swt_widgets_Dialog {
 
-@BeforeEach
+@Before
 public void setUp() {
 	shell = new Shell();
 }
 
-@AfterEach
+@After
 public void tearDown() {
 	shell.dispose();
 }
 
 @Test
 public void test_getParent() {
-	assertTrue(dialog.getParent() == shell);
+	assertTrue(":a:", dialog.getParent() == shell);
 }
 
 @Test
@@ -54,13 +54,18 @@ public void test_getStyle() {
 
 @Test
 public void test_setTextLjava_lang_String() {
-	assertTrue(dialog.getText() == "");
+	assertTrue(":1:", dialog.getText() == "");
 	String testStr = "test string";
 	dialog.setText(testStr);
-	assertEquals(testStr, dialog.getText());
+	assertEquals(":2:", testStr, dialog.getText());
 	dialog.setText("");
-	assertTrue(dialog.getText().isEmpty());
-	assertThrows(IllegalArgumentException.class, () -> dialog.setText(null), "No exception thrown for string = null");
+	assertTrue(":3:", dialog.getText().isEmpty());
+	try {
+		dialog.setText(null);
+		fail("No exception thrown for string = null");
+	}
+	catch (IllegalArgumentException e) {
+	}
 }
 
 /* custom */

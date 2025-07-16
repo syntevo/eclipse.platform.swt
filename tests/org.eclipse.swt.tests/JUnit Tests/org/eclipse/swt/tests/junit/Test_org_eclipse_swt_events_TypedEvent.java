@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2015 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,15 +13,16 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.events.TypedEvent
@@ -30,12 +31,12 @@ import org.junit.jupiter.api.Test;
  */
 public class Test_org_eclipse_swt_events_TypedEvent {
 
-@BeforeEach
+@Before
 public void setUp() {
 	shell = new Shell();
 }
 
-@AfterEach
+@After
 public void tearDown() {
 	shell.dispose();
 }

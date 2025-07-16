@@ -19,7 +19,6 @@ import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.win32.*;
-import org.eclipse.swt.internal.win32.version.*;
 
 /**
  * Instances of this class represent the "windows"
@@ -582,11 +581,11 @@ void createBalloonTipHandle () {
 
 void setTitleColoring() {
 	int attributeID = 0;
-	if (OsVersion.IS_WIN10_2004) {
+	if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN10_2004) {
 		// Documented since build 20348, but was already present since build 19041
 		final int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 		attributeID = DWMWA_USE_IMMERSIVE_DARK_MODE;
-	} else if (OsVersion.IS_WIN10_1809) {
+	} else if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN10_1809) {
 		// Undocumented value
 		attributeID = 19;
 	} else {
@@ -1069,7 +1068,7 @@ Point getMaximumSizeInPixels () {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			adjustWindowRectEx(rect, bits1, false, bits2);
+			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 			height = Math.min (height, rect.bottom - rect.top);
 		}
 	}
@@ -1110,7 +1109,7 @@ Point getMinimumSizeInPixels () {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			adjustWindowRectEx(rect, bits1, false, bits2);
+			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 			height = Math.max (height, rect.bottom - rect.top);
 		}
 	}
@@ -1597,12 +1596,7 @@ public void setBounds(Rectangle rect) {
 	if (rect == null) error (SWT.ERROR_NULL_ARGUMENT);
 	checkWidget ();
 	Rectangle boundsInPixels = getDisplay().translateToDisplayCoordinates(rect, getZoom());
-	// The scaling of the width and height in case of a monitor change is handled by
-	// the WM_DPICHANGED event processing. So to avoid duplicate scaling, we always
-	// have to scale width and height with the zoom of the original monitor (still
-	// returned by getZoom()) here.
-	setBoundsInPixels(boundsInPixels.x, boundsInPixels.y, DPIUtil.scaleUp(rect.width, getZoom()),
-			DPIUtil.scaleUp(rect.height, getZoom()));
+	setBoundsInPixels(boundsInPixels.x, boundsInPixels.y, boundsInPixels.width, boundsInPixels.height);
 }
 
 @Override
@@ -1821,7 +1815,7 @@ void setMaximumSizeInPixels (int width, int height) {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			adjustWindowRectEx(rect, bits1, false, bits2);
+			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 			heightLimit = rect.bottom - rect.top;
 		}
 	}
@@ -1867,7 +1861,7 @@ void setMinimumSizeInPixels (int width, int height) {
 			RECT rect = new RECT ();
 			int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 			int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-			adjustWindowRectEx(rect, bits1, false, bits2);
+			OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 			heightLimit = rect.bottom - rect.top;
 		}
 	}
@@ -2304,37 +2298,6 @@ void overpaintMenuBorder () {
 	OS.ReleaseDC (handle, dc);
 }
 
-/**
- * Fills the remaining area which are not painted by MenuBar and ClientArea
- * inside the shell window.
- */
-private void fillUnpaintedRegionInShellWindow() {
-	if (menuBar == null) return;
-	Rectangle clientArea = getClientRectInWindow();
-	Rectangle menuArea = menuBar.getBounds();
-	Rectangle windowBounds = getBoundsInPixels();
-	menuArea.x = menuArea.x - windowBounds.x;
-	menuArea.y = menuArea .y - windowBounds.y;
-	long windowRegion = OS.CreateRectRgn (0, 0, windowBounds.width, windowBounds.height);
-	long menuRegion = OS.CreateRectRgn (menuArea.x, menuArea.y, menuArea.x + menuArea.width, menuArea.y + menuArea.height);
-	long clientRegion = OS.CreateRectRgn (clientArea.x, clientArea.y, clientArea.x + clientArea.width, clientArea.y + clientArea.height);
-	OS.CombineRgn (windowRegion, windowRegion, menuRegion, OS.RGN_DIFF);
-	OS.CombineRgn (windowRegion, windowRegion, clientRegion, OS.RGN_DIFF);
-	OS.DeleteObject (menuRegion);
-	OS.DeleteObject (clientRegion);
-	int dwRop = display.useDarkModeExplorerTheme ? OS.BLACKNESS : OS.PATCOPY;
-	long dc = OS.GetWindowDC (handle);
-	POINT pt = null;
-	pt = new POINT();
-	OS.GetWindowOrgEx(dc, pt);
-	OS.OffsetRgn(windowRegion, -pt.x, -pt.y);
-	OS.SelectClipRgn(dc, windowRegion);
-	OS.OffsetRgn(windowRegion, pt.x, pt.y);
-	OS.PatBlt(dc, 0, 0, windowBounds.width, windowBounds.height, dwRop);
-	OS.DeleteObject (windowRegion);
-	OS.ReleaseDC (handle, dc);
-}
-
 @Override
 long windowProc (long hwnd, int msg, long wParam, long lParam) {
 	if (handle == 0) return 0;
@@ -2379,7 +2342,6 @@ long windowProc (long hwnd, int msg, long wParam, long lParam) {
 		{
 			long ret = super.windowProc (hwnd, msg, wParam, lParam);
 			overpaintMenuBorder();
-			fillUnpaintedRegionInShellWindow();
 			return ret;
 		}
 	}
@@ -2567,16 +2529,6 @@ LRESULT WM_NCHITTEST (long wParam, long lParam) {
 		if (hittest == OS.HTMENU) hittest = OS.HTBORDER;
 		return new LRESULT (hittest);
 	}
-	/*
-	 * In quarter zoom levels, sometimes the MenuItem in the MenuBar has more height
-	 * than the MenuBar, which leads to a gap between the client area and the menu
-	 * bar leaving it unpainted and unmanaged. On hovering over the MenuItem, it
-	 * leaves the gap area painted with remains of the MenuItem hover overlay. The
-	 * event WM_NCHITTEST is sent on hovering over MenuItem and hence the overlay
-	 * remains can be cleaned by calling
-	 * fillUnpaintedRegionBetweenMenuBarAndClientArea on this event.
-	 */
-	fillUnpaintedRegionInShellWindow();
 	return null;
 }
 
@@ -2660,7 +2612,7 @@ LRESULT WM_SETCURSOR (long wParam, long lParam) {
 				RECT rect = new RECT ();
 				OS.GetClientRect (handle, rect);
 				if (OS.PtInRect (rect, pt)) {
-					OS.SetCursor (Cursor.win32_getHandle(cursor, getNativeZoom()));
+					OS.SetCursor (Cursor.win32_getHandle(cursor, getZoom()));
 					switch (msg) {
 						case OS.WM_LBUTTONDOWN:
 						case OS.WM_RBUTTONDOWN:
@@ -2719,31 +2671,11 @@ LRESULT WM_WINDOWPOSCHANGING (long wParam, long lParam) {
 				RECT rect = new RECT ();
 				int bits1 = OS.GetWindowLong (handle, OS.GWL_STYLE);
 				int bits2 = OS.GetWindowLong (handle, OS.GWL_EXSTYLE);
-				adjustWindowRectEx(rect, bits1, false, bits2);
+				OS.AdjustWindowRectEx (rect, bits1, false, bits2);
 				lpwp.cy = Math.max (lpwp.cy, rect.bottom - rect.top);
 			}
 		}
 		OS.MoveMemory (lParam, lpwp, WINDOWPOS.sizeof);
-	}
-	return result;
-}
-
-@Override
-LRESULT WM_WINDOWPOSCHANGED (long wParam, long lParam) {
-	LRESULT result = super.WM_WINDOWPOSCHANGED(wParam, lParam);
-	// When the process is started with System DPI awareness and
-	// only the thread is PerMonitorV2 aware, there are some scenarios, when the
-	// OS does not send a DPI change event when a child Shell is positioned and
-	// opened on another monitor as its parent Shell. To work around that limitation
-	// this check is added to trigger a dpi change event if an unexpected DPI value is
-	// detected.
-	if (display.isRescalingAtRuntime()) {
-		int dpiForWindow = DPIUtil.mapDPIToZoom(OS.GetDpiForWindow(getShell().handle));
-		if (dpiForWindow != nativeZoom) {
-			WINDOWPOS lpwp = new WINDOWPOS ();
-			OS.MoveMemory (lpwp, lParam, WINDOWPOS.sizeof);
-			handleMonitorSpecificDpiChange(dpiForWindow, new Rectangle(lpwp.x, lpwp.y, lpwp.cx, lpwp.cy));
-		}
 	}
 	return result;
 }

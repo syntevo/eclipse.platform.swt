@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2016 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -321,6 +321,11 @@ public String getToolTipText () {
  */
 public int getWidth () {
 	checkWidget ();
+	return DPIUtil.autoScaleDown (getWidthInPixels ());
+}
+
+int getWidthInPixels () {
+	checkWidget();
 	if (!GTK.gtk_tree_view_column_get_visible (handle)) {
 		return 0;
 	}
@@ -360,12 +365,10 @@ long gtk_clicked (long widget) {
 }
 
 @Override
-int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
 	boolean doubleClick = n_press >= 2 ? true : false;
 
 	sendSelectionEvent(doubleClick ? SWT.DefaultSelection : SWT.Selection);
-
-	return GTK4.GTK_EVENT_SEQUENCE_NONE;
 }
 
 @Override
@@ -482,7 +485,7 @@ public void pack () {
 		}
 		OS.g_free (iter);
 	}
-	setWidth(width);
+	setWidthInPixels(width);
 }
 
 @Override
@@ -607,14 +610,14 @@ public void setImage (Image image) {
 		} else {
 			GTK3.gtk_image_set_from_surface(imageHandle, headerImageList.getSurface(imageIndex));
 		}
-		gtk_widget_show(imageHandle);
+		GTK.gtk_widget_show(imageHandle);
 	} else {
 		if (GTK.GTK4) {
 			GTK4.gtk_image_clear(imageHandle);
 		} else {
 			GTK3.gtk_image_set_from_surface(imageHandle, 0);
 		}
-		gtk_widget_hide(imageHandle);
+		GTK.gtk_widget_hide(imageHandle);
 	}
 }
 
@@ -681,9 +684,9 @@ public void setText (String string) {
 	byte [] buffer = Converter.wcsToMbcs (chars, true);
 	GTK.gtk_label_set_text_with_mnemonic (labelHandle, buffer);
 	if (string.length () != 0) {
-		gtk_widget_show (labelHandle);
+		GTK.gtk_widget_show (labelHandle);
 	} else {
-		gtk_widget_hide (labelHandle);
+		GTK.gtk_widget_hide (labelHandle);
 	}
 }
 
@@ -731,6 +734,11 @@ public void setToolTipText(String string) {
  * </ul>
  */
 public void setWidth(int width) {
+	checkWidget();
+	setWidthInPixels(DPIUtil.autoScaleUp(width));
+}
+
+void setWidthInPixels(int width) {
 	checkWidget();
 	if (width < 0) return;
 	if (width == lastWidth) return;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -306,8 +306,8 @@ void createHandle (int index) {
 			GTK4.gtk_box_append(boxHandle, imageHandle);
 			GTK4.gtk_box_append(boxHandle, labelHandle);
 
-			gtk_widget_hide(imageHandle);
-			gtk_widget_hide(labelHandle);
+			GTK.gtk_widget_hide(imageHandle);
+			GTK.gtk_widget_hide(labelHandle);
 		} else {
 			labelHandle = GTK.gtk_label_new_with_mnemonic(null);
 			if (labelHandle == 0) error(SWT.ERROR_NO_HANDLES);
@@ -407,6 +407,11 @@ public Color getBackground () {
  */
 public Rectangle getBounds () {
 	checkWidget ();
+	return DPIUtil.autoScaleDown (getBoundsInPixels ());
+}
+
+Rectangle getBoundsInPixels () {
+	checkWidget();
 	parent.forceResize ();
 	long topHandle = topHandle ();
 	GtkAllocation allocation = new GtkAllocation ();
@@ -602,6 +607,11 @@ public String getToolTipText () {
  */
 public int getWidth () {
 	checkWidget ();
+	return DPIUtil.autoScaleDown (getWidthInPixels ());
+}
+
+int getWidthInPixels () {
+	checkWidget();
 	parent.forceResize ();
 	long topHandle = topHandle ();
 	GtkAllocation allocation = new GtkAllocation();
@@ -649,9 +659,9 @@ long gtk_clicked (long widget) {
 						event.detail = SWT.ARROW;
 						GtkAllocation allocation = new GtkAllocation ();
 						GTK.gtk_widget_get_allocation (topHandle, allocation);
-						event.x = allocation.x;
-						if ((style & SWT.MIRRORED) != 0) event.x = parent.getClientWidth ()- allocation.width - event.x;
-						event.y = allocation.y + allocation.height;
+						event.x = DPIUtil.autoScaleDown(allocation.x);
+						if ((style & SWT.MIRRORED) != 0) event.x = DPIUtil.autoScaleDown (parent.getClientWidth ()- allocation.width) - event.x;
+						event.y = DPIUtil.autoScaleDown(allocation.y + allocation.height);
 					}
 					break;
 				}
@@ -1316,7 +1326,7 @@ void _setImage (Image image) {
 		}
 
 		if (GTK.GTK4) {
-			gtk_widget_show(imageHandle);
+			GTK.gtk_widget_show(imageHandle);
 			long pixbuf = ImageList.createPixbuf(image);
 			long texture = GDK.gdk_texture_new_for_pixbuf(pixbuf);
 			OS.g_object_unref(pixbuf);
@@ -1327,7 +1337,7 @@ void _setImage (Image image) {
 	} else {
 		if(GTK.GTK4) {
 			GTK4.gtk_image_clear(imageHandle);
-			gtk_widget_hide(imageHandle);
+			GTK.gtk_widget_hide(imageHandle);
 		} else {
 			GTK3.gtk_image_set_from_surface(imageHandle, 0);
 		}
@@ -1429,7 +1439,7 @@ public void setText (String string) {
 	byte [] buffer = Converter.wcsToMbcs (chars, true);
 
 	if (GTK.GTK4) {
-		gtk_widget_show(labelHandle);
+		GTK.gtk_widget_show(labelHandle);
 		GTK.gtk_label_set_text_with_mnemonic(labelHandle, buffer);
 	} else {
 		GTK.gtk_label_set_text_with_mnemonic(labelHandle, buffer);
@@ -1524,6 +1534,11 @@ public void setToolTipText(String string) {
  */
 public void setWidth (int width) {
 	checkWidget ();
+	setWidthInPixels(DPIUtil.autoScaleUp(width));
+}
+
+void setWidthInPixels (int width) {
+	checkWidget();
 	if ((style & SWT.SEPARATOR) == 0) return;
 	if (width < 0) return;
 	resizeHandle(width, (parent.style & SWT.VERTICAL) != 0 ? 6 : 15);
@@ -1547,9 +1562,9 @@ void showWidget (int index) {
 			}
 		}
 	} else {
-		if (handle != 0) gtk_widget_show (handle);
-		if (labelHandle != 0) gtk_widget_show (labelHandle);
-		if (imageHandle != 0) gtk_widget_show (imageHandle);
+		if (handle != 0) GTK.gtk_widget_show (handle);
+		if (labelHandle != 0) GTK.gtk_widget_show (labelHandle);
+		if (imageHandle != 0) GTK.gtk_widget_show (imageHandle);
 		GTK3.gtk_toolbar_insert(parent.handle, handle, index);
 	}
 }

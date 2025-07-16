@@ -15,7 +15,6 @@
  *******************************************************************************/
 package org.eclipse.swt.internal;
 
-import java.util.*;
 import java.util.function.*;
 
 import org.eclipse.swt.*;
@@ -43,23 +42,13 @@ public class DPIUtil {
 	private static int deviceZoom = 100;
 	private static int nativeDeviceZoom = 100;
 
-	private static enum AutoScaleMethod { AUTO, NEAREST, SMOOTH;
-
-		public static Optional<AutoScaleMethod> forString(String s) {
-			for (AutoScaleMethod v : values()) {
-				if (v.name().equalsIgnoreCase(s)) {
-					return Optional.of(v);
-				}
-			}
-			return Optional.empty();
-		}
-
-	}
-	private static final AutoScaleMethod AUTO_SCALE_METHOD_SETTING;
-	private static AutoScaleMethod autoScaleMethod;
+	private static enum AutoScaleMethod { AUTO, NEAREST, SMOOTH }
+	private static AutoScaleMethod autoScaleMethodSetting = AutoScaleMethod.AUTO;
+	private static AutoScaleMethod autoScaleMethod = AutoScaleMethod.NEAREST;
+	private static boolean autoScaleOnRuntime = false;
 
 	private static String autoScaleValue;
-	private static final boolean USE_CAIRO_AUTOSCALE = SWT.getPlatform().equals("gtk");
+	private static boolean useCairoAutoScale = false;
 
 	/**
 	 * System property that controls the autoScale functionality.
@@ -91,9 +80,10 @@ public class DPIUtil {
 	 * <li>"nearest": nearest-neighbor interpolation, may look jagged</li>
 	 * <li>"smooth": smooth edges, may look blurry</li>
 	 * </ul>
-	 * The current default is to use "smooth" on GTK when deviceZoom is an integer
-	 * multiple of 100% and on Windows if monitor-specific scaling is enabled, and
-	 * "nearest" otherwise..
+	 * The current default is to use "nearest", except on
+	 * GTK when the deviceZoom is not an integer multiple of 100%.
+	 * The smooth strategy currently doesn't work on Win32 and Cocoa, see
+	 * <a href="https://bugs.eclipse.org/493455">bug 493455</a>.
 	 */
 	private static final String SWT_AUTOSCALE_METHOD = "swt.autoScale.method";
 
@@ -112,8 +102,16 @@ public class DPIUtil {
 		autoScaleValue = System.getProperty (SWT_AUTOSCALE);
 
 		String value = System.getProperty (SWT_AUTOSCALE_METHOD);
-		AUTO_SCALE_METHOD_SETTING = AutoScaleMethod.forString(value).orElse(AutoScaleMethod.AUTO);
-		autoScaleMethod = AUTO_SCALE_METHOD_SETTING != AutoScaleMethod.AUTO ? AUTO_SCALE_METHOD_SETTING : AutoScaleMethod.NEAREST;
+		if (value != null) {
+			if (AutoScaleMethod.NEAREST.name().equalsIgnoreCase(value)) {
+				autoScaleMethod = autoScaleMethodSetting = AutoScaleMethod.NEAREST;
+			} else if (AutoScaleMethod.SMOOTH.name().equalsIgnoreCase(value)) {
+				autoScaleMethod = autoScaleMethodSetting = AutoScaleMethod.SMOOTH;
+			}
+		}
+
+		String updateOnRuntimeValue = System.getProperty (SWT_AUTOSCALE_UPDATE_ON_RUNTIME);
+		autoScaleOnRuntime = Boolean.parseBoolean(updateOnRuntimeValue);
 	}
 
 /**
@@ -299,33 +297,28 @@ private static ImageData autoScaleImageData (Device device, final ImageData imag
 	int height = imageData.height;
 	int scaledWidth = Math.round (width * scaleFactor);
 	int scaledHeight = Math.round (height * scaleFactor);
-	boolean useSmoothScaling = isSmoothScalingEnabled() && imageData.getTransparencyType() != SWT.TRANSPARENCY_MASK;
-	if (useSmoothScaling) {
+	return switch (autoScaleMethod) {
+	case SMOOTH -> {
 		Image original = new Image (device, (ImageDataProvider) zoom -> imageData);
-		ImageGcDrawer drawer =  new ImageGcDrawer() {
-			@Override
-			public void drawOn(GC gc, int imageWidth, int imageHeight) {
-				gc.setAntialias (SWT.ON);
-				Image.drawScaled(gc, original, width, height, scaleFactor);
-			};
-
-			@Override
-			public int getGcStyle() {
-				return SWT.TRANSPARENT;
-			}
-		};
-		Image resultImage = new Image (device, drawer, scaledWidth, scaledHeight);
-		ImageData result = resultImage.getImageData (100);
+		/* Create a 24 bit image data with alpha channel */
+		final ImageData resultData = new ImageData (scaledWidth, scaledHeight, 24, new PaletteData (0xFF, 0xFF00, 0xFF0000));
+		resultData.alphaData = new byte [scaledWidth * scaledHeight];
+		Image resultImage = new Image (device, (ImageDataProvider) zoom -> resultData);
+		GC gc = new GC (resultImage);
+		gc.setAntialias (SWT.ON);
+		gc.drawImage (original, 0, 0, autoScaleDown (width), autoScaleDown (height),
+				/* E.g. destWidth here is effectively DPIUtil.autoScaleDown (scaledWidth), but avoiding rounding errors.
+				 * Nevertheless, we still have some rounding errors due to the point-based API GC#drawImage(..).
+				 */
+				0, 0, Math.round (autoScaleDown (width * scaleFactor)), Math.round (autoScaleDown (height * scaleFactor)));
+		gc.dispose ();
 		original.dispose ();
+		ImageData result = resultImage.getImageData (getDeviceZoom ());
 		resultImage.dispose ();
-		return result;
-	} else {
-		return imageData.scaledTo (scaledWidth, scaledHeight);
+		yield result;
 	}
-}
-
-public static boolean isSmoothScalingEnabled() {
-	return autoScaleMethod == AutoScaleMethod.SMOOTH;
+	default -> imageData.scaledTo (scaledWidth, scaledHeight);
+	};
 }
 
 /**
@@ -356,6 +349,10 @@ public static ImageData autoScaleImageData (Device device, final ImageData image
  */
 public static ImageData autoScaleUp (Device device, final ImageData imageData) {
 	return autoScaleImageData(device, imageData, 100);
+}
+
+public static ImageData autoScaleUp (Device device, final ElementAtZoom<ImageData> elementAtZoom) {
+	return autoScaleImageData(device, elementAtZoom.element(), elementAtZoom.zoom());
 }
 
 public static int[] autoScaleUp(int[] pointArray) {
@@ -492,7 +489,7 @@ public static Rectangle scaleUp(Drawable drawable, Rectangle rect, int zoom) {
  * @return float scaling factor
  */
 private static float getScalingFactor(int zoom) {
-	if (USE_CAIRO_AUTOSCALE) {
+	if (useCairoAutoScale) {
 		return 1;
 	}
 	if (zoom <= 0) {
@@ -529,14 +526,6 @@ public static int mapZoomToDPI (int zoom) {
  * @param <T> type of the element to be presented, e.g., {@link ImageData}
  */
 public record ElementAtZoom<T>(T element, int zoom) {
-	public ElementAtZoom {
-		if (element == null) {
-			SWT.error(SWT.ERROR_NULL_ARGUMENT);
-		}
-		if (zoom <= 0) {
-			SWT.error(SWT.ERROR_INVALID_ARGUMENT);
-		}
-	}
 }
 
 /**
@@ -619,31 +608,24 @@ public static void setDeviceZoom (int nativeDeviceZoom) {
 
 	DPIUtil.deviceZoom = deviceZoom;
 	System.setProperty("org.eclipse.swt.internal.deviceZoom", Integer.toString(deviceZoom));
-
-	// in GTK, preserve the current method when switching to a 100% monitor
-	boolean preserveScalingMethod = SWT.getPlatform().equals("gtk") && deviceZoom == 100;
-	if (!preserveScalingMethod && AUTO_SCALE_METHOD_SETTING == AutoScaleMethod.AUTO) {
-		if (sholdUseSmoothScaling()) {
-			autoScaleMethod = AutoScaleMethod.SMOOTH;
-		} else {
+	if (deviceZoom != 100 && autoScaleMethodSetting == AutoScaleMethod.AUTO) {
+		if (deviceZoom / 100 * 100 == deviceZoom || !"gtk".equals(SWT.getPlatform())) {
 			autoScaleMethod = AutoScaleMethod.NEAREST;
+		} else {
+			autoScaleMethod = AutoScaleMethod.SMOOTH;
 		}
 	}
 }
 
-private static boolean sholdUseSmoothScaling() {
-	return switch (SWT.getPlatform()) {
-	case "gtk" -> deviceZoom / 100 * 100 != deviceZoom;
-	case "win32" -> isMonitorSpecificScalingActive();
-	default -> false;
-	};
+public static void setUseCairoAutoScale (boolean cairoAutoScale) {
+	useCairoAutoScale = cairoAutoScale;
+}
+
+public static boolean useCairoAutoScale() {
+	return useCairoAutoScale;
 }
 
 public static int getZoomForAutoscaleProperty (int nativeDeviceZoom) {
-	return getZoomForAutoscaleProperty(nativeDeviceZoom, autoScaleValue);
-}
-
-private static int getZoomForAutoscaleProperty (int nativeDeviceZoom, String autoScaleValue) {
 	int zoom = 0;
 	if (autoScaleValue != null) {
 		if ("false".equalsIgnoreCase (autoScaleValue)) {
@@ -672,66 +654,8 @@ private static int getZoomForAutoscaleProperty (int nativeDeviceZoom, String aut
 	return zoom;
 }
 
-public static void runWithAutoScaleValue(String autoScaleValue, Runnable runnable) {
-	String initialAutoScaleValue = DPIUtil.autoScaleValue;
-	DPIUtil.autoScaleValue = autoScaleValue;
-	DPIUtil.deviceZoom = getZoomForAutoscaleProperty(nativeDeviceZoom);
-	try {
-		runnable.run();
-	} finally {
-		DPIUtil.autoScaleValue = initialAutoScaleValue;
-		DPIUtil.deviceZoom = getZoomForAutoscaleProperty(nativeDeviceZoom);
-	}
-}
-
-public static void setMonitorSpecificScaling(boolean activate) {
-	System.setProperty(SWT_AUTOSCALE_UPDATE_ON_RUNTIME, Boolean.toString(activate));
-}
-
-public static boolean isMonitorSpecificScalingActive() {
-	boolean updateOnRuntimeValue = Boolean.getBoolean (SWT_AUTOSCALE_UPDATE_ON_RUNTIME);
-	return updateOnRuntimeValue;
-}
-
-public static void setAutoScaleForMonitorSpecificScaling() {
-	boolean isDefaultAutoScale = autoScaleValue == null;
-	if (isDefaultAutoScale) {
-		autoScaleValue = "quarter";
-	} else if (!isSupportedAutoScaleForMonitorSpecificScaling()) {
-		throw new SWTError(SWT.ERROR_NOT_IMPLEMENTED,
-				"monitor-specific scaling is only implemented for auto-scale values \"quarter\", \"exact\", \"false\" or a concrete zoom value, but \""
-						+ autoScaleValue + "\" has been specified");
-	}
-}
-
-/**
- * Monitor-specific scaling on Windows only supports auto-scale modes in which
- * all elements (font, images, control bounds etc.) are scaled equally or almost
- * equally. The previously default mode "integer"/"integer200", which rounded
- * the scale factor for everything but fonts to multiples of 100, is complex and
- * difficult to realize with monitor-specific rescaling of UI elements. Since a
- * uniform scale factor for everything should perspectively be used anyway,
- * there will be support for complex auto-scale modes for monitor-specific
- * scaling.
- *
- * The supported modes are "quarter" and "exact" or explicit zoom values given
- * by the value itself or "false". Every other value will be treated as
- * "integer"/"integer200" and is thus not supported.
- */
-private static boolean isSupportedAutoScaleForMonitorSpecificScaling() {
-	if (autoScaleValue == null) {
-		return false;
-	}
-	switch (autoScaleValue.toLowerCase()) {
-		case "false", "quarter", "exact": return true;
-	}
-	try {
-		Integer.parseInt(autoScaleValue);
-		return true;
-	} catch (NumberFormatException e) {
-		// unsupported value, use default
-	}
-	return false;
+public static boolean isAutoScaleOnRuntimeActive() {
+	return autoScaleOnRuntime;
 }
 
 /**

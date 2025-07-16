@@ -19,7 +19,6 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.internal.gtk3.*;
-import org.eclipse.swt.internal.gtk4.*;
 
 /**
  * Instances of this class represent icons that can be placed on the
@@ -289,7 +288,7 @@ long gtk_button_press_event (long widget, long event) {
 }
 
 @Override
-int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
+void gtk_gesture_press_event(long gesture, int n_press, double x, double y, long event) {
 	switch (n_press) {
 		case 1: {
 			int eventButton = GDK.gdk_button_event_get_button(event);
@@ -307,7 +306,6 @@ int gtk_gesture_press_event(long gesture, int n_press, double x, double y, long 
 		default:
 			break;
 	}
-	return GTK4.GTK_EVENT_SEQUENCE_NONE;
 }
 
 @Override

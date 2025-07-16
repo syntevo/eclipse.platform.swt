@@ -19,14 +19,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -51,12 +49,16 @@ public void test_Constructor() {
 }
 
 @Test
-public void test_addImageLoaderListenerLorg_eclipse_swt_graphics_ImageLoaderListener() throws IOException {
+public void test_addImageLoaderListenerLorg_eclipse_swt_graphics_ImageLoaderListener() {
 	ImageLoader loader = new ImageLoader();
 	ImageLoaderListener loaderListener = e -> loaderListenerCalled = true;
 
-	assertThrows(IllegalArgumentException.class, () -> loader.addImageLoaderListener(null),
-			"No exception thrown for addImageLoaderListener with null argument");
+	try {
+		loader.addImageLoaderListener(null);
+		fail("No exception thrown for addImageLoaderListener with null argument");
+	} catch (IllegalArgumentException e) {
+	}
+
 	assertFalse(":a:", loader.hasListeners());
 	loader.addImageLoaderListener(loaderListener);
 	assertTrue(":b:", loader.hasListeners());
@@ -64,13 +66,13 @@ public void test_addImageLoaderListenerLorg_eclipse_swt_graphics_ImageLoaderList
 	loaderListenerCalled = false;
 	try (InputStream stream = SwtTestUtil.class.getResourceAsStream("interlaced_target.png")) {
 		loader.load(stream);
-	}
+	} catch (IOException e) {}
 	assertTrue(":c:", loaderListenerCalled);
 
 	loaderListenerCalled = false;
 	try (InputStream stream = SwtTestUtil.class.getResourceAsStream("target.png")) {
 		loader.load(stream);
-	}
+	} catch (IOException e) {}
 	assertFalse(":d:", loaderListenerCalled);
 
 	loaderListenerCalled = false;
@@ -82,60 +84,85 @@ public void test_addImageLoaderListenerLorg_eclipse_swt_graphics_ImageLoaderList
 }
 
 @Test
-public void test_loadLjava_io_InputStream() throws IOException {
-	ImageLoader loader = new ImageLoader();
-	assertThrows(IllegalArgumentException.class, () -> loader.load((InputStream) null),
-			"No exception thrown for load inputStream == null");
-
-	try (InputStream stream = SwtTestUtil.class.getResourceAsStream("empty.txt")) {
-		assertThrows(SWTException.class, () -> loader.load(stream),
-				"No exception thrown for load from invalid inputStream");
-	}
-
-	String fileName = SwtTestUtil.imageFilenames[0];
-	for (String format : SwtTestUtil.imageFormats) {
-		try (InputStream stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format)) {
+public void test_loadLjava_io_InputStream() {
+		ImageLoader loader = new ImageLoader();
+		try (InputStream stream = null) {
 			loader.load(stream);
+			fail("No exception thrown for load inputStream == null");
+		} catch (IllegalArgumentException | IOException e) {
 		}
-	}
+
+		try (InputStream stream = SwtTestUtil.class.getResourceAsStream("empty.txt")) {
+			loader.load(stream);
+			fail("No exception thrown for load from invalid inputStream");
+		} catch (IOException|SWTException e) {
+		}
+
+		int numFormats = SwtTestUtil.imageFormats.length;
+		String fileName = SwtTestUtil.imageFilenames[0];
+		for (int i = 0; i < numFormats; i++) {
+			String format = SwtTestUtil.imageFormats[i];
+			try (InputStream stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format)) {
+				loader.load(stream);
+			} catch (IOException e) {
+			}
+		}
 }
 
 @Test
 public void test_loadLjava_lang_String() {
 	ImageLoader loader = new ImageLoader();
 	String filename = null;
-	assertThrows(IllegalArgumentException.class, () -> loader.load(filename),
-			"No exception thrown for load filename == null");
+	try {
+		loader.load(filename);
+		fail("No exception thrown for load filename == null");
+	} catch (IllegalArgumentException e) {
+	}
 }
 
 @Test
-public void test_saveLjava_io_OutputStreamI() throws IOException {
+public void test_saveLjava_io_OutputStreamI() {
 	ImageLoader loader = new ImageLoader();
-
-	OutputStream outStream1 = null;
-	assertThrows(IllegalArgumentException.class, () -> loader.save(outStream1, 0),
-			"No exception thrown for save outputStream == null");
-
-	OutputStream outStream2 = new ByteArrayOutputStream();
-	assertThrows(SWTException.class, () -> loader.save(outStream2, -1),
-			"No exception thrown for save to invalid outputStream format");
-
-	boolean jpgSupported = Arrays.asList(SwtTestUtil.imageFormats).contains("jpg");
-	if (jpgSupported) {
-		String filename = SwtTestUtil.imageFilenames[0];
-		// must use jpg since save is not implemented yet in png format
-		String filetype = "jpg";
-		try (InputStream inStream = SwtTestUtil.class.getResourceAsStream(filename + "." + filetype)) {
-			loader.load(inStream);
+	ByteArrayOutputStream outStream = null;
+	try {
+		try {
+			loader.save(outStream, 0);
+			fail("No exception thrown for save outputStream == null");
+		} catch (IllegalArgumentException e) {
 		}
-		OutputStream outStream = new ByteArrayOutputStream();
-		int i = 0;
-		for (String format : SwtTestUtil.imageFormats) {
-			if (format.equals(filetype)) {
-				// save using the appropriate format
-				loader.save(outStream, i++);
+
+		outStream = new ByteArrayOutputStream();
+		try {
+			loader.save(outStream, -1);
+			fail("No exception thrown for save to invalid outputStream format");
+		} catch (SWTException e) {
+		}
+		boolean jpgSupported = false;
+		for (String imageFormat : SwtTestUtil.imageFormats) {
+			if (imageFormat.equals("jpg")) {
+				jpgSupported = true;
 				break;
 			}
+		}
+		if (jpgSupported) {
+			String filename = SwtTestUtil.imageFilenames[0];
+			// must use jpg since save is not implemented yet in png format
+			String filetype = "jpg";
+			try (InputStream inStream = SwtTestUtil.class.getResourceAsStream(filename + "." + filetype)) {
+				loader.load(inStream);
+			} catch (IOException e) {}
+			for (int i = 0; i < SwtTestUtil.imageFormats.length; i++) {
+				if (SwtTestUtil.imageFormats[i].equals(filetype)) {
+					// save using the appropriate format
+					loader.save(outStream, i);
+					break;
+				}
+			}
+		}
+	} finally {
+		try {
+			outStream.close();
+		} catch (Exception e) {
 		}
 	}
 }
@@ -144,8 +171,11 @@ public void test_saveLjava_io_OutputStreamI() throws IOException {
 public void test_saveLjava_lang_StringI() {
 	ImageLoader loader = new ImageLoader();
 	String filename = null;
-	assertThrows(IllegalArgumentException.class, () -> loader.save(filename, 0),
-			"No exception thrown for save filename == null");
+	try {
+		loader.save(filename, 0);
+		fail("No exception thrown for save filename == null");
+	} catch (IllegalArgumentException e) {
+	}
 }
 
 /**

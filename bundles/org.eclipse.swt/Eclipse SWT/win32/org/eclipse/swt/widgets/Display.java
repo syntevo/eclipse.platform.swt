@@ -25,7 +25,6 @@ import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.ole.win32.*;
 import org.eclipse.swt.internal.win32.*;
-import org.eclipse.swt.internal.win32.version.*;
 
 /**
  * Instances of this class are responsible for managing the
@@ -537,11 +536,6 @@ public class Display extends Device implements Executor {
 	static int SWT_RESTORECARET;
 	static int DI_GETDRAGIMAGE;
 	static int SWT_OPENDOC;
-	private static int ICON_SIZE_AT_100 = retrieveDefaultIconSize();
-
-	private static int retrieveDefaultIconSize() {
-		return OS.GetSystemMetricsForDpi(OS.SM_CXICON, DPIUtil.mapZoomToDPI(100));
-	}
 
 	/* Skinning support */
 	Widget [] skinList = new Widget [GROW_SIZE];
@@ -960,9 +954,8 @@ public void close () {
 protected void create (DeviceData data) {
 	checkSubclass ();
 	checkDisplay (thread = Thread.currentThread (), true);
-	if (DPIUtil.isMonitorSpecificScalingActive()) {
-		setMonitorSpecificScaling(true);
-		DPIUtil.setAutoScaleForMonitorSpecificScaling();
+	if (DPIUtil.isAutoScaleOnRuntimeActive()) {
+		setRescalingAtRuntime(true);
 	}
 	createDisplay (data);
 	register (this);
@@ -1216,7 +1209,7 @@ static Image createIcon (Image image, int zoom) {
 	if (hIcon == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 	OS.DeleteObject (hBitmap);
 	OS.DeleteObject (hMask);
-	return Image.win32_new (device, SWT.ICON, hIcon, zoom);
+	return Image.win32_new (device, SWT.ICON, hIcon);
 }
 
 long getTextSearchIcon(int size) {
@@ -1467,7 +1460,7 @@ public Widget findWidget (Widget widget, long id) {
 
 long foregroundIdleProc (long code, long wParam, long lParam) {
 	if (code >= 0) {
-		Runnable processMessages = () -> {
+		if (!synchronizer.isMessagesEmpty()) {
 			sendPostExternalEventDispatchEvent ();
 			if (runMessagesInIdle) {
 				if (runMessagesInMessageProc) {
@@ -1493,15 +1486,6 @@ long foregroundIdleProc (long code, long wParam, long lParam) {
 			int flags = OS.PM_NOREMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT;
 			if (!OS.PeekMessage (msg, 0, 0, 0, flags)) wakeThread ();
 			sendPreExternalEventDispatchEvent ();
-		};
-		if (!synchronizer.isMessagesEmpty()) {
-			// Windows hooks will inherit the thread DPI awareness from
-			// the process. Whatever DPI awareness was set before on
-			// the thread will be overwritten before the hook is called.
-			// This requires to reset the thread DPi awareness to make
-			// sure, all UI updates caused by this will be executed
-			// with the correct DPI awareness
-			runWithProperDPIAwareness(processMessages);
 		}
 	}
 	return OS.CallNextHookEx (idleHook, (int)code, wParam, lParam);
@@ -2165,7 +2149,7 @@ public static boolean isSystemDarkTheme () {
 	/*
 	 * The registry settings, and Dark Theme itself, is present since Win10 1809
 	 */
-	if (OsVersion.IS_WIN10_1809) {
+	if (OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN10_1809) {
 		int[] result = OS.readRegistryDwords(OS.HKEY_CURRENT_USER,
 				"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
 		if (result!=null) {
@@ -2567,39 +2551,27 @@ public Image getSystemImage (int id) {
 	switch (id) {
 		case SWT.ICON_ERROR: {
 			if (errorImage != null) return errorImage;
-			errorImage = new Image(this, getImageDataProviderForIcon(OS.OIC_HAND));
-			return errorImage;
+			long hIcon = OS.LoadImage (0, OS.OIC_HAND, OS.IMAGE_ICON, 0, 0, OS.LR_SHARED);
+			return errorImage = Image.win32_new (this, SWT.ICON, hIcon);
 		}
 		case SWT.ICON_WORKING:
 		case SWT.ICON_INFORMATION: {
 			if (infoImage != null) return infoImage;
-			infoImage = new Image(this, getImageDataProviderForIcon(OS.OIC_INFORMATION));
-			return infoImage;
+			long hIcon = OS.LoadImage (0, OS.OIC_INFORMATION, OS.IMAGE_ICON, 0, 0, OS.LR_SHARED);
+			return infoImage = Image.win32_new (this, SWT.ICON, hIcon);
 		}
 		case SWT.ICON_QUESTION: {
 			if (questionImage != null) return questionImage;
-			questionImage = new Image(this, getImageDataProviderForIcon(OS.OIC_QUES));
-			return questionImage;
+			long hIcon = OS.LoadImage (0, OS.OIC_QUES, OS.IMAGE_ICON, 0, 0, OS.LR_SHARED);
+			return questionImage = Image.win32_new (this, SWT.ICON, hIcon);
 		}
 		case SWT.ICON_WARNING: {
 			if (warningIcon != null) return warningIcon;
-			warningIcon = new Image(this, getImageDataProviderForIcon(OS.OIC_BANG));
-			return warningIcon;
+			long hIcon = OS.LoadImage (0, OS.OIC_BANG, OS.IMAGE_ICON, 0, 0, OS.LR_SHARED);
+			return warningIcon = Image.win32_new (this, SWT.ICON, hIcon);
 		}
 	}
 	return null;
-}
-
-private ImageDataProvider getImageDataProviderForIcon(int iconName) {
-	return zoom -> {
-		int scaledIconSize = DPIUtil.scaleUp(ICON_SIZE_AT_100, zoom);
-		long [] hIcon = new long [1];
-		OS.LoadIconWithScaleDown(0, iconName, scaledIconSize, scaledIconSize, hIcon);
-		Image image = Image.win32_new (this, SWT.ICON, hIcon[0], zoom);
-		ImageData imageData = image.getImageData(zoom);
-		image.dispose();
-		return imageData;
-	};
 }
 
 /**
@@ -2806,9 +2778,7 @@ protected void init () {
 	// Field initialization happens after super constructor
 	controlByHandle = new HashMap<>();
 	this.synchronizer = new Synchronizer (this);
-	if (this.coordinateSystemMapper == null) {
-		this.coordinateSystemMapper = new SingleZoomCoordinateSystemMapper(this);
-	}
+	this.coordinateSystemMapper = new SingleZoomCoordinateSystemMapper();
 	super.init ();
 	DPIUtil.setDeviceZoom (getDeviceZoom ());
 
@@ -3043,6 +3013,15 @@ Point mapInPixels (Control from, Control to, int x, int y) {
 	point.y = y;
 	OS.MapWindowPoints (hwndFrom, hwndTo, point, 1);
 	return new Point (point.x, point.y);
+}
+
+private int getZoomLevelForMapping(Control from, Control to) {
+	if (from != null && from.isDisposed()) error (SWT.ERROR_INVALID_ARGUMENT);
+	if (to != null && to.isDisposed()) error (SWT.ERROR_INVALID_ARGUMENT);
+	if (to != null) {
+		return to.getZoom();
+	}
+	return from.getZoom();
 }
 
 /**
@@ -3456,17 +3435,9 @@ long msgFilterProc (long code, long wParam, long lParam) {
 			if (hookMsg.message == OS.WM_NULL) {
 				MSG msg = new MSG ();
 				int flags = OS.PM_NOREMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT | OS.PM_QS_POSTMESSAGE;
-				// Windows hooks will inherit the thread DPI awareness from
-				// the process. Whatever DPI awareness was set before on
-				// the thread will be overwritten before the hook is called.
-				// This requires to reset the thread DPi awareness to make
-				// sure, all UI updates caused by this will be executed
-				// with the correct DPI awareness
-				runWithProperDPIAwareness(() -> {
-					if (!OS.PeekMessage (msg, 0, 0, 0, flags)) {
-						if (runAsyncMessages (false)) wakeThread ();
-					}
-				});
+				if (!OS.PeekMessage (msg, 0, 0, 0, flags)) {
+					if (runAsyncMessages (false)) wakeThread ();
+				}
 			}
 			break;
 		}
@@ -5188,27 +5159,47 @@ String wrapText (String text, long handle, int width) {
 }
 
 static String withCrLf (String string) {
-	/* Create a new string with the CR/LF line terminator. */
-	int i = 0;
-	int length = string.length();
-	StringBuilder result = new StringBuilder (length);
-	while (i < length) {
-		int j = string.indexOf ('\n', i);
-		if (j > 0 && string.charAt(j - 1) == '\r') {
-			result.append(string.substring(i, j + 1));
-			i = j + 1;
-		} else {
-			if (j == -1) j = length;
-			result.append (string.substring (i, j));
-			if ((i = j) < length) {
-				result.append ("\r\n"); //$NON-NLS-1$
-				i++;
-			}
-		}
+
+	/* If the string is empty, return the string. */
+	int length = string.length ();
+	if (length == 0) return string;
+
+	/*
+	* Check for an LF or CR/LF and assume the rest of
+	* the string is formated that way.  This will not
+	* work if the string contains mixed delimiters.
+	*/
+	int i = string.indexOf ('\n', 0);
+	if (i == -1) return string;
+	if (i > 0 && string.charAt (i - 1) == '\r') {
+		return string;
 	}
 
-	/* Avoid creating a copy of the string if it has not changed */
-	if (string.length()== result.length()) return string;
+	/*
+	* The string is formatted with LF.  Compute the
+	* number of lines and the size of the buffer
+	* needed to hold the result
+	*/
+	i++;
+	int count = 1;
+	while (i < length) {
+		if ((i = string.indexOf ('\n', i)) == -1) break;
+		count++; i++;
+	}
+	count += length;
+
+	/* Create a new string with the CR/LF line terminator. */
+	i = 0;
+	StringBuilder result = new StringBuilder (count);
+	while (i < length) {
+		int j = string.indexOf ('\n', i);
+		if (j == -1) j = length;
+		result.append (string.substring (i, j));
+		if ((i = j) < length) {
+			result.append ("\r\n"); //$NON-NLS-1$
+			i++;
+		}
+	}
 	return result.toString ();
 }
 
@@ -5355,7 +5346,6 @@ private class ThemeData {
 		return OS.OpenThemeData(hwndMessage, themeName, dpi);
 	}
 }
-
 /**
  * {@return whether rescaling of shells at runtime when the DPI scaling of a
  * shell's monitor changes is activated for this device}
@@ -5381,19 +5371,12 @@ public boolean isRescalingAtRuntime() {
  * @param activate whether rescaling shall be activated or deactivated
  * @return whether activating or deactivating the rescaling was successful
  * @since 3.127
- * @deprecated this method should not be used as it needs to be called already
- *             during instantiation to take proper effect
  */
-@Deprecated(since = "2025-03", forRemoval = true)
 public boolean setRescalingAtRuntime(boolean activate) {
-	return setMonitorSpecificScaling(activate);
-}
-
-private boolean setMonitorSpecificScaling(boolean activate) {
 	int desiredApiAwareness = activate ? OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 : OS.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;
 	if (setDPIAwareness(desiredApiAwareness)) {
 		rescalingAtRuntime = activate;
-		coordinateSystemMapper = activate ? new MultiZoomCoordinateSystemMapper(this, this::getMonitors) : new SingleZoomCoordinateSystemMapper(this);
+		coordinateSystemMapper = activate ? new MultiZoomCoordinateSystemMapper() : new SingleZoomCoordinateSystemMapper();
 		// dispose a existing font registry for the default display
 		SWTFontProvider.disposeFontRegistry(this);
 		return true;
@@ -5402,12 +5385,16 @@ private boolean setMonitorSpecificScaling(boolean activate) {
 }
 
 private boolean setDPIAwareness(int desiredDpiAwareness) {
+	if (OS.WIN32_BUILD < OS.WIN32_BUILD_WIN10_1607) {
+		System.err.println("***WARNING: the OS version does not support setting DPI awareness.");
+		return false;
+	}
 	if (desiredDpiAwareness == OS.GetThreadDpiAwarenessContext()) {
 		return true;
 	}
 	if (desiredDpiAwareness == OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) {
 		// "Per Monitor V2" only available in more recent Windows version
-		boolean perMonitorV2Available = OsVersion.IS_WIN10_1809;
+		boolean perMonitorV2Available = OS.WIN32_BUILD >= OS.WIN32_BUILD_WIN10_1809;
 		if (!perMonitorV2Available) {
 			System.err.println("***WARNING: the OS version does not support DPI awareness mode PerMonitorV2.");
 			return false;
@@ -5421,20 +5408,296 @@ private boolean setDPIAwareness(int desiredDpiAwareness) {
 	return true;
 }
 
-private void runWithProperDPIAwareness(Runnable operation) {
-	if (isRescalingAtRuntime()) {
-		// refreshing is only necessary, when monitor specific scaling is active
-		long previousDPIAwareness = OS.GetThreadDpiAwarenessContext();
-		if (!setDPIAwareness(OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
-			// awareness was not changed, so no need to reset it
-			previousDPIAwareness = 0;
-		}
-		operation.run();
-		if (previousDPIAwareness > 0) {
-			OS.SetThreadDpiAwarenessContext(previousDPIAwareness);
-		}
-	} else {
-		operation.run();
+private interface CoordinateSystemMapper {
+
+	Rectangle map(Control from, Control to, Rectangle rectangle);
+
+	Rectangle map(Control from, Control to, int x, int y, int width, int height);
+
+	Point map(Control from, Control to, Point point);
+
+	Point map(Control from, Control to, int x, int y);
+
+	Rectangle mapMonitorBounds(Rectangle rectangle, int zoom);
+
+	Point translateFromDisplayCoordinates(Point point, int zoom);
+
+	Point translateToDisplayCoordinates(Point point, int zoom);
+
+	Rectangle translateFromDisplayCoordinates(Rectangle rect, int zoom);
+
+	Rectangle translateToDisplayCoordinates(Rectangle rect, int zoom);
+
+	void setCursorLocation(int x, int y);
+
+	Point getCursorLocation();
+
+}
+
+private class SingleZoomCoordinateSystemMapper implements CoordinateSystemMapper {
+	@Override
+	public Point map (Control from, Control to, Point point) {
+		int zoom = getZoomLevelForMapping(from, to);
+		point = DPIUtil.scaleUp(point, zoom);
+		return DPIUtil.scaleDown(mapInPixels(from, to, point), zoom);
+	}
+
+	@Override
+	public Rectangle map (Control from, Control to, Rectangle rectangle) {
+		int zoom = getZoomLevelForMapping(from, to);
+		rectangle = DPIUtil.scaleUp(rectangle, zoom);
+		return DPIUtil.scaleDown(mapInPixels(from, to, rectangle), zoom);
+	}
+
+	@Override
+	public Point map (Control from, Control to, int x, int y) {
+		int zoom = getZoomLevelForMapping(from, to);
+		x = DPIUtil.scaleUp(x, zoom);
+		y = DPIUtil.scaleUp(y, zoom);
+		return DPIUtil.scaleDown(mapInPixels(from, to, x, y), zoom);
+	}
+
+	@Override
+	public Rectangle map (Control from, Control to, int x, int y, int width, int height) {
+		int zoom = getZoomLevelForMapping(from, to);
+		x = DPIUtil.scaleUp(x, zoom);
+		y = DPIUtil.scaleUp(y, zoom);
+		width = DPIUtil.scaleUp(width, zoom);
+		height = DPIUtil.scaleUp(height, zoom);
+		return DPIUtil.scaleDown(mapInPixels(from, to, x, y, width, height), zoom);
+	}
+
+	@Override
+	public Rectangle mapMonitorBounds(Rectangle rect, int zoom) {
+		return DPIUtil.autoScaleDown(rect);
+	}
+
+	@Override
+	public Point translateFromDisplayCoordinates(Point point, int zoom) {
+		return DPIUtil.scaleDown(point, zoom);
+	}
+
+	@Override
+	public Point translateToDisplayCoordinates(Point point, int zoom) {
+		return DPIUtil.scaleUp(point, zoom);
+	}
+
+	@Override
+	public Rectangle translateFromDisplayCoordinates(Rectangle rect, int zoom) {
+		return DPIUtil.scaleDown(rect, zoom);
+	}
+
+	@Override
+	public Rectangle translateToDisplayCoordinates(Rectangle rect, int zoom) {
+		return DPIUtil.scaleUp(rect, zoom);
+	}
+
+	@Override
+	public Point getCursorLocation () {
+		Point cursorLocationInPixels = getCursorLocationInPixels();
+		return DPIUtil.autoScaleDown(cursorLocationInPixels);
+	}
+
+	@Override
+	public void setCursorLocation (int x, int y) {
+		setCursorLocationInPixels (DPIUtil.autoScaleUp (x), DPIUtil.autoScaleUp (y));
 	}
 }
+
+private class MultiZoomCoordinateSystemMapper implements CoordinateSystemMapper {
+	@Override
+	public Point map (Control from, Control to, Point point) {
+		return map(from, to, point.x, point.y);
+	}
+
+	@Override
+	public Rectangle map (Control from, Control to, Rectangle rectangle) {
+		return map(from, to, rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+	}
+
+	@Override
+	public Point map (Control from, Control to, int x, int y) {
+		Point mappedPointInPoints;
+		if (from == null) {
+			Point mappedPointInpixels = mapInPixels(from, to, getPixelsFromPoint(to.getShell().getMonitor(), x, y));
+			mappedPointInPoints = DPIUtil.scaleDown(mappedPointInpixels, to.getZoom());
+		} else if (to == null) {
+			Point mappedPointInpixels = mapInPixels(from, to, DPIUtil.scaleUp(new Point(x, y), from.getZoom()));
+			mappedPointInPoints = getPointFromPixels(from.getShell().getMonitor(), mappedPointInpixels.x, mappedPointInpixels.y);
+		} else {
+			Point mappedPointInpixels = mapInPixels(from, to, DPIUtil.scaleUp(new Point(x, y), from.getZoom()));
+			mappedPointInPoints = DPIUtil.scaleDown(mappedPointInpixels, to.getZoom());
+		}
+		return mappedPointInPoints;
+	}
+
+	@Override
+	public Rectangle map (Control from, Control to, int x, int y, int width, int height) {
+		Rectangle mappedRectangleInPoints;
+		if (from == null) {
+			Rectangle mappedRectangleInPixels = mapInPixels(from, to, translateRectangleInPixelsInDisplayCoordinateSystem(x, y, width, height, to.getShell().getMonitor()));
+			mappedRectangleInPoints = DPIUtil.scaleDown(mappedRectangleInPixels, to.getZoom());
+		} else if (to == null) {
+			Rectangle mappedRectangleInPixels = mapInPixels(from, to, DPIUtil.scaleUp(new Rectangle(x, y, width, height), from.getZoom()));
+			mappedRectangleInPoints = translateRectangleInPointsInDisplayCoordinateSystem(mappedRectangleInPixels.x, mappedRectangleInPixels.y, mappedRectangleInPixels.width, mappedRectangleInPixels.height, from.getShell().getMonitor());
+		} else {
+			Rectangle mappedRectangleInPixels = mapInPixels(from, to, DPIUtil.scaleUp(new Rectangle(x, y, width, height), from.getZoom()));
+			mappedRectangleInPoints = DPIUtil.scaleDown(mappedRectangleInPixels, to.getZoom());
+		}
+		return mappedRectangleInPoints;
+	}
+
+	@Override
+	public Rectangle mapMonitorBounds(Rectangle rect, int zoom) {
+		Rectangle bounds = DPIUtil.scaleDown(rect, zoom);
+		bounds.x = rect.x;
+		bounds.y = rect.y;
+		return bounds;
+	}
+
+	@Override
+	public Point translateFromDisplayCoordinates(Point point, int zoom) {
+		return translateLocationInPixelsFromDisplayCoordinateSystem(point.x, point.y);
+	}
+
+	@Override
+	public Point translateToDisplayCoordinates(Point point, int zoom) {
+		return translateLocationInPointsToDisplayCoordinateSystem(point.x, point.y);
+	}
+
+	@Override
+	public Rectangle translateFromDisplayCoordinates(Rectangle rect, int zoom) {
+		return translateRectangleInPixelsFromDisplayCoordinateSystemByContainment(rect.x, rect.y, rect.width, rect.height);
+	}
+
+	@Override
+	public Rectangle translateToDisplayCoordinates(Rectangle rect, int zoom) {
+		return translateRectangleInPointsToDisplayCoordinateSystemByContainment(rect.x, rect.y, rect.width, rect.height);
+	}
+
+	@Override
+	public Point getCursorLocation () {
+		Point cursorLocationInPixels = getCursorLocationInPixels();
+		return translateLocationInPixelsFromDisplayCoordinateSystem(cursorLocationInPixels.x, cursorLocationInPixels.y);
+	}
+
+	@Override
+	public void setCursorLocation (int x, int y) {
+		Point cursorLocationInPixels = translateLocationInPointsToDisplayCoordinateSystem(x, y);
+		setCursorLocationInPixels (cursorLocationInPixels.x, cursorLocationInPixels.y);
+	}
+
+	private Point translateLocationInPointsToDisplayCoordinateSystem(int x, int y) {
+		Monitor monitor = getContainingMonitor(x, y);
+		return getPixelsFromPoint(monitor, x, y);
+	}
+
+	private Point translateLocationInPixelsFromDisplayCoordinateSystem(int x, int y) {
+		Monitor monitor = getContainingMonitorInPixelsCoordinate(x, y);
+		return getPointFromPixels(monitor, x, y);
+	}
+
+	private Rectangle translateRectangleInPointsToDisplayCoordinateSystemByContainment(int x, int y, int width, int height) {
+		Monitor monitorByLocation = getContainingMonitor(x, y);
+		Monitor monitorByContainment = getContainingMonitor(x, y, width, height);
+		return translateRectangleInPixelsInDisplayCoordinateSystem(x, y, width, height, monitorByLocation, monitorByContainment);
+	}
+
+	private Rectangle translateRectangleInPixelsInDisplayCoordinateSystem(int x, int y, int width, int height, Monitor monitor) {
+		return translateRectangleInPixelsInDisplayCoordinateSystem(x, y, width, height, monitor, monitor);
+	}
+
+	private Rectangle translateRectangleInPixelsInDisplayCoordinateSystem(int x, int y, int width, int height, Monitor monitorOfLocation, Monitor monitorOfArea) {
+		Point topLeft = getPixelsFromPoint(monitorOfLocation, x, y);
+		int zoom = getApplicableMonitorZoom(monitorOfArea);
+		int widthInPixels = DPIUtil.scaleUp(width, zoom);
+		int heightInPixels = DPIUtil.scaleUp(height, zoom);
+		return new Rectangle(topLeft.x, topLeft.y, widthInPixels, heightInPixels);
+	}
+
+	private Rectangle translateRectangleInPixelsFromDisplayCoordinateSystemByContainment(int x, int y, int widthInPixels, int heightInPixels) {
+		Monitor monitorByLocation = getContainingMonitor(x, y);
+		Monitor monitorByContainment = getContainingMonitor(x, y, widthInPixels, heightInPixels);
+		return translateRectangleInPointsInDisplayCoordinateSystem(x, y, widthInPixels, heightInPixels, monitorByLocation, monitorByContainment);
+	}
+
+	private Rectangle translateRectangleInPointsInDisplayCoordinateSystem(int x, int y, int widthInPixels, int heightInPixels, Monitor monitor) {
+		return translateRectangleInPointsInDisplayCoordinateSystem(x, y, widthInPixels, heightInPixels, monitor, monitor);
+	}
+
+
+	private Rectangle translateRectangleInPointsInDisplayCoordinateSystem(int x, int y, int widthInPixels, int heightInPixels, Monitor monitorOfLocation, Monitor monitorOfArea) {
+		Point topLeft = getPointFromPixels(monitorOfLocation, x, y);
+		int zoom = getApplicableMonitorZoom(monitorOfArea);
+		int width = DPIUtil.scaleDown(widthInPixels, zoom);
+		int height = DPIUtil.scaleDown(heightInPixels, zoom);
+		return new Rectangle(topLeft.x, topLeft.y, width, height);
+	}
+
+	private Monitor getContainingMonitor(int x, int y) {
+		Monitor[] monitors = getMonitors();
+		for (Monitor currentMonitor : monitors) {
+			Rectangle clientArea = currentMonitor.getClientArea();
+			if (clientArea.contains(x, y)) {
+				return currentMonitor;
+			}
+		}
+		return getPrimaryMonitor();
+	}
+
+	private Monitor getContainingMonitor(int x, int y, int width, int height) {
+		Rectangle rectangle = new Rectangle(x, y, width, height);
+		Monitor[] monitors = getMonitors();
+		Monitor selectedMonitor = getPrimaryMonitor();
+		int highestArea = 0;
+		for (Monitor currentMonitor : monitors) {
+			Rectangle clientArea = currentMonitor.getClientArea();
+			Rectangle intersection = clientArea.intersection(rectangle);
+			int area = intersection.width * intersection.height;
+			if (area > highestArea) {
+				selectedMonitor = currentMonitor;
+				highestArea = area;
+			}
+		}
+		return selectedMonitor;
+	}
+
+	private Monitor getContainingMonitorInPixelsCoordinate(int xInPixels, int yInPixels) {
+		Monitor[] monitors = getMonitors();
+		for (Monitor current : monitors) {
+			Rectangle clientArea = getMonitorClientAreaInPixels(current);
+			if (clientArea.contains(xInPixels, yInPixels)) {
+				return current;
+			}
+		}
+		return getPrimaryMonitor();
+	}
+
+	private Rectangle getMonitorClientAreaInPixels(Monitor monitor) {
+		int zoom = getApplicableMonitorZoom(monitor);
+		int widthInPixels = DPIUtil.scaleUp(monitor.clientWidth, zoom);
+		int heightInPixels = DPIUtil.scaleUp(monitor.clientHeight, zoom);
+		return new Rectangle(monitor.clientX, monitor.clientY, widthInPixels, heightInPixels);
+	}
+
+	private Point getPixelsFromPoint(Monitor monitor, int x, int y) {
+		int zoom = getApplicableMonitorZoom(monitor);
+		int mappedX = DPIUtil.scaleUp(x - monitor.clientX, zoom) + monitor.clientX;
+		int mappedY = DPIUtil.scaleUp(y - monitor.clientY, zoom) + monitor.clientY;
+		return new Point(mappedX, mappedY);
+	}
+
+	private Point getPointFromPixels(Monitor monitor, int x, int y) {
+		int zoom = getApplicableMonitorZoom(monitor);
+		int mappedX = DPIUtil.scaleDown(x - monitor.clientX, zoom) + monitor.clientX;
+		int mappedY = DPIUtil.scaleDown(y - monitor.clientY, zoom) + monitor.clientY;
+		return new Point(mappedX, mappedY);
+	}
+
+	private int getApplicableMonitorZoom(Monitor monitor) {
+		return DPIUtil.getZoomForAutoscaleProperty(monitor.zoom);
+	}
+
+}
+
 }

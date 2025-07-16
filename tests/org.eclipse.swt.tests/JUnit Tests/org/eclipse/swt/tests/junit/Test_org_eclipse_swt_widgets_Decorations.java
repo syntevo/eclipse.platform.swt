@@ -21,8 +21,6 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -125,9 +123,9 @@ public void test_setDefaultButtonLorg_eclipse_swt_widgets_Button() {
 public void test_setImageLorg_eclipse_swt_graphics_Image() {
 	assertNull(":a:", decorations.getImage());
 	loadImages();
-	decorations.setImage(images.get(0));
-	assertTrue(":b:", images.get(0) == decorations.getImage());
-	assertTrue(":c:", images.get(1) != decorations.getImage());
+	decorations.setImage(images[0]);
+	assertTrue(":b:", images[0] == decorations.getImage());
+	assertTrue(":c:", images[1] != decorations.getImage());
 	decorations.setImage(null);
 	assertNull(":d:", decorations.getImage());
 	freeImages();
@@ -191,7 +189,7 @@ public void test_setVisibleZ() {
 
 /* custom */
 Decorations decorations;
-private List<Image> images = new ArrayList<>();
+Image[] images = new Image [SwtTestUtil.imageFormats.length*SwtTestUtil.imageFilenames.length];
 
 @Override
 protected void setWidget(Widget w) {
@@ -203,10 +201,15 @@ protected void setWidget(Widget w) {
 
 // this method must be private or protected so the auto-gen tool keeps it
 private void loadImages() {
-	for (String format : SwtTestUtil.imageFormats) {
-		for (String fileName : SwtTestUtil.imageFilenames) {
+	int numFormats = SwtTestUtil.imageFormats.length;
+	int numFiles = SwtTestUtil.imageFilenames.length;
+	for (int i=0; i<numFormats; i++) {
+		String format = SwtTestUtil.imageFormats[i];
+		int index = i*numFiles;
+		for (int j=0; j<numFiles; j++){
+			String fileName = SwtTestUtil.imageFilenames[j];
 			try (InputStream  resource = this.getClass().getResourceAsStream(fileName + "." + format)) {
-				images.add(new Image(shell.getDisplay(), resource));
+				images [index+j] = new Image (shell.getDisplay(), resource);
 			} catch (IOException e) {
 				// continue;
 			}

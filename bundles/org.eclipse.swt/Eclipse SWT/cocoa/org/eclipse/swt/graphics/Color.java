@@ -48,6 +48,10 @@ public final class Color extends Resource {
 	 */
 	public double [] handle;
 
+Color() {
+	super();
+}
+
 Color(Device device) {
 	super(device);
 }

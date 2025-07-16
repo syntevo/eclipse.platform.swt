@@ -18,6 +18,16 @@
 
 #define OS_NATIVE(func) Java_org_eclipse_swt_internal_win32_OS_##func
 
+__declspec(dllexport) HRESULT DllGetVersion(DLLVERSIONINFO *dvi);
+HRESULT DllGetVersion(DLLVERSIONINFO *dvi)
+{
+	dvi->dwMajorVersion = SWT_VERSION / 1000;
+	dvi->dwMinorVersion = SWT_VERSION % 1000;
+	dvi->dwBuildNumber = SWT_REVISION;
+	dvi->dwPlatformID = DLLVER_PLATFORM_WINDOWS;
+	return 1;
+}
+
 HINSTANCE g_hInstance = NULL;
 BOOL WINAPI DllMain(HANDLE hInstDLL, DWORD dwReason, LPVOID lpvReserved)
 {
@@ -242,16 +252,6 @@ BOOL Validate_SetPreferredAppMode(const BYTE* functionPtr)
 		const DWORD arg0 = ((ldr & 0x003FFC00) >> 10) * 4;
 		const DWORD arg1 = ((add & 0x003FFC00) >> 10);
 		return arg0 == arg1;
-	}
-
-	/* Win11 builds from 26100 */
-	if (((*(const DWORD*)(&functionPtr[0x00])) & 0x9F00001F) == 0x90000008 &&  // adrp  x8,#...
-		((*(const DWORD*)(&functionPtr[0x04])) & 0xFF8003FF) == 0x91000108 &&  // add   x8,x8,#...
-		*(const DWORD*)(&functionPtr[0x08]) == 0x2A0003E9 &&                   // mov   w9,w0
-		*(const DWORD*)(&functionPtr[0x0c]) == 0xB9400100 &&                   // ldr   w0,[x8]
-		*(const DWORD*)(&functionPtr[0x10]) == 0xB8E98109)                     // swpal w9,w9,[x8]
-	{
-		return TRUE;
 	}
 
 	return FALSE;

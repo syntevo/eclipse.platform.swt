@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2009 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,20 +14,19 @@
 package org.eclipse.swt.internal.image;
 
 
-import java.io.*;
-
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.internal.image.FileFormat.*;
+import java.io.*;
 
 /**
  * Baseline TIFF decoder revision 6.0
  * Extension T4-encoding CCITT T.4 1D
  */
-public final class TIFFFileFormat extends StaticImageFileFormat {
+public final class TIFFFileFormat extends FileFormat {
 
-	@Override
-	boolean isFileFormat(LEDataInputStream stream) throws IOException {
+@Override
+boolean isFileFormat(LEDataInputStream stream) {
+	try {
 		byte[] header = new byte[4];
 		stream.read(header);
 		stream.unread(header);
@@ -37,7 +36,10 @@ public final class TIFFFileFormat extends StaticImageFileFormat {
 			return false;
 		}
 		return true;
+	} catch (Exception e) {
+		return false;
 	}
+}
 
 @Override
 ImageData[] loadFromByteStream() {

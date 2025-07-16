@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -1081,25 +1081,26 @@ long eventSurface () {
  */
 public Point getCaretLocation () {
 	checkWidget ();
+	return DPIUtil.autoScaleDown(getCaretLocationInPixels());
+}
+
+
+Point getCaretLocationInPixels () {
+	checkWidget ();
 	if ((style & SWT.READ_ONLY) != 0) {
 		return new Point (0, 0);
 	}
 	int index = GTK.gtk_editable_get_position (entryHandle);
+	index = GTK3.gtk_entry_text_index_to_layout_index (entryHandle, index);
 	int [] offset_x = new int [1], offset_y = new int [1];
-	if (GTK.GTK4) {
-		// TODO GTK 4.x implementation
-		return new Point (0, 0);
-	} else {
-		index = GTK3.gtk_entry_text_index_to_layout_index (entryHandle, index);
-		GTK3.gtk_entry_get_layout_offsets (entryHandle, offset_x, offset_y);
-		long layout = GTK3.gtk_entry_get_layout (entryHandle);
-		PangoRectangle pos = new PangoRectangle ();
-		OS.pango_layout_index_to_pos (layout, index, pos);
-		Point thickness = getThickness (entryHandle);
-		int x = offset_x [0] + OS.PANGO_PIXELS (pos.x) - getBorderWidthInPixels () - thickness.x;
-		int y = offset_y [0] + OS.PANGO_PIXELS (pos.y) - thickness.y;
-		return new Point (x, y);
-	}
+	GTK3.gtk_entry_get_layout_offsets (entryHandle, offset_x, offset_y);
+	long layout = GTK3.gtk_entry_get_layout (entryHandle);
+	PangoRectangle pos = new PangoRectangle ();
+	OS.pango_layout_index_to_pos (layout, index, pos);
+	Point thickness = getThickness (entryHandle);
+	int x = offset_x [0] + OS.PANGO_PIXELS (pos.x) - getBorderWidthInPixels () - thickness.x;
+	int y = offset_y [0] + OS.PANGO_PIXELS (pos.y) - thickness.y;
+	return new Point (x, y);
 }
 
 /**
@@ -1122,7 +1123,7 @@ public int getCaretPosition () {
 	if ((style & SWT.READ_ONLY) != 0) {
 		return 0;
 	}
-	long ptr = GTK.GTK4? GTK4.gtk_entry_buffer_get_text(GTK4.gtk_entry_get_buffer(entryHandle)) : GTK3.gtk_entry_get_text (entryHandle);
+	long ptr = GTK3.gtk_entry_get_text (entryHandle);
 	return (int)OS.g_utf8_offset_to_utf16_offset (ptr, GTK.gtk_editable_get_position (entryHandle));
 }
 
@@ -1302,7 +1303,7 @@ public Point getSelection () {
 	int [] end = new int [1];
 	if (entryHandle != 0) {
 		GTK.gtk_editable_get_selection_bounds (entryHandle, start, end);
-		long ptr = GTK.GTK4 ? GTK4.gtk_entry_buffer_get_text(GTK4.gtk_entry_get_buffer(entryHandle)): GTK3.gtk_entry_get_text (entryHandle);
+		long ptr = GTK3.gtk_entry_get_text (entryHandle);
 		start[0] = (int)OS.g_utf8_offset_to_utf16_offset (ptr, start[0]);
 		end[0] = (int)OS.g_utf8_offset_to_utf16_offset (ptr, end[0]);
 	}
@@ -1383,6 +1384,12 @@ String getText (int start, int stop) {
  * </ul>
  */
 public int getTextHeight () {
+	checkWidget();
+	return DPIUtil.autoScaleDown(getTextHeightInPixels());
+}
+
+
+int getTextHeightInPixels () {
 	checkWidget();
 	GtkRequisition requisition = new GtkRequisition ();
 	gtk_widget_get_preferred_size (handle, requisition);
@@ -1965,14 +1972,7 @@ long paintSurface () {
  */
 public void paste () {
 	checkWidget ();
-	if (entryHandle != 0) {
-		if (GTK.GTK4) {
-			long textHandle = GTK4.gtk_widget_get_first_child(entryHandle);
-			GTK4.gtk_widget_activate_action(textHandle, OS.action_paste_clipboard, null);
-		} else {
-			GTK3.gtk_editable_paste_clipboard (entryHandle);
-		}
-	}
+	if (entryHandle != 0) GTK3.gtk_editable_paste_clipboard (entryHandle);
 }
 
 @Override
@@ -2270,7 +2270,7 @@ void setBackgroundGdkRGBA (long context, long handle, GdkRGBA rgba) {
 @Override
 int setBounds (int x, int y, int width, int height, boolean move, boolean resize) {
 	int newHeight = height;
-	if (resize) newHeight = Math.max (getTextHeight (), height);
+	if (resize) newHeight = Math.max (getTextHeightInPixels (), height);
 	return super.setBounds (x, y, width, newHeight, move, resize);
 }
 

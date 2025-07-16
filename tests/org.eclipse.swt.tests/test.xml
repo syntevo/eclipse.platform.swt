@@ -9,6 +9,7 @@
   <!-- sets the properties eclipse-home, and library-file -->
   <property name="eclipse-home" value="${basedir}/../.."/>
   <property name="plugin-name" value="org.eclipse.swt.tests"/>
+  <property name="plugin-path" value="${eclipse-home}/plugins/${org.eclipse.swt.tests}"/>
   <property name="library-file" value="${eclipse-home}/plugins/org.eclipse.test/library.xml"/>
 
   <!-- This target holds all initialization code that needs to be done for -->
@@ -30,7 +31,7 @@
       <property name="plugin-name" value="${plugin-name}"/>
       <property name="classname" value="org.eclipse.swt.tests.junit.AllNonBrowserTests"/>
       <!-- workaround for https://bugs.eclipse.org/502410 and checks for bug 532632 -->
-      <property name="vmargs" value="-Dorg.eclipse.swt.internal.gtk.disablePrinting -Dorg.eclipse.swt.internal.enableStrictChecks"/>
+      <property name="vmargs" value="-Dorg.eclipse.swt.internal.gtk.disablePrinting -Dorg.eclipse.swt.internal.gtk.enableStrictChecks"/>
     </ant>
   </target>
 	

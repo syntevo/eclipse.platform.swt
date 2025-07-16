@@ -304,11 +304,9 @@ public class StyledText extends Canvas {
 				}
 			}
 		}
-
+		Point screenDPI = styledText.getDisplay().getDPI();
 		Point printerDPI = printer.getDPI();
 		resources = new HashMap<> ();
-		int scaleFactorX = printerDPI.x / 100;
-		int scaleFactorY = printerDPI.y / 100;
 		for (int i = 0; i < lineCount; i++) {
 			Color color = printerRenderer.getLineBackground(i, null);
 			if (color != null) {
@@ -325,7 +323,7 @@ public class StyledText extends Canvas {
 			}
 			int indent = printerRenderer.getLineIndent(i, 0);
 			if (indent != 0) {
-				printerRenderer.setLineIndent(i, 1, indent * scaleFactorX);
+				printerRenderer.setLineIndent(i, 1, indent * printerDPI.x / screenDPI.x);
 			}
 		}
 		StyleRange[] styles = printerRenderer.styles;
@@ -369,17 +367,17 @@ public class StyledText extends Canvas {
 			if (!printOptions.printTextFontStyle) {
 				style.fontStyle = SWT.NORMAL;
 			}
-			style.rise = style.rise * scaleFactorY;
+			style.rise = style.rise * printerDPI.y / screenDPI.y;
 			GlyphMetrics metrics = style.metrics;
 			if (metrics != null) {
-				metrics.ascent = metrics.ascent * scaleFactorY;
-				metrics.descent = metrics.descent * scaleFactorY;
-				metrics.width = metrics.width * scaleFactorX;
+				metrics.ascent = metrics.ascent * printerDPI.y / screenDPI.y;
+				metrics.descent = metrics.descent * printerDPI.y / screenDPI.y;
+				metrics.width = metrics.width * printerDPI.x / screenDPI.x;
 			}
 		}
-		lineSpacing = styledText.lineSpacing * scaleFactorY;
+		lineSpacing = styledText.lineSpacing * printerDPI.y / screenDPI.y;
 		if (printOptions.printLineNumbers) {
-			printMargin = 3 * scaleFactorX;
+			printMargin = 3 * printerDPI.x / screenDPI.x;
 		}
 	}
 	/**
@@ -1593,15 +1591,15 @@ void createCaretBitmaps() {
 		leftCaretBitmap.dispose();
 	}
 	int lineHeight = renderer.getLineHeight();
-	final ImageGcDrawer leftCaretDrawer = (gc, width, height) -> {
-		gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
-		gc.fillRectangle(0, 0, width, height);
-		gc.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
-		gc.drawLine(0,0,0,height);
-		gc.drawLine(0,0,width-1,0);
-		gc.drawLine(0,1,1,1);
-	};
-	leftCaretBitmap = new Image(display, leftCaretDrawer, caretWidth, lineHeight);
+	leftCaretBitmap = new Image(display, caretWidth, lineHeight);
+	GC gc = new GC (leftCaretBitmap);
+	gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
+	gc.fillRectangle(0, 0, caretWidth, lineHeight);
+	gc.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
+	gc.drawLine(0,0,0,lineHeight);
+	gc.drawLine(0,0,caretWidth-1,0);
+	gc.drawLine(0,1,1,1);
+	gc.dispose();
 
 	if (rightCaretBitmap != null) {
 		if (defaultCaret != null && rightCaretBitmap.equals(defaultCaret.getImage())) {
@@ -1609,15 +1607,15 @@ void createCaretBitmaps() {
 		}
 		rightCaretBitmap.dispose();
 	}
-	final ImageGcDrawer rightCaretDrawer = (gc, width, height) -> {
-		gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
-		gc.fillRectangle(0, 0, width, height);
-		gc.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
-		gc.drawLine(width-1,0,width-1,height);
-		gc.drawLine(0,0,width-1,0);
-		gc.drawLine(width-1,1,1,1);
-	};
-	rightCaretBitmap = new Image(display, rightCaretDrawer, caretWidth, lineHeight);
+	rightCaretBitmap = new Image(display, caretWidth, lineHeight);
+	gc = new GC (rightCaretBitmap);
+	gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
+	gc.fillRectangle(0, 0, caretWidth, lineHeight);
+	gc.setForeground(display.getSystemColor(SWT.COLOR_WHITE));
+	gc.drawLine(caretWidth-1,0,caretWidth-1,lineHeight);
+	gc.drawLine(0,0,caretWidth-1,0);
+	gc.drawLine(caretWidth-1,1,1,1);
+	gc.dispose();
 }
 /**
  * Moves the selected text to the clipboard.  The text will be put in the
@@ -6048,7 +6046,7 @@ void handleTextChanged(TextChangedEvent event) {
 	}
 	int firstLine = content.getLineAtOffset(lastTextChangeStart);
 	resetCache(firstLine, 0);
-	if (!isFixedLineHeight() && isFocusControl() && topIndex > firstLine) {
+	if (!isFixedLineHeight() && topIndex > firstLine) {
 		topIndex = firstLine;
 		if (topIndex < 0) {
 			// TODO: This logging is in place to determine why topIndex is getting set to negative values.
@@ -10876,14 +10874,11 @@ void updateSelection(int startOffset, int replacedLength, int newLength) {
  * @noreference This method is not intended to be referenced by clients.
  */
 public static void updateAndRefreshCarets(StyledText styledText, Consumer<Caret> caretUpdater) {
-	Set<Caret> caretSet = new HashSet<>();
-	caretSet.add(styledText.getCaret());
-	caretSet.add(styledText.defaultCaret);
+	caretUpdater.accept(styledText.getCaret());
+	caretUpdater.accept(styledText.defaultCaret);
 	for (Caret caret : styledText.carets) {
-		caretSet.add(caret);
+		caretUpdater.accept(caret);
 	}
-	caretSet.forEach(caretUpdater);
-
 	styledText.updateCaretVisibility();
 	styledText.setCaretLocations();
 

@@ -548,13 +548,7 @@ void copyAreaInPixels(int srcX, int srcY, int width, int height, int destX, int 
 		Cairo.cairo_set_source_surface(handle, data.image.surface, deltaX, deltaY);
 		Cairo.cairo_rectangle(handle, destX, destY, width, height);
 		Cairo.cairo_set_operator(handle, Cairo.CAIRO_OPERATOR_SOURCE);
-		// As source and target area may be overlapping, we need to draw on
-		// an intermediate surface to avoid that parts of the source area are
-		// overwritten before reading it to be copied
-		Cairo.cairo_push_group(handle);
 		Cairo.cairo_fill(handle);
-		Cairo.cairo_pop_group_to_source(handle);
-		Cairo.cairo_paint(handle);
 	} else if (drawable != 0) {
 		Cairo.cairo_save(handle);
 		Cairo.cairo_rectangle(handle, destX, destY, width, height);
@@ -1621,16 +1615,18 @@ void fillGradientRectangleInPixels(int x, int y, int width, int height, boolean 
 	long cairo = data.cairo;
 	long pattern;
 
-	/*
-	 * Here the co-ordinates passed are in points for GTK3.
-	 * That means the user is expecting surface to be at
-	 * device scale equal to current scale factor. So need
-	 * to set the device scale to current scale factor
-	 */
-	long surface = Cairo.cairo_get_target(cairo);
-	if (surface != 0) {
-		float scaleFactor = DPIUtil.getDeviceZoom() / 100f;
-		Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
+	if (DPIUtil.useCairoAutoScale() ) {
+		/*
+		 * Here the co-ordinates passed are in points for GTK3.
+		 * That means the user is expecting surface to be at
+		 * device scale equal to current scale factor. So need
+		 * to set the device scale to current scale factor
+		 */
+		long surface = Cairo.cairo_get_target(cairo);
+		if (surface != 0) {
+			float scaleFactor = DPIUtil.getDeviceZoom() / 100f;
+			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
+		}
 	}
 
 	if (fromRGB.equals(toRGB)) {

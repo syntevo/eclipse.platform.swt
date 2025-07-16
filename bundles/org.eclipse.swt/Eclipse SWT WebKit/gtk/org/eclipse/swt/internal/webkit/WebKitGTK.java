@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others. All rights reserved.
+ * Copyright (c) 2000, 2021 IBM Corporation and others. All rights reserved.
  * The contents of this file are made available under the terms
  * of the GNU Lesser General Public License (LGPL) Version 2.1 that
  * accompanies this distribution (lgpl-v21.txt).  The LGPL is also
@@ -226,9 +226,6 @@ public static final native void soup_uri_free(long uri);
 /** @method flags=dynamic */
 public static final native long soup_uri_new(byte[] uri_string);
 
-/** @method flags=dynamic */
-public static final native int soup_get_major_version();
-
 /* --------------------- start WebKitGTK natives --------------------- */
 
 /** @method flags=dynamic */
@@ -358,9 +355,6 @@ public static final native void webkit_policy_decision_ignore(long decision);
 
 /** @method flags=dynamic */
 public static final native long webkit_web_context_get_default();
-
-/** @method flags=dynamic */
-public static final native long webkit_network_session_get_default();
 
 /** @method flags=dynamic */
 public static final native long webkit_web_context_get_cookie_manager(long context);

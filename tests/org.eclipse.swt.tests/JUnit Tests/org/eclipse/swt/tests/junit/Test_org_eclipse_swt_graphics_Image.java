@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2020 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,18 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
+import java.net.URL;
 import java.util.function.Consumer;
 
 import org.eclipse.swt.SWT;
@@ -42,16 +37,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageDataProvider;
 import org.eclipse.swt.graphics.ImageFileNameProvider;
-import org.eclipse.swt.graphics.ImageGcDrawer;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.DPIUtil;
 import org.eclipse.swt.widgets.Display;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.graphics.Image
@@ -60,39 +52,51 @@ import org.junit.rules.TemporaryFolder;
  */
 @SuppressWarnings("restriction")
 public class Test_org_eclipse_swt_graphics_Image {
-
-	@ClassRule
-	public static TemporaryFolder tempFolder = new TemporaryFolder();
-
-	private static String getPath(String fileName) {
-		return SwtTestUtil.getPath(fileName, tempFolder).toString();
-	}
-
-	ImageFileNameProvider imageFileNameProvider = zoom -> {
-		String fileName = switch (zoom) {
-		case 100 -> "collapseall.png";
-		case 150 -> "collapseall@1.5x.png";
-		case 200 -> "collapseall@2x.png";
-		default -> null;
-		};
-		return fileName != null ? getPath(fileName) : null;
-	};
-	ImageDataProvider imageDataProvider = zoom -> {
-		String fileName = switch (zoom) {
-		case 100 -> "collapseall.png";
-		case 150 -> "collapseall@1.5x.png";
-		case 200 -> "collapseall@2x.png";
-		default -> null;
-		};
-		return fileName != null ? new ImageData(getPath(fileName)) : null;
-	};
-	ImageDataProvider imageDataProvider1xOnly = zoom -> {
-		if (zoom == 100) {
-			return new ImageData(getPath("collapseall.png"));
-		}
+ImageFileNameProvider imageFileNameProvider = zoom -> {
+	String fileName;
+	switch (zoom) {
+	case 100:
+		fileName = "collapseall.png";
+		break;
+	case 150:
+		fileName = "collapseall@1.5x.png";
+		break;
+	case 200:
+		fileName = "collapseall@2x.png";
+		break;
+	default:
 		return null;
-	};
-ImageGcDrawer imageGcDrawer = (gc, width, height) -> {};
+	}
+	return getPath(fileName);
+};
+ImageDataProvider imageDataProvider = zoom -> {
+	String fileName;
+	switch (zoom) {
+	case 100:
+		fileName = "collapseall.png";
+		break;
+	case 150:
+		fileName = "collapseall@1.5x.png";
+		break;
+	case 200:
+		fileName = "collapseall@2x.png";
+		break;
+	default:
+		return null;
+	}
+	return new ImageData(getPath(fileName));
+};
+ImageDataProvider imageDataProvider1xOnly = zoom -> {
+	String fileName;
+	switch (zoom) {
+	case 100:
+		fileName = "collapseall.png";
+		break;
+	default:
+		return null;
+	}
+	return new ImageData(getPath(fileName));
+};
 
 @Before
 public void setUp() {
@@ -101,52 +105,98 @@ public void setUp() {
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceII() {
-	IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> new Image(display, -1, 10));
-	assertSWTProblem("Incorrect exception thrown for width < 0", SWT.ERROR_INVALID_ARGUMENT, e1);
+	Image image;
+	try {
+		image = new Image(display, -1, 10);
+		image.dispose();
+		fail("No exception thrown for width <= 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for width <= 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> new Image(display, 0, 10));
-	assertSWTProblem("Incorrect exception thrown for width == 0", SWT.ERROR_INVALID_ARGUMENT, e2);
+	try {
+		image = new Image(display, 0, 10);
+		image.dispose();
+		fail("No exception thrown for width <= 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for width <= 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, -20));
-	assertSWTProblem("Incorrect exception thrown for height < 0", SWT.ERROR_INVALID_ARGUMENT, e3);
+	try {
+		image = new Image(display, 10, -20);
+		image.dispose();
+		fail("No exception thrown for height <= 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for height <= 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	IllegalArgumentException e4 = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, 0));
-	assertSWTProblem("Incorrect exception thrown for height == 0", SWT.ERROR_INVALID_ARGUMENT, e4);
+	try {
+		image = new Image(display, 10, 0);
+		image.dispose();
+		fail("No exception thrown for height <= 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for height <= 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	Image image = new Image(null, 10, 10);
+	image = new Image(null, 10, 10);
 	image.dispose();
 
 	image = new Image(display, 10, 10);
 	image.dispose();
+
 }
 
-@SuppressWarnings("removal")
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_Rectangle() {
 	Image image;
-	IllegalArgumentException e;
-	Rectangle bounds1 = null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, bounds1));
-	assertSWTProblem("Incorrect exception thrown for rectangle == null", SWT.ERROR_NULL_ARGUMENT, e);
+	Rectangle bounds = null;
 
-	Rectangle bounds2 = new Rectangle(0, 0, -1, 10);
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, bounds2));
-	assertSWTProblem("Incorrect exception thrown for width < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	try {
+		image = new Image(display, bounds);
+		image.dispose();
+		fail("No exception thrown for rectangle == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for rectangle == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 
-	Rectangle bounds3 = new Rectangle(0, 0, 0, 10);
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, bounds3));
-	assertSWTProblem("Incorrect exception thrown for width == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	bounds = new Rectangle(0, 0, -1, 10);
+	try {
+		image = new Image(display, bounds);
+		image.dispose();
+		fail("No exception thrown for width < 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for width < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	Rectangle bounds4 = new Rectangle(0, 0, 10, -1);
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, bounds4));
-	assertSWTProblem("Incorrect exception thrown for height < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	bounds = new Rectangle(0, 0, 0, 10);
+	try {
+		image = new Image(display, bounds);
+		image.dispose();
+		fail("No exception thrown for width == 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for width == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	Rectangle bounds5 = new Rectangle(0, 0, 10, 0);
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, bounds5));
-	assertSWTProblem("Incorrect exception thrown for height == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	bounds = new Rectangle(0, 0, 10, -1);
+	try {
+		image = new Image(display, bounds);
+		image.dispose();
+		fail("No exception thrown for height < 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for height < 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
+
+	bounds = new Rectangle(0, 0, 10, 0);
+	try {
+		image = new Image(display, bounds);
+		image.dispose();
+		fail("No exception thrown for height == 0");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for height == 0", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
 	// valid images
-	Rectangle bounds = new Rectangle(-1, -10, 10, 10);
+	bounds = new Rectangle(-1, -10, 10, 10);
 	image = new Image(display, bounds);
 	image.dispose();
 
@@ -159,44 +209,27 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_gra
 }
 
 @Test
-public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_int_int() {
-	Image image;
-	IllegalArgumentException e;
-
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, -1, 10));
-	assertSWTProblem("Incorrect exception thrown for width < 0", SWT.ERROR_INVALID_ARGUMENT, e);
-
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 0, 10));
-	assertSWTProblem("Incorrect exception thrown for width == 0", SWT.ERROR_INVALID_ARGUMENT, e);
-
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, -1));
-	assertSWTProblem("Incorrect exception thrown for height < 0", SWT.ERROR_INVALID_ARGUMENT, e);
-
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, 10, 0));
-	assertSWTProblem("Incorrect exception thrown for height == 0", SWT.ERROR_INVALID_ARGUMENT, e);
-
-	// valid images
-	image = new Image(null, 10, 10);
-	image.dispose();
-
-	image = new Image(display, 10, 10);
-	image.dispose();
-}
-
-@Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_ImageData() {
-	IllegalArgumentException e;
+	ImageData data = null;
+	Image image = null;
 
-	ImageData data1 = null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, data1));
-	assertSWTProblem("Incorrect exception thrown for ImageData == null", SWT.ERROR_NULL_ARGUMENT, e);
+	try {
+		image = new Image(display, data);
+		image.dispose();
+		fail("No exception thrown for ImageData == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for ImageData == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 
 //	Platform-specific test.
-//	ImageData data2 = new ImageData(10, 10, 1, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
-//	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, data2));
+//	data = new ImageData(10, 10, 1, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
+//	try {
+//		image = new Image(display, data);
+//		image.dispose();
+//		fail("Unsupported color depth");
+//	} catch (SWTException e) {
+//	}
 
-	ImageData data;
-	Image image;
 	data = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
 	image = new Image(null, data);
 	image.dispose();
@@ -214,7 +247,7 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_gra
 	gc.drawImage(image, 0, 0);
 	ImageData gcImageData = gcImage.getImageData();
 	int redPixel = gcImageData.getPixel(9, 9);
-	assertEquals(getRealRGB(display.getSystemColor(SWT.COLOR_RED)), gcImageData.palette.getRGB(redPixel));
+	assertEquals(":a:", getRealRGB(display.getSystemColor(SWT.COLOR_RED)), gcImageData.palette.getRGB(redPixel));
 	gc.dispose();
 	gcImage.dispose();
 	image.dispose();
@@ -222,36 +255,59 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_gra
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_graphics_ImageDataLorg_eclipse_swt_graphics_ImageData() {
-	IllegalArgumentException e;
-
+	ImageData data = null;
 	ImageData data1 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, null, data1));
-	assertSWTProblem("Incorrect exception thrown for ImageData source == null", SWT.ERROR_NULL_ARGUMENT, e);
+	Image image = null;
 
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, data1, null));
-	assertSWTProblem("Incorrect exception thrown for ImageData mask == null", SWT.ERROR_NULL_ARGUMENT, e);
+	try {
+		image = new Image(display, data, data1);
+		image.dispose();
+		fail("No exception thrown for ImageData source == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for ImageData source == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 
-	ImageData data2 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
-	ImageData data3 = new ImageData(1, 10, 1, new PaletteData(new RGB(0, 0, 0)));
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, data2, data3));
-	assertSWTProblem("Incorrect exception thrown for ImageData source width != ImageData mask width", SWT.ERROR_INVALID_ARGUMENT, e);
+	data = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
+	data1 = null;
+	try {
+		image = new Image(display, data, data1);
+		image.dispose();
+		fail("No exception thrown for ImageData mask == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for ImageData mask == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 
-	ImageData data4 = new ImageData(10, 1, 1, new PaletteData(new RGB(0, 0, 0)));
-	ImageData data5 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, data4, data5));
-	assertSWTProblem("Incorrect exception thrown for ImageData source height != ImageData mask height", SWT.ERROR_INVALID_ARGUMENT, e);
+	data = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
+	data1 = new ImageData(1, 10, 1, new PaletteData(new RGB(0, 0, 0)));
+	try {
+		image = new Image(display, data, data1);
+		image.dispose();
+		fail("No exception thrown for ImageData source width != ImageData mask width");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for ImageData source width != ImageData mask width", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 
-	ImageData data6 = new ImageData(10, 10, 8, new PaletteData(new RGB(0, 0, 0)));
-	ImageData data7 = new ImageData(10, 10, 8, new PaletteData(new RGB(0, 0, 0)));
-	Image image = new Image(display, data6, data7); // Image now accepts masks where depth != 1
+	data = new ImageData(10, 1, 1, new PaletteData(new RGB(0, 0, 0)));
+	data1 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
+	try {
+		image = new Image(display, data, data1);
+		image.dispose();
+		fail("No exception thrown for ImageData source height != ImageData mask height");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for ImageData source height != ImageData mask height", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
+
+	data = new ImageData(10, 10, 8, new PaletteData(new RGB(0, 0, 0)));
+	data1 = new ImageData(10, 10, 8, new PaletteData(new RGB(0, 0, 0)));
+	image = new Image(display, data, data1); // Image now accepts masks where depth != 1
 	image.dispose();
 
-	data6 = new ImageData(10, 10, 8, new PaletteData(0x30, 0x0C, 0x03));
+	data = new ImageData(10, 10, 8, new PaletteData(0x30, 0x0C, 0x03));
 	// set opaque red pixel at x=9, y=9
-	data6.setPixel(9, 9, 0x30);
-	data7 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0), new RGB(255, 255, 255)));
-	data7.setPixel(9, 9, 1);
-	image = new Image(display, data6, data7);
+	data.setPixel(9, 9, 0x30);
+	data1 = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0), new RGB(255, 255, 255)));
+	data1.setPixel(9, 9, 1);
+	image = new Image(display, data, data1);
 	Image gcImage = new Image(display, 10, 10);
 	GC gc = new GC(gcImage);
 	Color backgroundColor = display.getSystemColor(SWT.COLOR_BLUE);
@@ -260,199 +316,295 @@ public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLorg_eclipse_swt_gra
 	gc.drawImage(image, 0, 0);
 	ImageData gcImageData = gcImage.getImageData();
 	int redPixel = gcImageData.getPixel(9, 9);
-	assertEquals(getRealRGB(display.getSystemColor(SWT.COLOR_RED)), gcImageData.palette.getRGB(redPixel));
+	assertEquals(":a:", getRealRGB(display.getSystemColor(SWT.COLOR_RED)), gcImageData.palette.getRGB(redPixel));
 	int bluePixel = gcImageData.getPixel(0, 0);
-	assertEquals(getRealRGB(backgroundColor), gcImageData.palette.getRGB(bluePixel));
+	assertEquals(":b:", getRealRGB(backgroundColor), gcImageData.palette.getRGB(bluePixel));
 	gc.dispose();
 	gcImage.dispose();
 	image.dispose();
 }
 
 @Test
-public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLjava_io_InputStream() throws IOException {
-	Exception e;
-
-	InputStream stream1 = null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, stream1));
-	assertSWTProblem("Incorrect exception thrown for InputStream == null", SWT.ERROR_NULL_ARGUMENT, e);
-
-	try (InputStream stream2 = SwtTestUtil.class.getResourceAsStream("empty.txt")) {
-		e = assertThrows(SWTException.class, () -> new Image(display, stream2));
-	}
-	assertSWTProblem("Incorrect exception thrown for invalid InputStream", SWT.ERROR_UNSUPPORTED_FORMAT, e);
-
-	String firstFile = SwtTestUtil.invalidImageFilenames[0];
-	Display[] displays = { display, null };
-	for (Display display : displays) {
-		for (String format : SwtTestUtil.imageFormats) {
-			try (InputStream stream = SwtTestUtil.class.getResourceAsStream(firstFile + "." + format)) {
-				e = assertThrows(SWTException.class, () -> new Image(display, stream));
-			}
-			assertSWTProblem("Incorrect exception thrown for invalid image InputStream", SWT.ERROR_INVALID_IMAGE, e);
+public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLjava_io_InputStream() {
+	InputStream stream = null;
+	Image image = null;
+	try {
+		try {
+			image = new Image(display, stream);
+			image.dispose();
+			fail("No exception thrown for InputStream == null");
+		} catch (IllegalArgumentException e) {
+			assertSWTProblem("Incorrect exception thrown for InputStream == null", SWT.ERROR_NULL_ARGUMENT, e);
 		}
-	}
 
-	try (InputStream stream = SwtTestUtil.class.getResourceAsStream(SwtTestUtil.invalidImageFilenames[1])) {
-		e = assertThrows(SWTException.class, () -> new Image(display, stream));
-	}
-	assertSWTProblem("Incorrect exception thrown for invalid image InputStream", SWT.ERROR_INVALID_IMAGE, e);
+		stream = SwtTestUtil.class.getResourceAsStream("empty.txt");
+		try {
+			image = new Image(display, stream);
+			image.dispose();
+			try {
+				stream.close();
+			} catch (IOException e) {}
+			fail("No exception thrown for invalid InputStream");
+		} catch (SWTException e) {
+			assertSWTProblem("Incorrect exception thrown for invalid InputStream", SWT.ERROR_UNSUPPORTED_FORMAT, e);
+		}
 
-	// create valid images
-	for (Display tempDisplay : displays) {
-		for (String fileName : SwtTestUtil.imageFilenames) {
-			for (String format : SwtTestUtil.imageFormats) {
-				try (InputStream stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format);) {
-					Image image = new Image(tempDisplay, stream);
+		int numFormats = SwtTestUtil.imageFormats.length;
+		String fileName = SwtTestUtil.invalidImageFilenames[0];
+		Display[] displays = {display, null};
+		for (int j = 0; j < displays.length; j++) {
+			for (int i=0; i<numFormats; i++) {
+				String format = SwtTestUtil.imageFormats[i];
+				stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format);
+
+				try {
+					image = new Image(display, stream);
 					image.dispose();
+					try {
+						stream.close();
+					} catch (IOException e) {}
+					fail("No exception thrown for invalid InputStream");
+				} catch (SWTException e) {
+// Bug 70167 - Image(Device, InputStream) throws incorrect exception for bad PNG
+// remove comment when bug is fixed.
+// Bug appears fixed on Bugzilla, however, removing the comment below still results in a failed test as of June 2021
+//					assertEquals("Incorrect exception thrown for invalid image InputStream", SWT.ERROR_INVALID_IMAGE, e);
 				}
 			}
+		}
+
+		stream = SwtTestUtil.class.getResourceAsStream(SwtTestUtil.invalidImageFilenames[1]);
+		try {
+			image = new Image(display, stream);
+			image.dispose();
+			try {
+				stream.close();
+			} catch (IOException e) {}
+			fail("No exception thrown for invalid InputStream");
+		} catch (SWTException e) {
+			assertSWTProblem("Incorrect exception thrown for invalid image InputStream", SWT.ERROR_INVALID_IMAGE, e);
+		}
+
+		// create valid images
+		for (Display tempDisplay : displays) {
+			int numFileNames = SwtTestUtil.imageFilenames.length;
+			for (int k=0; k<numFileNames; k++) {
+				fileName = SwtTestUtil.imageFilenames[k];
+				for (int i=0; i<numFormats; i++) {
+					String format = SwtTestUtil.imageFormats[i];
+					stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format);
+					image = new Image(tempDisplay, stream);
+					image.dispose();
+					try {
+						stream.close();
+					} catch (IOException e) {}
+				}
+			}
+		}
+	} finally {
+		try {
+			stream.close();
+		} catch (Exception e) {
 		}
 	}
 }
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_DeviceLjava_lang_String() {
-	Exception e;
-
-	String fileName1 = null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, fileName1));
-	assertSWTProblem("Incorrect exception thrown for file name == null", SWT.ERROR_NULL_ARGUMENT, e);
-
-	String pathName2 = "nonexistent.txt";
-	e = assertThrows(SWTException.class, () -> new Image(display, pathName2));
-	assertSWTProblem("Incorrect exception thrown for non-existent file name", SWT.ERROR_IO, e);
-
-	String pathName3 = getPath("empty.txt").toString();
-	e = assertThrows(SWTException.class, () -> new Image(display, pathName3));
-	assertSWTProblem("Incorrect exception thrown for invalid file name", SWT.ERROR_UNSUPPORTED_FORMAT, e);
-
-	String firstFile = SwtTestUtil.invalidImageFilenames[0];
-	Display[] displays = { display, null };
-	for (Display display : displays) {
-		for (String format : SwtTestUtil.imageFormats) {
-			String pathName = getPath(firstFile + "." + format).toString();
-			e = assertThrows(SWTException.class, () -> new Image(display, pathName));
-			assertSWTProblem("Incorrect exception thrown for invalid image file name", SWT.ERROR_INVALID_IMAGE, e);
-		}
+	String fileName = null;
+	try {
+		Image image = new Image(display, fileName);
+		image.dispose();
+		fail("No exception thrown for file name == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for file name == null", SWT.ERROR_NULL_ARGUMENT, e);
 	}
+	try {
+		String pathName = "nonexistent.txt";
+		Image image = new Image(display, pathName);
+		image.dispose();
+		fail("No exception thrown for non-existent file name");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for non-existent file name", SWT.ERROR_IO, e);
+	}
+		try {
+			String pathName = getPath("empty.txt");
+			Image image = new Image(display, pathName);
+			image.dispose();
+			fail("No exception thrown for invalid file name");
+		} catch (SWTException e) {
+			assertSWTProblem("Incorrect exception thrown for invalid file name", SWT.ERROR_UNSUPPORTED_FORMAT, e);
+		}
 
-	String pathName4 = getPath(SwtTestUtil.invalidImageFilenames[1]).toString();
-	e = assertThrows(SWTException.class, () -> new Image(display, pathName4));
-	assertSWTProblem("Incorrect exception thrown for invalid image file name", SWT.ERROR_INVALID_IMAGE, e);
+		int numFormats = SwtTestUtil.imageFormats.length;
+		fileName = SwtTestUtil.invalidImageFilenames[0];
+		Display[] displays = {display, null};
+		for (int j = 0; j < displays.length; j++) {
+			for (int i=0; i<numFormats; i++) {
+				String format = SwtTestUtil.imageFormats[i];
 
-	// create valid images
-	for (Display display : displays) {
-		for (String fileName : SwtTestUtil.imageFilenames) {
-			for (String format : SwtTestUtil.imageFormats) {
-				String pathName = getPath(fileName + "." + format).toString();
-				Image image = new Image(display, pathName);
-				image.dispose();
+				try {
+					String pathName = getPath(fileName + "." + format);
+					Image image = new Image(display, pathName);
+					image.dispose();
+					fail("No exception thrown for invalid file name");
+				} catch (SWTException e) {
+//					 Bug 70167 - Image(Device, InputStream) throws incorrect exception for bad PNG
+//					 remove comment when bug is fixed.
+//					 Bug is fixed yet still results in a failed test as of June 2021.
+//					assertEquals("Incorrect exception thrown for invalid image file name", SWT.ERROR_INVALID_IMAGE, e);
+				}
 			}
 		}
-	}
+
+		try {
+			String pathName = getPath(SwtTestUtil.invalidImageFilenames[1]);
+			Image image = new Image(display, pathName);
+			image.dispose();
+			fail("No exception thrown for invalid file name");
+		} catch (SWTException e) {
+			assertSWTProblem("Incorrect exception thrown for invalid image file name", SWT.ERROR_INVALID_IMAGE, e);
+		}
+
+		// create valid images
+		for (int j = 0; j < displays.length; j++) {
+			int numFileNames = SwtTestUtil.imageFilenames.length;
+			for (int k=0; k<numFileNames; k++) {
+				fileName = SwtTestUtil.imageFilenames[k];
+				for (int i=0; i<numFormats; i++) {
+					String format = SwtTestUtil.imageFormats[i];
+					String pathName = getPath(fileName + "." + format);
+					Image image = new Image(display, pathName);
+					image.dispose();
+				}
+			}
+		}
 }
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_Device_ImageFileNameProvider() {
-	Exception e;
-
 	// Null provider
-	ImageFileNameProvider provider1 = null;
-	e = assertThrows(IllegalArgumentException.class, ()->new Image(display, provider1));
-	assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_NULL_ARGUMENT, e);
-
+	ImageFileNameProvider provider = null;
+	try {
+		Image image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for file name == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 	// Invalid provider
-	ImageFileNameProvider	provider2 = zoom -> null;
-	e = assertThrows(IllegalArgumentException.class, ()->new Image(display, provider2));
-	assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_INVALID_ARGUMENT, e);
-
+	provider = zoom -> null;
+	try {
+		Image image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for non-existent file name");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 	// Valid provider
 	Image image = new Image(display, imageFileNameProvider);
 	image.dispose();
 	// Corrupt Image provider
-	ImageFileNameProvider provider3 = zoom -> {
-		String fileName = switch (zoom) {
-		case 100, 150, 200 -> "corrupt.png";
-		default -> null;
-		};
-		return fileName != null ? getPath(fileName) : null;
-	};
-	e = assertThrows(SWTException.class, ()->new Image(display, provider3));
-	assertSWTProblem("Incorrect exception thrown for provider with corrupt images", SWT.ERROR_INVALID_IMAGE, e);
-
-	// Valid provider only 100% zoom
-	ImageFileNameProvider provider4 = zoom -> {
-		if (zoom == 100) {
-			return getPath("collapseall.png");
+	provider = zoom -> {
+		String fileName;
+		switch (zoom) {
+		case 100:
+			fileName = "corrupt.png"; break;
+		case 150:
+			fileName = "corrupt.png"; break;
+		case 200:
+			fileName = "corrupt.png"; break;
+		default:
+			return null;
 		}
-		return null;
+		return getPath(fileName);
 	};
-	image = new Image(display, provider4);
+	try {
+		image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for corrupt image file.");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for provider with corrupt images", SWT.ERROR_INVALID_IMAGE, e);
+	}
+	// Valid provider only 100% zoom
+	provider = zoom -> {
+		String fileName;
+		switch (zoom) {
+		case 100:
+			fileName = "collapseall.png";
+			break;
+		case 150:
+		case 200:
+		default:
+			return null;
+		}
+		return getPath(fileName);
+	};
+	image = new Image(display, provider);
 	image.dispose();
 }
 
 @Test
 public void test_ConstructorLorg_eclipse_swt_graphics_Device_ImageDataProvider() {
-	Exception e;
 	// Null provider
-	ImageDataProvider provider1 = null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, provider1));
-	assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_NULL_ARGUMENT, e);
-
+	ImageDataProvider provider = null;
+	try {
+		Image image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for file name == null");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_NULL_ARGUMENT, e);
+	}
 	// Invalid provider
-	ImageDataProvider provider2 = zoom -> null;
-	e = assertThrows(IllegalArgumentException.class, () -> new Image(display, provider2));
-	assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_INVALID_ARGUMENT, e);
+	provider = zoom -> null;
+	try {
+		Image image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for non-existent file name");
+	} catch (IllegalArgumentException e) {
+		assertSWTProblem("Incorrect exception thrown for provider == null", SWT.ERROR_INVALID_ARGUMENT, e);
+	}
 	// Valid provider
 	Image image = new Image(display, imageDataProvider);
 	image.dispose();
 	// Corrupt Image provider
-	ImageDataProvider provider3 = zoom -> {
-		return switch (zoom) {
-		case 100, 150, 200 -> new ImageData(getPath("corrupt.png"));
-		default -> null;
-		};
-	};
-	e = assertThrows(SWTException.class, () -> new Image(display, provider3));
-	assertSWTProblem("Incorrect exception thrown for provider with corrupt images", SWT.ERROR_INVALID_IMAGE, e);
-	// Valid provider only 100% zoom
-	ImageDataProvider provider4 = zoom -> {
-		if (zoom == 100) {
-			return new ImageData(getPath("collapseall.png"));
+	provider = zoom -> {
+		String fileName;
+		switch (zoom) {
+		case 100:
+			fileName = "corrupt.png"; break;
+		case 150:
+			fileName = "corrupt.png"; break;
+		case 200:
+			fileName = "corrupt.png"; break;
+		default:
+			return null;
 		}
-		return null;
+		return new ImageData(getPath(fileName));
 	};
-	image = new Image(display, provider4);
+	try {
+		image = new Image(display, provider);
+		image.dispose();
+		fail("No exception thrown for corrupt image file.");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for provider with corrupt images", SWT.ERROR_INVALID_IMAGE, e);
+	}
+	// Valid provider only 100% zoom
+	provider = zoom -> {
+		String fileName;
+		switch (zoom) {
+		case 100:
+			fileName = "collapseall.png";
+			break;
+		case 150:
+		case 200:
+		default:
+			return null;
+		}
+		return new ImageData(getPath(fileName));
+	};
+	image = new Image(display, provider);
 	image.dispose();
-}
-
-@Test
-public void test_ConstructorLorg_eclipse_swt_graphics_Device_ImageGcDrawer() {
-	// Null provider
-	ImageGcDrawer drawer = null;
-	IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new Image(display, drawer, 20, 20));
-	assertSWTProblem("Incorrect exception thrown for ImageGcDrawer == null", SWT.ERROR_NULL_ARGUMENT, e);
-
-	// Valid provider
-	Image image = new Image(display, imageGcDrawer, 20, 20);
-	image.dispose();
-}
-
-@Test
-public void test_ConstructorLorg_eclipse_swt_graphics_DeviceImageI() throws IOException {
-	byte[] bytes = Files.readAllBytes(Path.of(getPath("collapseall.png")));
-	Image sourceImage = new Image(display, new ByteArrayInputStream(bytes));
-	Image copiedImage = new Image(display, sourceImage, SWT.IMAGE_COPY);
-	Image targetImage = new Image(display, 1, 1);
-	GC gc = new GC(targetImage);
-	gc.drawImage(sourceImage, 0, 0);
-	gc.drawImage(targetImage, 0, 0);
-
-	assertEquals(0, imageDataComparator().compare(sourceImage.getImageData(), copiedImage.getImageData()));
-
-	sourceImage.dispose();
-	copiedImage.dispose();
-	targetImage.dispose();
 }
 
 @Test
@@ -464,15 +616,15 @@ public void test_equalsLjava_lang_Object() {
 		image = new Image(display, 10, 10);
 		image1 = image;
 
-		assertFalse(image.equals(null));
+		assertFalse(":a:", image.equals(null));
 
-		assertTrue(image.equals(image1));
+		assertTrue(":b:", image.equals(image1));
 
 		ImageData imageData = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
 		image.dispose();
 		image = new Image(display, imageData);
 		image1 = new Image(display, imageData);
-		assertFalse(image.equals(image1));
+		assertFalse(":c:", image.equals(image1));
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -483,12 +635,12 @@ public void test_equalsLjava_lang_Object() {
 		image = new Image(display, imageFileNameProvider);
 		image1 = image;
 
-		assertFalse(image.equals(null));
+		assertFalse(":d:", image.equals(null));
 
-		assertTrue(image.equals(image1));
+		assertTrue(":e:", image.equals(image1));
 
 		image1 = new Image(display, imageFileNameProvider);
-		assertTrue(image.equals(image1));
+		assertTrue(":f:", image.equals(image1));
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -497,12 +649,12 @@ public void test_equalsLjava_lang_Object() {
 		image = new Image(display, imageFileNameProvider);
 		image1 = image;
 
-		assertFalse(image.equals(null));
+		assertFalse(":d:", image.equals(null));
 
-		assertTrue(image.equals(image1));
+		assertTrue(":e:", image.equals(image1));
 
 		image1 = new Image(display, imageFileNameProvider);
-		assertTrue(image.equals(image1));
+		assertTrue(":f:", image.equals(image1));
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -513,28 +665,12 @@ public void test_equalsLjava_lang_Object() {
 		image = new Image(display, imageDataProvider);
 		image1 = image;
 
-		assertFalse(image.equals(null));
+		assertFalse(":g:", image.equals(null));
 
-		assertTrue(image.equals(image1));
+		assertTrue(":h:", image.equals(image1));
 
 		image1 = new Image(display, imageDataProvider);
-		assertTrue(image.equals(image1));
-	} finally {
-		image.dispose();
-		image1.dispose();
-	}
-
-	// ImageGcDrawer
-	try {
-		image = new Image(display, imageGcDrawer, 10, 10);
-		image1 = image;
-
-		assertFalse(image.equals(null));
-
-		assertTrue(image.equals(image1));
-
-		image1 = new Image(display, imageGcDrawer, 10, 10);
-		assertTrue(image.equals(image1));
+		assertTrue(":i:", image.equals(image1));
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -545,99 +681,100 @@ public void test_equalsLjava_lang_Object() {
 public void test_getBackground() {
 	Image image = new Image(display, 10, 10);
 	image.dispose();
-	SWTException e = assertThrows(SWTException.class, () -> image.getBackground());
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	try {
+		image.getBackground();
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	}
 	// remainder tested in setBackground method
 }
 
 @Test
 public void test_getBounds() {
 	Rectangle bounds = new Rectangle(0, 0, 10, 20);
-	Image image1 = new Image(display, bounds.width, bounds.height);
-	image1.dispose();
-	SWTException e = assertThrows(SWTException.class, () -> image1.getBounds());
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	Image image = new Image(display, bounds.width, bounds.height);
+	image.dispose();
+	try {
+		image.getBounds();
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	}
 
-	Image image;
 	// creates bitmap image
 	image = new Image(display, bounds.width, bounds.height);
 	Rectangle bounds1 = image.getBounds();
 	image.dispose();
-	assertEquals(bounds, bounds1);
+	assertEquals(":a:", bounds, bounds1);
 
-	image = new Image(display, bounds.width, bounds.height);
+	image = new Image(display, bounds);
 	bounds1 = image.getBounds();
 	image.dispose();
-	assertEquals(bounds, bounds1);
+	assertEquals(":b:", bounds, bounds1);
 
 	// create icon image
 	ImageData imageData = new ImageData(bounds.width, bounds.height, 1, new PaletteData(new RGB(0, 0, 0)));
 	image = new Image(display, imageData);
 	bounds1 = image.getBounds();
 	image.dispose();
-	assertEquals(bounds, bounds1);
+	assertEquals(":c:", bounds, bounds1);
 }
 
 @SuppressWarnings("deprecation")
 @Test
 public void test_getBoundsInPixels() {
-	Rectangle initialBounds = new Rectangle(0, 0, 10, 20);
-	Image image1 = new Image(display, initialBounds.width, initialBounds.height);
-	image1.dispose();
-	SWTException e = assertThrows(SWTException.class, () -> image1.getBoundsInPixels());
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
-
-	Image image;
-	// creates bitmap image
-	image = new Image(display, initialBounds.width, initialBounds.height);
-	Rectangle boundsInPixels = image.getBoundsInPixels();
-	Rectangle bounds = image.getBounds();
+	Rectangle bounds = new Rectangle(0, 0, 10, 20);
+	Image image = new Image(display, bounds.width, bounds.height);
 	image.dispose();
-	assertEquals("Image.getBounds method doesn't return original bounds.", initialBounds, bounds);
-	assertEquals("Image.getBoundsInPixels method doesn't return bounds in Pixel values.", DPIUtil.autoScaleUp(initialBounds), boundsInPixels);
+	try {
+		image.getBoundsInPixels();
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	}
+
+	// creates bitmap image
+	image = new Image(display, bounds.width, bounds.height);
+	Rectangle boundsInPixels = image.getBoundsInPixels();
+	image.dispose();
+	assertEquals(":a: Image.getBoundsInPixels method doesn't return bounds in Pixel values.", boundsInPixels, DPIUtil.autoScaleUp(bounds));
 
 	// create icon image
-	ImageData imageData = new ImageData(initialBounds.width, initialBounds.height, 1, new PaletteData(new RGB[] {new RGB(0, 0, 0)}));
+	ImageData imageData = new ImageData(bounds.width, bounds.height, 1, new PaletteData(new RGB[] {new RGB(0, 0, 0)}));
 	image = new Image(display, imageData);
 	boundsInPixels = image.getBoundsInPixels();
-	bounds = image.getBounds();
 	image.dispose();
-	assertEquals("Image.getBounds method doesn't return original bounds.", initialBounds, bounds);
-	assertEquals("Image.getBoundsInPixels method doesn't return bounds in Pixel values.", DPIUtil.autoScaleUp(initialBounds), boundsInPixels);
+	assertEquals(":b: Image.getBoundsInPixels method doesn't return bounds in Pixel values.", boundsInPixels, DPIUtil.autoScaleUp(bounds));
 
 	// create image with FileNameProvider
 	image = new Image(display, imageFileNameProvider);
 	boundsInPixels = image.getBoundsInPixels();
 	bounds = image.getBounds();
 	image.dispose();
-	assertEquals("Image.getBoundsInPixels method doesn't return bounds in Pixel values.", DPIUtil.autoScaleUp(bounds), boundsInPixels);
+	assertEquals(":c: Image.getBoundsInPixels method doesn't return bounds in Pixel values.", boundsInPixels, DPIUtil.autoScaleUp(bounds));
 
 	// create image with ImageDataProvider
 	image = new Image(display, imageDataProvider);
 	boundsInPixels = image.getBoundsInPixels();
 	bounds = image.getBounds();
 	image.dispose();
-	assertEquals("Image.getBoundsInPixels method doesn't return bounds in Pixel values.", DPIUtil.autoScaleUp(bounds), boundsInPixels);
-
-	// create image with ImageGcDrawer
-	image = new Image(display, imageGcDrawer, initialBounds.width, initialBounds.height);
-	boundsInPixels = image.getBoundsInPixels();
-	bounds = image.getBounds();
-	image.dispose();
-	assertEquals("Image.getBounds method doesn't return original bounds.", initialBounds, bounds);
-	assertEquals("Image.getBoundsInPixels method doesn't return bounds in Pixel values for ImageGcDrawer.", DPIUtil.autoScaleUp(initialBounds), boundsInPixels);
+	assertEquals(":d: Image.getBoundsInPixels method doesn't return bounds in Pixel values.", boundsInPixels, DPIUtil.autoScaleUp(bounds));
 }
 
 @SuppressWarnings("deprecation")
 @Test
 public void test_getImageDataCurrentZoom() {
 	Rectangle bounds = new Rectangle(0, 0, 10, 20);
-	Image image1 = new Image(display, bounds.width, bounds.height);
-	image1.dispose();
-	SWTException e = assertThrows(SWTException.class, () -> image1.getImageDataAtCurrentZoom());
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	Image image = new Image(display, bounds.width, bounds.height);
+	image.dispose();
+	try {
+		image.getImageDataAtCurrentZoom();
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	}
 
-	Image image;
 	// creates bitmap image and compare size of imageData
 	image = new Image(display, bounds.width, bounds.height);
 	ImageData imageDataAtCurrentZoom = image.getImageDataAtCurrentZoom();
@@ -723,12 +860,15 @@ public void test_getImageData_200() {
 
 void getImageData_int(int zoom) {
 	Rectangle bounds = new Rectangle(0, 0, 10, 20);
-	Image image1 = new Image(display, bounds.width, bounds.height);
-	image1.dispose();
-	SWTException e = assertThrows(SWTException.class, () -> image1.getImageData(zoom));
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	Image image = new Image(display, bounds.width, bounds.height);
+	image.dispose();
+	try {
+		image.getImageData(zoom);
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	}
 
-	Image image;
 	// creates bitmap image and compare size of imageData
 	image = new Image(display, bounds.width, bounds.height);
 	ImageData imageDataAtZoom = image.getImageData(zoom);
@@ -737,7 +877,7 @@ void getImageData_int(int zoom) {
 	assertEquals(":a: Size of ImageData returned from Image.getImageData(int) method doesn't return matches with bounds in Pixel values.", scaleBounds(bounds, zoom, 100), boundsAtZoom);
 
 	// creates second bitmap image and compare size of imageData
-	image = new Image(display, bounds.width, bounds.height);
+	image = new Image(display, bounds);
 	imageDataAtZoom = image.getImageData(zoom);
 	boundsAtZoom = new Rectangle(0, 0, imageDataAtZoom.width, imageDataAtZoom.height);
 	bounds = image.getBounds();
@@ -796,14 +936,14 @@ public void test_hashCode() {
 		image = new Image(display, 10, 10);
 		image1 = image;
 
-		assertEquals(image1.hashCode(), image.hashCode());
+		assertEquals(":a:", image1.hashCode(), image.hashCode());
 
 		ImageData imageData = new ImageData(10, 10, 1, new PaletteData(new RGB(0, 0, 0)));
 		image.dispose();
 		image = new Image(display, imageData);
 		image1 = new Image(display, imageData);
 		boolean equals = (image1.hashCode() == image.hashCode());
-		assertFalse(equals);
+		assertFalse(":b:", equals);
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -813,7 +953,7 @@ public void test_hashCode() {
 	try {
 		image = new Image(display, imageFileNameProvider);
 		image1 = new Image(display, imageFileNameProvider);
-		assertEquals(image1.hashCode(), image.hashCode());
+		assertEquals(":c:", image1.hashCode(), image.hashCode());
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -823,17 +963,7 @@ public void test_hashCode() {
 	try {
 		image = new Image(display, imageDataProvider);
 		image1 = new Image(display, imageDataProvider);
-		assertEquals(image1.hashCode(), image.hashCode());
-	} finally {
-		image.dispose();
-		image1.dispose();
-	}
-
-	// ImageGcDrawer
-	try {
-		image = new Image(display, imageGcDrawer, 10, 10);
-		image1 = new Image(display, imageGcDrawer, 10, 10);
-		assertEquals(image1.hashCode(), image.hashCode());
+		assertEquals(":d:", image1.hashCode(), image.hashCode());
 	} finally {
 		image.dispose();
 		image1.dispose();
@@ -843,55 +973,71 @@ public void test_hashCode() {
 @Test
 public void test_isDisposed() {
 	Image image = new Image(display, 10, 10);
-	assertFalse(image.isDisposed());
+	assertFalse(":a:", image.isDisposed());
 	image.dispose();
-	assertTrue(image.isDisposed());
+	assertTrue(":b:", image.isDisposed());
 }
 
 @Test
 public void test_setBackgroundLorg_eclipse_swt_graphics_Color() {
-	assumeFalse(
-			"Excluded test_setBackgroundLorg_eclipse_swt_graphics_Color(org.eclipse.swt.tests.junit.Test_org_eclipse_swt_graphics_Image)",
-			SwtTestUtil.isGTK);
-	// TODO Fix GTK failure.
-	Image image1 = new Image(display, 10, 10);
+	if (SwtTestUtil.isGTK) {
+		//TODO Fix GTK failure.
+		if (SwtTestUtil.verbose) {
+			System.out.println("Excluded test_setBackgroundLorg_eclipse_swt_graphics_Color(org.eclipse.swt.tests.junit.Test_org_eclipse_swt_graphics_Image)");
+		}
+		return;
+	}
+
+	Image image = new Image(display, 10, 10);
+
 	try {
-		IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> image1.setBackground(null));
+		image.setBackground(null);
+		fail("No exception thrown for color == null");
+	} catch (IllegalArgumentException e) {
 		assertSWTProblem("Incorrect exception thrown for color == null", SWT.ERROR_NULL_ARGUMENT, e);
 	} finally {
-		image1.dispose();
+		image.dispose();
 	}
-	Image image2 = new Image(display, 10, 10);
-	Color color2 = new Color(255, 255, 255);
-	color2.dispose();
+
+	image = new Image(display, 10, 10);
+	Color color = new Color(255, 255, 255);
+	color.dispose();
 	try {
-		IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> image2.setBackground(color2));
+		image.setBackground(color);
+		fail("No exception thrown for disposed color");
+	} catch (IllegalArgumentException e) {
 		assertSWTProblem("Incorrect exception thrown for disposed color", SWT.ERROR_INVALID_ARGUMENT, e);
 	} finally {
-		image2.dispose();
+		image.dispose();
 	}
-	Image image3 = new Image(display, 10, 10);
-	image3.dispose();
-	Color color3 = new Color(255, 255, 255);
-	SWTException e = assertThrows(SWTException.class, () -> image3.setBackground(color3));
-	assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+
+	image = new Image(display, 10, 10);
+	image.dispose();
+	color = new Color(255, 255, 255);
+	try {
+		image.setBackground(color);
+		fail("No exception thrown for disposed image");
+	} catch (SWTException e) {
+		assertSWTProblem("Incorrect exception thrown for disposed image", SWT.ERROR_GRAPHIC_DISPOSED, e);
+	} finally {
+		color.dispose();
+	}
 
 	// this image does not have a transparent pixel by default so setBackground has no effect
-	Image image4 = new Image(display, 10, 10);
-	image4.setBackground(display.getSystemColor(SWT.COLOR_GREEN));
-	Color color4 = image4.getBackground();
-	assertNull("background color should be null for non-transparent image", color4);
-	image4.dispose();
+	image = new Image(display, 10, 10);
+	image.setBackground(display.getSystemColor(SWT.COLOR_GREEN));
+	color = image.getBackground();
+	assertNull("background color should be null for non-transparent image", color);
+	image.dispose();
 
 	// create an image with transparency and then set the background color
-	ImageData imageData = new ImageData(10, 10, 2,
-			new PaletteData(new RGB(0, 0, 0), new RGB(255, 255, 255), new RGB(50, 100, 150)));
+	ImageData imageData = new ImageData(10, 10, 2, new PaletteData(new RGB(0, 0, 0), new RGB(255, 255, 255), new RGB(50, 100, 150)));
 	imageData.transparentPixel = 0; // transparent pixel is currently black
-	Image image5 = new Image(display, imageData);
-	image5.setBackground(display.getSystemColor(SWT.COLOR_GREEN));
-	Color color5 = image5.getBackground();
-	assertEquals("background color should have been set to green", display.getSystemColor(SWT.COLOR_GREEN), color5);
-	image5.dispose();
+	image = new Image(display, imageData);
+	image.setBackground(display.getSystemColor(SWT.COLOR_GREEN));
+	color = image.getBackground();
+	assertEquals("background color should have been set to green", display.getSystemColor(SWT.COLOR_GREEN), color);
+	image.dispose();
 }
 
 @Test
@@ -911,8 +1057,10 @@ Display display;
 /** Test implementation **/
 
 void getImageData1() {
+	int numFormats = SwtTestUtil.imageFormats.length;
 	String fileName = SwtTestUtil.imageFilenames[0];
-	for (String format : SwtTestUtil.imageFormats) {
+	for (int i=0; i<numFormats; i++) {
+		String format = SwtTestUtil.imageFormats[i];
 		try (InputStream stream = SwtTestUtil.class.getResourceAsStream(fileName + "." + format)) {
 			ImageData data1 = new ImageData(stream);
 			Image image = new Image(display, data1);
@@ -956,7 +1104,26 @@ void getImageData2(int depth, PaletteData palette) {
 	gc.dispose();
 	image.dispose();
 }
+String getPath(String fileName) {
+	String urlPath;
 
+	String pluginPath = System.getProperty("PLUGIN_PATH");
+	if (pluginPath == null) {
+		URL url = getClass().getClassLoader().getResource(fileName);
+		if (url == null) {
+			fail("URL == null for file " + fileName);
+		}
+		urlPath = url.getFile();
+	} else {
+		urlPath = pluginPath + "/data/" + fileName;
+	}
+
+	if (File.separatorChar != '/') urlPath = urlPath.replace('/', File.separatorChar);
+	if (SwtTestUtil.isWindows && urlPath.indexOf(File.separatorChar) == 0) urlPath = urlPath.substring(1);
+	urlPath = urlPath.replaceAll("%20", " ");
+
+	return urlPath;
+}
 RGB getRealRGB(Color color) {
 	Image colorImage = new Image(display, 10, 10);
 	GC imageGc = new GC(colorImage);
@@ -1038,83 +1205,4 @@ public void test_updateWidthHeightAfterDPIChange() {
 		DPIUtil.setDeviceZoom(deviceZoom);
 	}
 }
-
-@Test
-public void test_imageDataIsCached() {
-	assumeTrue("On-demand image creation only implemented for Windows", SwtTestUtil.isWindows);
-	String imagePath = getPath("collapseall.png");
-	ImageFileNameProvider imageFileNameProvider = __ -> {
-		return imagePath;
-	};
-	Image fileNameProviderImage = new Image(display, imageFileNameProvider);
-	assertSame(fileNameProviderImage.getImageData(100), fileNameProviderImage.getImageData(100));
-}
-
-@Test
-public void test_imageDataSameViaDifferentProviders() {
-	assumeFalse("Cocoa generates inconsistent image data", SwtTestUtil.isCocoa);
-	String imagePath = getPath("collapseall.png");
-	ImageFileNameProvider imageFileNameProvider = __ -> {
-		return imagePath;
-	};
-	ImageDataProvider dataProvider = __ -> {
-		try (InputStream imageStream = Files.newInputStream(Path.of(imagePath))) {
-			return new ImageData(imageStream);
-		} catch (IOException e) {
-		}
-		return null;
-	};
-	Image fileNameProviderImage = new Image(display, imageFileNameProvider);
-	Image dataProviderImage = new Image(display, dataProvider);
-	ImageData dataFromFileNameProviderImage = fileNameProviderImage.getImageData(100);
-	ImageData dataFromImageDescriptorImage = dataProviderImage.getImageData(100);
-	assertEquals(0, imageDataComparator().compare(dataFromFileNameProviderImage, dataFromImageDescriptorImage));
-
-	fileNameProviderImage.dispose();
-	dataProviderImage.dispose();
-}
-
-@Test
-public void test_imageDataSameViaProviderAndSimpleData() {
-	assumeFalse("Cocoa generates inconsistent image data", SwtTestUtil.isCocoa);
-	String imagePath = getPath("collapseall.png");
-	ImageFileNameProvider imageFileNameProvider = __ -> {
-		return imagePath;
-	};
-	ImageDataProvider dataProvider = __ -> {
-		try (InputStream imageStream = Files.newInputStream(Path.of(imagePath))) {
-			return new ImageData(imageStream);
-		} catch (IOException e) {
-		}
-		return null;
-	};
-	Image fileNameProviderImage = new Image(display, imageFileNameProvider);
-	Image dataImage = new Image(display, dataProvider.getImageData(100));
-	ImageData dataFromFileNameProviderImage = fileNameProviderImage.getImageData(100);
-	ImageData dataFromImageWithSimpleData = dataImage.getImageData(100);
-	assertEquals(0, imageDataComparator().compare(dataFromFileNameProviderImage, dataFromImageWithSimpleData));
-
-	fileNameProviderImage.dispose();
-	dataImage.dispose();
-}
-
-
-private Comparator<ImageData> imageDataComparator() {
-	return Comparator.<ImageData>comparingInt(d -> d.width) //
-			.thenComparing(d -> d.height) //
-			.thenComparing((ImageData firstData, ImageData secondData) -> {
-				for (int x = 0; x < firstData.width; x++) {
-					for (int y = 0; y < firstData.height; y++) {
-						if (firstData.getPixel(x, y) != secondData.getPixel(x, y)) {
-							return -1;
-						}
-						if (firstData.getAlpha(x, y) != secondData.getAlpha(x, y)) {
-							return -1;
-						}
-					}
-				}
-				return 0;
-			});
-}
-
 }

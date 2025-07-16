@@ -14,11 +14,11 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.eclipse.swt.printing.PrinterData;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.printing.PrinterData

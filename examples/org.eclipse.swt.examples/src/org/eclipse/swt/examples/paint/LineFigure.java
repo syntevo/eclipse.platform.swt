@@ -14,10 +14,8 @@
 package org.eclipse.swt.examples.paint;
 
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Region;
+import org.eclipse.swt.*;
+import org.eclipse.swt.graphics.*;
 
 /**
  * 2D Line object
@@ -29,8 +27,7 @@ public class LineFigure extends Figure {
 	 * Constructs a Line
 	 * These objects are defined by their two end-points.
 	 *
-	 * @param foregroundColor the foreground color for this object
-	 * @param backgroundColor the background color for this object
+	 * @param color the color for this object
 	 * @param lineStyle the line style for this object
 	 * @param x1 the virtual X coordinate of the first end-point
 	 * @param y1 the virtual Y coordinate of the first end-point

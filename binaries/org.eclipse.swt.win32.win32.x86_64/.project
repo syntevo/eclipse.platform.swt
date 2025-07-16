@@ -110,7 +110,8 @@
 		<link>
 			<name>Eclipse SWT Tests</name>
 			<type>2</type>
-			<locationURI>SWT_HOST_PLUGIN/Eclipse%20SWT%20Tests</locationURI>
+			<!-- Once Tycho supports custom variables, SWT_HOST_PLUGIN should be used here: https://github.com/eclipse-tycho/tycho/issues/3820 -->
+			<locationURI>PARENT-2-PROJECT_LOC/bundles/org.eclipse.swt/Eclipse%20SWT%20Tests</locationURI>
 		</link>
 	</linkedResources>
 	<variableList>
