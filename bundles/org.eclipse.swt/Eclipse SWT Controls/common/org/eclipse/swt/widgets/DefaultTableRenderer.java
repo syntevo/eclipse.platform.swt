@@ -12,6 +12,7 @@ public class DefaultTableRenderer extends TableRenderer {
 	private static final Color CHECKBOX_INNER_COLOR = new Color(255, 255, 255);
 	private static final Color CHECKBOX_OUTER_COLOR = new Color(128, 128, 128);
 	private static final Color CHECKBOX_SELECTION_COLOR = new Color(0, 0, 0);
+	private static final Color ALTERNATING_ROW_BACKGROUND = new Color(250, 250, 250);
 
 	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
 
@@ -259,9 +260,17 @@ public class DefaultTableRenderer extends TableRenderer {
 		gc.setBackground(table.getBackground());
 		gc.fillRectangle(0, caTop, ca.width, caBottom - caTop);
 
+		final int topIndex = table.getTopIndex();
+
+		gc.setBackground(ALTERNATING_ROW_BACKGROUND);
+		final int itemHeight = table.getItemHeight();
+		for (int y = caTop + (topIndex & 1 ^ 1) * itemHeight; y < caBottom; y += 2 * itemHeight) {
+			gc.fillRectangle(0, y, ca.width, itemHeight);
+		}
+
 		final boolean isFocused = table.isFocusControl();
 
-		for (int i = table.getTopIndex(); i < table.getItemCount(); i++) {
+		for (int i = topIndex; i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
 
 			if (table.isVirtual()) {
