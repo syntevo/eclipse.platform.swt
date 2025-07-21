@@ -53,9 +53,6 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		gc.setAntialias(SWT.ON);
 
-		gc.setBackground(table.getBackground());
-		gc.fillRectangle(ca);
-
 		if (table.getHeaderVisible()) {
 			paintHeader(gc, ca);
 		}
@@ -255,7 +252,11 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	private void paintItems(GC gc) {
 		Rectangle ca = table.getClientArea();
-		final int maxY = ca.y + ca.height;
+		final int caTop = ca.y + table.getHeaderHeight();
+		final int caBottom = ca.y + ca.height;
+
+		gc.setBackground(table.getBackground());
+		gc.fillRectangle(0, caTop, ca.width, caBottom - caTop);
 
 		final boolean isFocused = table.isFocusControl();
 
@@ -269,7 +270,7 @@ public class DefaultTableRenderer extends TableRenderer {
 			paintItem(item, i, isFocused, gc);
 
 			final Rectangle bounds = item.getFullBounds();
-			if (bounds.y + bounds.height > maxY) {
+			if (bounds.y + bounds.height > caBottom) {
 				break;
 			}
 		}
