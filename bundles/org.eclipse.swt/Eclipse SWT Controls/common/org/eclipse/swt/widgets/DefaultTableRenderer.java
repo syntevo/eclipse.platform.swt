@@ -253,6 +253,7 @@ public class DefaultTableRenderer extends TableRenderer {
 	private void paintItems(GC gc) {
 		Rectangle ca = table.getClientArea();
 		final int caTop = ca.y + table.getHeaderHeight();
+		final int caRight = ca.x + ca.width;
 		final int caBottom = ca.y + ca.height;
 
 		gc.setBackground(table.getBackground());
@@ -267,7 +268,7 @@ public class DefaultTableRenderer extends TableRenderer {
 				table.checkData(item, i, false);
 			}
 
-			paintItem(item, i, isFocused, gc);
+			paintItem(item, i, isFocused, caRight, gc);
 
 			final Rectangle bounds = item.getFullBounds();
 			if (bounds.y + bounds.height > caBottom) {
@@ -276,7 +277,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		}
 	}
 
-	private void paintItem(TableItem item, int index, boolean isFocused, GC gc) {
+	private void paintItem(TableItem item, int index, boolean isFocused, int caRight, GC gc) {
 		final Color tableBackground = table.getBackground();
 		final Color itemBackground = item._getBackground();
 		final int detailDefault = prepareEventDetail(item, index);
@@ -292,6 +293,11 @@ public class DefaultTableRenderer extends TableRenderer {
 				final TableColumn column = table.getColumn(i);
 				final Rectangle cellBounds = item.getBounds(i);
 				final int x = column.getXScrolled();
+				final int right = x + column.getWidth();
+				if (right < 0           // hidden left
+				    || x >= caRight) {  // or right?
+					continue;
+				}
 
 				int detail = detailDefault;
 				Color cellBackground = item._getBackgroundOrNull(i);
