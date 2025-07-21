@@ -57,7 +57,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		gc.fillRectangle(ca);
 
 		if (table.getHeaderVisible()) {
-			paintHeader(gc);
+			paintHeader(gc, ca);
 		}
 
 		final int initialItemHeight = table.getItemHeight();
@@ -171,11 +171,14 @@ public class DefaultTableRenderer extends TableRenderer {
 		return new Point(width, height);
 	}
 
-	private void paintHeader(GC gc) {
-		final Color textColor = gc.getForeground();
+	private void paintHeader(GC gc, Rectangle ca) {
+		final Color textColor = table.getHeaderForeground();
 
-		Rectangle ca = table.getClientArea();
 		final int height = table.getHeaderHeight();
+
+		gc.setBackground(table.getHeaderBackground());
+		gc.fillRectangle(0, 0, ca.width, height);
+
 		gc.setForeground(HEADER_LINE_COLOR);
 		drawHLine(gc, 0, ca.width, height - 1);
 
