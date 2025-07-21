@@ -65,7 +65,7 @@ public class DefaultTableRenderer extends TableRenderer {
 		paintItems(gc);
 
 		if (table.getItemHeight() != initialItemHeight) {
-			table.updateScrollBarWithTextSize();
+			table.updateScrollBars();
 			paintItems(gc);
 		}
 	}

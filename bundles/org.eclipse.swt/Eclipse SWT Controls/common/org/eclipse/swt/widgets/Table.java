@@ -454,7 +454,12 @@ public class Table extends CustomComposite {
 	}
 
 	private int getVisibleItemCount(boolean includingPartlyVisible) {
-		int height = getClientArea().height - getHeaderHeight();
+		final int availableHeight = getClientArea().height;
+		return getVisibleItemCount(includingPartlyVisible, availableHeight);
+	}
+
+	private int getVisibleItemCount(boolean includingPartlyVisible, int availableHeight) {
+		int height = availableHeight - getHeaderHeight();
 		final int itemHeight = getItemHeight();
 		if (itemHeight < 1) error(SWT.ERROR_UNSPECIFIED);
 		if (includingPartlyVisible) {
@@ -473,7 +478,7 @@ public class Table extends CustomComposite {
 
 		ignoreResize = true;
 		try {
-			updateScrollBarWithTextSize();
+			updateScrollBars();
 			redraw();
 		}
 		finally {
@@ -481,17 +486,21 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	void updateScrollBarWithTextSize() {
+	void updateScrollBars() {
 		final Point size = getSize();
 		if (size.x == 0 || size.y == 0) {
 			return;
 		}
 
-		updateVerticalScrollBar();
+		final Rectangle clientArea = getClientArea();
 
-		if (horizontalBar != null) {
+		if (verticalBar == null) {
+			if (horizontalBar == null) {
+				return;
+			}
+
 			final int width = getWidth();
-			final int caWidth = getClientArea().width;
+			final int caWidth = clientArea.width;
 			// +1 for the closing vertical line of the table header
 			horizontalBar.setMaximum(width + 1);
 			horizontalBar.setMinimum(0);
@@ -499,33 +508,84 @@ public class Table extends CustomComposite {
 			horizontalBar.setIncrement(Math.max(1, caWidth / 20));
 			horizontalBar.setPageIncrement(Math.max(1, caWidth * 4 / 5));
 			horizontalBar.setVisible(width > caWidth);
-		}
-	}
-
-	private void updateVerticalScrollBar() {
-		if (verticalBar == null) {
 			return;
 		}
 
-		final Point size = getSize();
-		if (size.x == 0 || size.y == 0) {
+		if (horizontalBar == null) {
+			final int availableHeight = clientArea.height;
+			final int fullyVisibleItemCount = getVisibleItemCount(false, availableHeight);
+
+			final int itemCount = getItemCount();
+			if (itemCount > fullyVisibleItemCount) {
+				verticalBar.setVisible(true);
+				int topIndex = selectionModel.getTopIndex();
+				final int maxTopIndex = Math.max(0, itemCount - fullyVisibleItemCount);
+				topIndex = Math.min(topIndex, maxTopIndex);
+				verticalBar.setValues(topIndex, 0, itemCount, fullyVisibleItemCount, 1, fullyVisibleItemCount);
+				_setTopIndex(topIndex);
+			}
+			else {
+				verticalBar.setVisible(false);
+				verticalBar.setValues(0, 0, 0, 1, 1, 1);
+				_setTopIndex(0);
+			}
 			return;
 		}
 
-		final int fullyVisibleItemCount = getFullyVisibleItemCount();
+		final int verticalBarWidth = verticalBar.getSize().x;
+		final int horizontalBarHeight = horizontalBar.getSize().y;
+		int availableWidth = clientArea.width;
+		int availableHeight = clientArea.height;
+		if (verticalBar.getVisible()) {
+			availableWidth += verticalBarWidth;
+		}
+		if (horizontalBar.getVisible()) {
+			availableHeight += horizontalBarHeight;
+		}
 
 		final int itemCount = getItemCount();
-		if (itemCount > fullyVisibleItemCount) {
-			verticalBar.setVisible(true);
+
+		int fullyVisibleItemCount = getVisibleItemCount(false, availableHeight);
+		boolean needsVerticalScrollBar = itemCount > fullyVisibleItemCount;
+		if (needsVerticalScrollBar) {
+			availableWidth -= verticalBarWidth;
+		}
+
+		final int width = getWidth();
+		final boolean needsHorizontalScrollBar = width > availableWidth;
+		if (needsHorizontalScrollBar) {
+			availableHeight -= horizontalBarHeight;
+
+			fullyVisibleItemCount = getVisibleItemCount(false, availableHeight);
+			needsVerticalScrollBar = itemCount > fullyVisibleItemCount;
+		}
+
+		if (needsVerticalScrollBar) {
 			int topIndex = selectionModel.getTopIndex();
 			final int maxTopIndex = Math.max(0, itemCount - fullyVisibleItemCount);
 			topIndex = Math.min(topIndex, maxTopIndex);
 			verticalBar.setValues(topIndex, 0, itemCount, fullyVisibleItemCount, 1, fullyVisibleItemCount);
+			verticalBar.setVisible(true);
 			_setTopIndex(topIndex);
-		} else {
-			verticalBar.setVisible(false);
+		}
+		else {
 			verticalBar.setValues(0, 0, 0, 1, 1, 1);
+			verticalBar.setVisible(false);
 			_setTopIndex(0);
+		}
+
+		if (needsHorizontalScrollBar) {
+			// +1 for the closing vertical line of the table header
+			horizontalBar.setMaximum(width + 1);
+			horizontalBar.setMinimum(0);
+			horizontalBar.setThumb(availableWidth);
+			horizontalBar.setIncrement(Math.max(1, availableWidth / 20));
+			horizontalBar.setPageIncrement(Math.max(1, availableWidth * 4 / 5));
+			horizontalBar.setVisible(true);
+		}
+		else {
+			horizontalBar.setVisible(false);
+			horizontalBar.setValues(0, 0, 0, 1, 1, 1);
 		}
 	}
 
@@ -1137,7 +1197,7 @@ public class Table extends CustomComposite {
 		}
 
 		if (!isVirtual()) {
-			updateVerticalScrollBar();
+			updateScrollBars();
 		}
 		final int topIndex = getTopIndex();
 		if (index >= topIndex && index <= getLastVisibleIndex()) {
@@ -2579,7 +2639,7 @@ public class Table extends CustomComposite {
 				redraw();
 			}
 
-			updateVerticalScrollBar();
+			updateScrollBars();
 			return;
 		}
 
@@ -2969,7 +3029,7 @@ public class Table extends CustomComposite {
 		_setTopIndex(index);
 	}
 
-	void _setTopIndex(int index) {
+	private void _setTopIndex(int index) {
 		final int topIndex = selectionModel.getTopIndex();
 		if (topIndex == index) {
 			return;
