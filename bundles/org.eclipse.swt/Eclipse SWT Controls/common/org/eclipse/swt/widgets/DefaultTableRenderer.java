@@ -3,6 +3,9 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
 
+/**
+ * @noreference
+ */
 public class DefaultTableRenderer extends TableRenderer {
 
 	private static final Color HOVER_COLOR = new Color(234, 244, 255);
@@ -25,7 +28,7 @@ public class DefaultTableRenderer extends TableRenderer {
 	private static final int INITIAL_RIGHT_SHIFT = 3;
 	private static final int CHECKBOX_RIGHT_SHIFT = 35;
 
-	protected DefaultTableRenderer(Table table) {
+	public DefaultTableRenderer(Table table) {
 		super(table);
 	}
 

@@ -729,7 +729,7 @@ public class Table extends CustomComposite {
 		redraw(column.getXScrolled(), 0, width, height, true);
 	}
 
-	public boolean columnsExist() {
+	boolean columnsExist() {
 		return !columnsList.isEmpty();
 	}
 
@@ -1156,7 +1156,7 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	protected int getTotalColumnWidth() {
+	int getTotalColumnWidth() {
 		return columnsHandler.getSize().x;
 	}
 

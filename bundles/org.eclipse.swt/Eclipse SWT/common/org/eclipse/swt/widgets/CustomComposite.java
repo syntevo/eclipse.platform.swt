@@ -3,6 +3,9 @@ package org.eclipse.swt.widgets;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.*;
 
+/**
+ * @noreference
+ */
 public abstract class CustomComposite extends Composite {
 
 	private int x;

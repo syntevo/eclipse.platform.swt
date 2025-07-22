@@ -7,6 +7,7 @@ import org.eclipse.swt.*;
 /**
  * This class is internal API.
  * It is public only for being able to unit-test it.
+ * @noreference
  */
 public final class ListLikeModel {
 

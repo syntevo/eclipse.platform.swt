@@ -4,6 +4,9 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
+/**
+ * @noreference
+ */
 public abstract class TableRenderer {
 
 	public abstract Point computeHeaderSize(TableColumn column, GC gc);
