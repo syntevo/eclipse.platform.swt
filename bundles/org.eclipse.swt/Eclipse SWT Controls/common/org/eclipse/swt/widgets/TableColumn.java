@@ -49,8 +49,6 @@ public class TableColumn extends Item {
 
 	private int width = -1;
 
-	private Integer horizontalShiftAtCalculation;
-
 	/**
 	 * Constructs a new instance of this class given its parent (which must be a
 	 * <code>Table</code>) and a style value describing its behavior and appearance.
@@ -537,7 +535,6 @@ public class TableColumn extends Item {
 	public void setMoveable(boolean moveable) {
 		checkWidget();
 		this.moveable = moveable;
-		table.updateMoveable();
 	}
 
 	/**
@@ -558,12 +555,6 @@ public class TableColumn extends Item {
 	public void setResizable(boolean resizable) {
 		checkWidget();
 		this.resizable = resizable;
-	}
-
-	void setSortDirection(int direction) {
-		int index = table.indexOf(this);
-		if (index == -1) return;
-		Table.logNotImplemented();
 	}
 
 	/**
@@ -634,10 +625,6 @@ public class TableColumn extends Item {
 		table.updateColumnsX();
 		table.getColumnsHandler().clearCache();
 		table.redraw();
-	}
-
-	void updateToolTip(int index) {
-		Table.logNotImplemented();
 	}
 
 	int getX() {

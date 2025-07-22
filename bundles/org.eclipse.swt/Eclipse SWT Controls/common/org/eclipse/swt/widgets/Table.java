@@ -102,8 +102,6 @@ public class Table extends CustomComposite {
 	private final List<TableItem> itemsList = new ArrayList<>();
 	private final TreeMap<Integer, TableItem> virtualItemsList = new TreeMap<>();
 	private final ListLikeModel selectionModel;
-	// TODO implement focusHandling
-	private TableItem focusItem;
 	Item mouseHoverElement;
 	private final List<TableColumn> columnsList = new ArrayList<>();
 
@@ -1162,13 +1160,6 @@ public class Table extends CustomComposite {
 		return columnsHandler.getSize().x;
 	}
 
-	protected int getColumnWidth() {
-		if (!columnsList.isEmpty()) {
-			return columnsList.get(0).getWidth();
-		}
-		return 0;
-	}
-
 	void createItem(TableItem item, int index) {
 		if (isVirtual()) {
 			TableItem previous = virtualItemsList.get(index);
@@ -1203,10 +1194,6 @@ public class Table extends CustomComposite {
 		if (index >= topIndex && index <= getLastVisibleIndex()) {
 			redraw();
 		}
-	}
-
-	private boolean customHeaderDrawing() {
-		return headerBackgroundColor != null || headerForegroundColor != null;
 	}
 
 	/**
@@ -1944,16 +1931,6 @@ public class Table extends CustomComposite {
 		return selectionModel.getTopIndex();
 	}
 
-	private boolean hasChildren() {
-		logNotImplemented();
-		return false;
-	}
-
-	boolean hitTestSelection(int index, int x, int y) {
-		logNotImplemented();
-		return false;
-	}
-
 	/**
 	 * Searches the receiver's list starting at the first column (index 0) until a
 	 * column is found that is equal to the argument, and returns the index of that
@@ -2017,22 +1994,6 @@ public class Table extends CustomComposite {
 			return -1;
 		}
 		return itemsList.indexOf(item);
-	}
-
-	public int[] indicesOf(TableItem[] items) {
-		checkWidget();
-
-		if (items == null) return null;
-
-		int[] indexes = new int[items.length];
-		for (int currentIndex = 0; currentIndex < items.length; currentIndex++) {
-			indexes[currentIndex] = indexOf(items[currentIndex]);
-		}
-		return indexes;
-	}
-
-	boolean isCustomToolTip() {
-		return hooks(SWT.MeasureItem);
 	}
 
 	/**
@@ -2123,6 +2084,7 @@ public class Table extends CustomComposite {
 	 */
 	public void remove(int index) {
 		checkWidget();
+		// todo
 	}
 
 	/**
@@ -2470,11 +2432,10 @@ public class Table extends CustomComposite {
 
 	void setFocusIndex(int index) {
 		if (index < 0 || index >= getItemCount()) {
-			focusItem = null;
+			index = -1;
 			return;
 		}
 
-		focusItem = getItem(index);
 		selectionModel.setCurrent(index);
 	}
 
@@ -3177,10 +3138,6 @@ public class Table extends CustomComposite {
 	}
 
 	void updateHeaderToolTips() {
-		logNotImplemented();
-	}
-
-	void updateMoveable() {
 		logNotImplemented();
 	}
 
