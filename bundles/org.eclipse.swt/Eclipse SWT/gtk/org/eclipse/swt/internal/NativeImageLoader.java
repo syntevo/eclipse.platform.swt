@@ -205,6 +205,11 @@ public class NativeImageLoader {
 		boolean hasAlpha = GDK.gdk_pixbuf_get_has_alpha(pixbuf);
 		int width = GDK.gdk_pixbuf_get_width(pixbuf);
 		int height = GDK.gdk_pixbuf_get_height(pixbuf);
+
+		if (width > ImageLoader.MAX_SIZE || height > ImageLoader.MAX_SIZE) {
+			SWT.error(SWT.ERROR_INVALID_IMAGE);
+		}
+
 		int stride = GDK.gdk_pixbuf_get_rowstride(pixbuf);
 		int n_channels = GDK.gdk_pixbuf_get_n_channels(pixbuf); // only 3 or 4 samples per pixel are supported
 		int bits_per_sample = GDK.gdk_pixbuf_get_bits_per_sample(pixbuf); // only 8 bit per sample are supported
