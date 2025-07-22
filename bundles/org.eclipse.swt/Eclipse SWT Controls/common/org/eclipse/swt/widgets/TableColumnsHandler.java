@@ -1,10 +1,7 @@
 package org.eclipse.swt.widgets;
 
-import java.util.*;
-import java.util.List;
-
-import org.eclipse.swt.*;
-import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 
 final class TableColumnsHandler {
 
