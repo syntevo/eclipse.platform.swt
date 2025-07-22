@@ -445,6 +445,10 @@ boolean isPaletteBMP(PaletteData pal, int depth) {
 byte[] loadData(byte[] infoHeader) {
 	int width = (infoHeader[4] & 0xFF) | ((infoHeader[5] & 0xFF) << 8) | ((infoHeader[6] & 0xFF) << 16) | ((infoHeader[7] & 0xFF) << 24);
 	int height = (infoHeader[8] & 0xFF) | ((infoHeader[9] & 0xFF) << 8) | ((infoHeader[10] & 0xFF) << 16) | ((infoHeader[11] & 0xFF) << 24);
+	if (width > ImageLoader.MAX_SIZE
+	    || height > ImageLoader.MAX_SIZE) {
+		SWT.error(SWT.ERROR_IO);
+	}
 	int bitCount = (infoHeader[14] & 0xFF) | ((infoHeader[15] & 0xFF) << 8);
 	int stride = (width * bitCount + 7) / 8;
 	stride = (stride + 3) / 4 * 4; // Round up to 4 byte multiple
@@ -505,6 +509,10 @@ ImageData[] loadFromByteStream() {
 	int width = (infoHeader[4] & 0xFF) | ((infoHeader[5] & 0xFF) << 8) | ((infoHeader[6] & 0xFF) << 16) | ((infoHeader[7] & 0xFF) << 24);
 	int height = (infoHeader[8] & 0xFF) | ((infoHeader[9] & 0xFF) << 8) | ((infoHeader[10] & 0xFF) << 16) | ((infoHeader[11] & 0xFF) << 24);
 	if (height < 0) height = -height;
+	if (width > ImageLoader.MAX_SIZE
+	    || height > ImageLoader.MAX_SIZE) {
+		SWT.error(SWT.ERROR_IO);
+	}
 	int bitCount = (infoHeader[14] & 0xFF) | ((infoHeader[15] & 0xFF) << 8);
 	this.compression = (infoHeader[16] & 0xFF) | ((infoHeader[17] & 0xFF) << 8) | ((infoHeader[18] & 0xFF) << 16) | ((infoHeader[19] & 0xFF) << 24);
 	PaletteData palette = loadPalette(infoHeader);
