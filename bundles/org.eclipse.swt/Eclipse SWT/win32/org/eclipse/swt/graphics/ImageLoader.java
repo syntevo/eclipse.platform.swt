@@ -53,6 +53,8 @@ import org.eclipse.swt.internal.image.*;
  */
 public class ImageLoader {
 
+	public static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
+
 	/**
 	 * the array of ImageData objects in this ImageLoader.
 	 * This array is read in when the load method is called,

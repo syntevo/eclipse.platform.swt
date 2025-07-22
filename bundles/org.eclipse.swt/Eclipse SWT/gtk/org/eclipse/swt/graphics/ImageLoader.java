@@ -58,6 +58,8 @@ import org.eclipse.swt.widgets.*;
  */
 public class ImageLoader {
 
+	public static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
+
 	/**
 	 * the array of ImageData objects in this ImageLoader.
 	 * This array is read in when the load method is called,
@@ -356,8 +358,6 @@ int getImageFormat(long loader) {
 		default: return SWT.IMAGE_UNDEFINED;
 	}
 }
-
-private static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
 
 /**
  * Convert GdkPixbuf pointer to Java object ImageData
