@@ -3132,6 +3132,24 @@ public class Table extends CustomComposite {
 		}
 	}
 
+	// just to satisfy the API checker
+	@Override
+	public void dispose() {
+		super.dispose();
+	}
+
+	// just to satisfy the API checker
+	@Override
+	public Rectangle getClientArea() {
+		return super.getClientArea();
+	}
+
+	// just to satisfy the API checker
+	@Override
+	public void setFont(Font font) {
+		super.setFont(font);
+	}
+
 	/* public */ void sort() {
 		checkWidget();
 		redraw();

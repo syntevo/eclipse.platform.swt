@@ -504,6 +504,12 @@ public class TableColumn extends Item {
 		}
 	}
 
+	// just to satisfy the API checker
+	@Override
+	public void setText(String string) {
+		super.setText(string);
+	}
+
 	void setImage(Image image, boolean sort, boolean right) {
 		int index = table.indexOf(this);
 		if (index == -1) return;
