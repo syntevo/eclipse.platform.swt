@@ -279,12 +279,6 @@ public class TableItem extends Item {
 		return bounds;
 	}
 
-	// just to satisfy the API checker
-	@Override
-	public void dispose() {
-		super.dispose();
-	}
-
 	private int getItemIndex() {
 		if (this.itemIndex == -2) {
 			this.itemIndex = table.indexOf(this);

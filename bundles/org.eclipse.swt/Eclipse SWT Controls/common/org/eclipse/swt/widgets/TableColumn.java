@@ -148,11 +148,6 @@ public class TableColumn extends Item {
 		parent.createColumn(this, index);
 	}
 
-	@Override
-	public void dispose() {
-		super.dispose();
-	}
-
 	/**
 	 * Adds the listener to the collection of listeners who will be notified when
 	 * the control is moved or resized, by sending it one of the messages defined in
