@@ -110,7 +110,6 @@ public class Table extends CustomComposite {
 	TableItem currentItem;
 	TableColumn sortColumn;
 	long headerToolTipHandle;
-	boolean customDraw;
 	boolean ignoreResize;
 	private int itemHeight;
 	private int noColumnWidth;
@@ -710,7 +709,6 @@ public class Table extends CustomComposite {
 		case SWT.MeasureItem:
 		case SWT.EraseItem:
 		case SWT.PaintItem:
-			setCustomDraw(true);
 			setBackgroundTransparent(true);
 			break;
 		}
@@ -2420,10 +2418,6 @@ public class Table extends CustomComposite {
 		this.columnOrder = order;
 		updateColumnsX();
 		redraw();
-	}
-
-	void setCustomDraw(boolean customDraw) {
-		this.customDraw = customDraw;
 	}
 
 	boolean isFocusRow(int index) {

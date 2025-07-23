@@ -745,9 +745,6 @@ public class TableItem extends Item {
 	public void setBackground(Color color) {
 		checkWidget();
 		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		if (color != null) {
-			table.setCustomDraw(true);
-		}
 		if (background == color) {
 			return;
 		}
@@ -789,7 +786,6 @@ public class TableItem extends Item {
 		if (0 > index || index > count - 1) return;
 		Color cellColor = null;
 		if (color != null) {
-			table.setCustomDraw(true);
 			cellColor = color;
 		}
 		if (cellBackground == null) {
@@ -881,9 +877,6 @@ public class TableItem extends Item {
 		if (oldFont == newFont) return;
 		this.font = newFont;
 		if (oldFont != null && oldFont.equals(newFont)) return;
-		if (font != null) {
-			table.setCustomDraw(true);
-		}
 		if ((table.style & SWT.VIRTUAL) != 0) {
 			cached = true;
 		}
@@ -932,9 +925,6 @@ public class TableItem extends Item {
 		if (oldFont == font) return;
 		cellFont[index] = font;
 		if (oldFont != null && oldFont.equals(font)) return;
-		if (font != null) {
-			table.setCustomDraw(true);
-		}
 		if ((table.style & SWT.VIRTUAL) != 0) {
 			cached = true;
 		}
@@ -966,9 +956,6 @@ public class TableItem extends Item {
 	public void setForeground(Color color) {
 		checkWidget();
 		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
-		if (color != null) {
-			table.setCustomDraw(true);
-		}
 		if (foreground == color) return;
 		foreground = color;
 		if ((table.style & SWT.VIRTUAL) != 0) {
@@ -1008,7 +995,6 @@ public class TableItem extends Item {
 		if (0 > index || index > count - 1) return;
 		Color pixel = null;
 		if (color != null) {
-			table.setCustomDraw(true);
 			pixel = color;
 		}
 		if (cellForeground == null) {
