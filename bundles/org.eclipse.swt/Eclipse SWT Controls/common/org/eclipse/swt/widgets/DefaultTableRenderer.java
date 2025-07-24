@@ -169,6 +169,10 @@ public class DefaultTableRenderer extends TableRenderer {
 			width += GAP;
 		}
 
+		if (colIndex == 0) {
+			width += getLeftIndent();
+		}
+
 		return new Point(width, height);
 	}
 
