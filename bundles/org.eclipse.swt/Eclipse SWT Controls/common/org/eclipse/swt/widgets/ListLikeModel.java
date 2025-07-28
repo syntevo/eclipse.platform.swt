@@ -35,7 +35,15 @@ public final class ListLikeModel {
 		if (count < this.count) {
 			selection.removeIf(i -> i >= count);
 		}
+
 		this.count = count;
+
+		if (current >= count) {
+			current = -1;
+		}
+		if (anchor >= count) {
+			anchor = -1;
+		}
 	}
 
 	public void add(int index) {
