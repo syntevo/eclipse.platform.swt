@@ -107,7 +107,6 @@ public class Table extends CustomComposite {
 
 	private final TableColumnsHandler columnsHandler = new TableColumnsHandler(this);
 
-	TableItem currentItem;
 	TableColumn sortColumn;
 	long headerToolTipHandle;
 	boolean ignoreResize;
@@ -828,10 +827,8 @@ public class Table extends CustomComposite {
 			Event event = new Event();
 			event.item = item;
 			event.index = index;
-			currentItem = item;
 			sendEvent(SWT.SetData, event);
 			// widget could be disposed at this point
-			currentItem = null;
 			if (isDisposed() || item.isDisposed()) return false;
 			if (redraw && !setScrollWidth(item, false)) {
 				item.redraw();
