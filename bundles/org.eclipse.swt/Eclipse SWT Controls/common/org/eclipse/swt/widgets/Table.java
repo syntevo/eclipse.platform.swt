@@ -618,11 +618,21 @@ public class Table extends CustomComposite {
 			return;
 		}
 
+		if (e.button != 1 && e.button != 3) {
+			return;
+		}
+
 		final boolean isCheckBoxTable = (style & SWT.CHECK) != 0;
+		final boolean shiftPressed = (e.stateMask & SWT.SHIFT) != 0;
+		final boolean ctrlOrCmdPressed = (e.stateMask & SWT.MOD1) != 0;
+		if (e.button == 3 && (shiftPressed || ctrlOrCmdPressed)) {
+			return;
+		}
+
 		final int topIndex = getTopIndex();
-		for (int i = topIndex, max = getLastVisibleIndex(); i <= max ; i++) {
+		for (int i = topIndex, max = getLastVisibleIndex(); i <= max; i++) {
 			TableItem item = getItem(i);
-			if (isCheckBoxTable && item.isInCheckArea(p)) {
+			if (e.button == 1 && isCheckBoxTable && item.isInCheckArea(p)) {
 				item.toggleCheck();
 
 				Event event = new Event();
@@ -634,8 +644,9 @@ public class Table extends CustomComposite {
 
 			Rectangle bounds = item.getBounds();
 			if (bounds.contains(p)) {
-				final boolean shiftPressed = (e.stateMask & SWT.SHIFT) != 0;
-				final boolean ctrlOrCmdPressed = (e.stateMask & SWT.MOD1) != 0;
+				if (e.button == 3 && selectionModel.isSelected(i)) {
+					return;
+				}
 				clickAtRow(i, shiftPressed, ctrlOrCmdPressed);
 				break;
 			}
