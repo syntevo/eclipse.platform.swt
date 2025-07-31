@@ -625,6 +625,7 @@ public class TableColumn extends Item {
 
 		table.updateColumnsX();
 		table.getColumnsHandler().clearCache();
+		table.updateScrollBars();
 		table.redraw();
 	}
 
