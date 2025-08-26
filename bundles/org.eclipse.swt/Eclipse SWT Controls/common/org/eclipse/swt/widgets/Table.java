@@ -2595,12 +2595,10 @@ public class Table extends CustomComposite {
 
 			selectionModel.setCount(count);
 
-			if (count > prevItemCount) {
-				if (prevItemCount == 0) {
-					measureLineHeight(0);
-				}
-				redraw();
+			if (count > prevItemCount && prevItemCount == 0) {
+				measureLineHeight(0);
 			}
+			redraw();
 
 			updateScrollBars();
 			return;
