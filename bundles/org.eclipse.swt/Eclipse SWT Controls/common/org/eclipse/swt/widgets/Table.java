@@ -197,7 +197,6 @@ public class Table extends CustomComposite {
 			case SWT.Resize -> onResize();
 			case SWT.FocusIn -> onFocusIn();
 			case SWT.FocusOut -> onFocusOut();
-			case SWT.Traverse -> onTraverse(event);
 			case SWT.Selection -> onSelection(event);
 			case SWT.MouseWheel -> onMouseWheel();
 			case SWT.KeyDown -> onKeyDown(event);
@@ -218,7 +217,6 @@ public class Table extends CustomComposite {
 		addListener(SWT.Resize, listener);
 		addListener(SWT.FocusIn, listener);
 		addListener(SWT.FocusOut, listener);
-		addListener(SWT.Traverse, listener);
 		addListener(SWT.MouseWheel, listener);
 		addListener(SWT.MouseDoubleClick, listener);
 
@@ -337,9 +335,6 @@ public class Table extends CustomComposite {
 			column.setX(x);
 			x += column.getWidth();
 		}
-	}
-
-	private void onTraverse(Event event) {
 	}
 
 	private void onFocusIn() {
