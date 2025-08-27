@@ -337,6 +337,15 @@ public class Table extends CustomComposite {
 		}
 	}
 
+	@Override
+	boolean traverse(Event event) {
+		// otherwise ESC is consumed
+		if (event.detail == SWT.TRAVERSE_ESCAPE) {
+			event.doit = true;
+		}
+		return super.traverse(event);
+	}
+
 	private void onFocusIn() {
 		redraw();
 	}
