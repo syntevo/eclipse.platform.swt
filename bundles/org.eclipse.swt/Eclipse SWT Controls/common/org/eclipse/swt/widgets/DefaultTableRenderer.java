@@ -15,6 +15,7 @@ public class DefaultTableRenderer extends TableRenderer {
 	private static final Color CHECKBOX_INNER_COLOR = new Color(255, 255, 255);
 	private static final Color CHECKBOX_OUTER_COLOR = new Color(128, 128, 128);
 	private static final Color CHECKBOX_SELECTION_COLOR = new Color(0, 0, 0);
+	private static final Color DROP_AT_COLOR = new Color(0, 120, 212);
 	private static final String ALTERNATIVE_ROW_BACKGROUND = "backgroundColor.alternative";
 
 	private static final int DRAW_FLAGS = SWT.DRAW_MNEMONIC | SWT.DRAW_TAB | SWT.DRAW_TRANSPARENT | SWT.DRAW_DELIMITER;
@@ -278,7 +279,11 @@ public class DefaultTableRenderer extends TableRenderer {
 			}
 		}
 
+		final TableItem dropItem = table.getDropItem();
+		final int dropInsertBefore = table.getDropInsertBefore();
 		final boolean isFocused = table.isFocusControl();
+
+		TableItem dropItemToDraw = null;
 
 		for (int i = topIndex; i < table.getItemCount(); i++) {
 			TableItem item = table.getItem(i);
@@ -290,9 +295,25 @@ public class DefaultTableRenderer extends TableRenderer {
 			paintItem(item, i, isFocused, caRight, gc);
 
 			final Rectangle bounds = item.getFullBounds();
+
+			if (item == dropItem) {
+				dropItemToDraw = item;
+			} else if (i == dropInsertBefore) {
+				// use foreground color
+				gc.drawLine(ca.x, bounds.y - 1, ca.x + ca.width, bounds.y - 1);
+				gc.drawLine(ca.x, bounds.y, ca.x + ca.width, bounds.y);
+			}
+
 			if (bounds.y + bounds.height > caBottom) {
 				break;
 			}
+		}
+
+		if (dropItemToDraw != null) {
+			gc.setForeground(DROP_AT_COLOR);
+			final Rectangle bounds = dropItemToDraw.getFullBounds();
+			final int arcSize = Math.min(3, bounds.height / 3);
+			gc.drawRoundRectangle(bounds.x, bounds.y, bounds.width - 1, bounds.height, arcSize, arcSize);
 		}
 	}
 

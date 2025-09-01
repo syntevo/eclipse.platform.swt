@@ -138,6 +138,9 @@ public class Table extends CustomComposite {
 
 	private int hScrollPos;
 
+	private TableItem dropItem;
+	private int dropInsertBefore = -1;
+
 	/**
 	 * Constructs a new instance of this class given its parent and a style value
 	 * describing its behavior and appearance.
@@ -441,7 +444,7 @@ public class Table extends CustomComposite {
 	private void scrollIntoView() {
 		final int current = selectionModel.getCurrent();
 		if (current >= 0) {
-			showItem(current);
+			showItem(current, true);
 		}
 	}
 
@@ -3054,12 +3057,19 @@ public class Table extends CustomComposite {
 		}
 	}
 
-	private void showItem(int index) {
+	/**
+	 * @noreference
+	 */
+	public void showItem(int index) {
+		showItem(index, false);
+	}
+
+	private void showItem(int index, boolean makeMoreItemsVisibleAtViewportEdge) {
 		if (index < 0 || index >= getItemCount()) error(SWT.ERROR_INVALID_ARGUMENT);
 
 		final int topIndex = selectionModel.getTopIndex();
 		final int fullyVisibleItemCount = Math.max(getFullyVisibleItemCount(), 1);
-		final int margin = Math.min(fullyVisibleItemCount / 2, 3);
+		final int margin = Math.min(fullyVisibleItemCount / 2, makeMoreItemsVisibleAtViewportEdge ? 3 : 1);
 		final int lastFullyVisibleItem = topIndex + fullyVisibleItemCount - 1;
 		final int maxTopIndex = Math.max(0, selectionModel.getCount() - fullyVisibleItemCount);
 		if (index < topIndex + margin) {
@@ -3105,7 +3115,7 @@ public class Table extends CustomComposite {
 
 		int index = indexOf(item);
 		if (index != -1) {
-			showItem(index);
+			showItem(index, true);
 		}
 	}
 
@@ -3132,7 +3142,7 @@ public class Table extends CustomComposite {
 
 		final int index = selectionModel.getSelectionIndex();
 		if (index >= 0) {
-			showItem(index);
+			showItem(index, true);
 		}
 	}
 
@@ -3312,5 +3322,48 @@ public class Table extends CustomComposite {
 			newColumnOrder[i++] = columnIndex;
 		}
 		setColumnOrder(newColumnOrder);
+	}
+
+	TableItem getDropItem() {
+		return dropItem;
+	}
+
+	int getDropInsertBefore() {
+		return dropInsertBefore;
+	}
+
+	/**
+	 * This is internal API
+	 * @noreference
+	 */
+	public void setDropHighlight(TableItem dropItem) {
+		if (dropItem == null) error(SWT.ERROR_NULL_ARGUMENT);
+		if (dropItem == this.dropItem) {
+			return;
+		}
+
+		this.dropItem = dropItem;
+		this.dropInsertBefore = -1;
+		redraw();
+	}
+
+	/**
+	 * @noreference
+	 */
+	public void setDropInsertBefore(int dropInsertBefore) {
+		if (dropInsertBefore < -1 || dropInsertBefore > getItemCount()) error(SWT.ERROR_INVALID_RANGE);
+		if (dropItem != null) {
+			dropItem = null;
+			this.dropInsertBefore = dropInsertBefore;
+			redraw();
+			return;
+		}
+
+		if (dropInsertBefore == this.dropInsertBefore) {
+			return;
+		}
+
+		this.dropInsertBefore = dropInsertBefore;
+		redraw();
 	}
 }
