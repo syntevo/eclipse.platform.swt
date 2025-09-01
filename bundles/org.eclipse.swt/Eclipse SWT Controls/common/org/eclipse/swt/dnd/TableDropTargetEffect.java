@@ -155,6 +155,21 @@ public class TableDropTargetEffect extends DropTargetEffect {
 				}
 				return;
 			}
+		} else if ((feedback & DND.FEEDBACK_INSERT_AFTER) != 0) {
+			final int itemCount = table.getItemCount();
+			final int y;
+			if (itemCount > 0) {
+				final TableItem lastItem = table.getItem(itemCount - 1);
+				final Rectangle lastItemBounds = lastItem.getBounds();
+				y = lastItemBounds.y + lastItemBounds.height;
+			} else {
+				y = table.getHeaderHeight();
+			}
+
+			if (coordinates.y >= y) {
+				table.setDropInsertBefore(itemCount);
+				return;
+			}
 		}
 
 		table.setDropInsertBefore(-1);
