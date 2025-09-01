@@ -78,7 +78,7 @@ public class TableDragSourceEffect extends DragSourceEffect {
 	 */
 	@Override
 	public void dragStart(DragSourceEvent event) {
-		event.image = getDragSourceImage(event);
+//		event.image = getDragSourceImage(event);
 	}
 
 	Image getDragSourceImage(DragSourceEvent event) {
