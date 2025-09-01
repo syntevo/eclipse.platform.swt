@@ -3354,12 +3354,7 @@ public class Table extends CustomComposite {
 		if (dropInsertBefore < -1 || dropInsertBefore > getItemCount()) error(SWT.ERROR_INVALID_RANGE);
 		if (dropItem != null) {
 			dropItem = null;
-			this.dropInsertBefore = dropInsertBefore;
-			redraw();
-			return;
-		}
-
-		if (dropInsertBefore == this.dropInsertBefore) {
+		} else if (dropInsertBefore == this.dropInsertBefore) {
 			return;
 		}
 
