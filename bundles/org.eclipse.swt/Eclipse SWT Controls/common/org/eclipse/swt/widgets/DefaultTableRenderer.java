@@ -285,7 +285,8 @@ public class DefaultTableRenderer extends TableRenderer {
 
 		TableItem dropItemToDraw = null;
 
-		for (int i = topIndex; i < table.getItemCount(); i++) {
+		final int itemCount = table.getItemCount();
+		for (int i = topIndex; i < itemCount; i++) {
 			TableItem item = table.getItem(i);
 
 			if (table.isVirtual()) {
@@ -299,9 +300,7 @@ public class DefaultTableRenderer extends TableRenderer {
 			if (item == dropItem) {
 				dropItemToDraw = item;
 			} else if (i == dropInsertBefore) {
-				// use foreground color
-				gc.drawLine(ca.x, bounds.y - 1, ca.x + ca.width, bounds.y - 1);
-				gc.drawLine(ca.x, bounds.y, ca.x + ca.width, bounds.y);
+				drawDropInsertBeforeIndicator(gc, ca, bounds.y);
 			}
 
 			if (bounds.y + bounds.height > caBottom) {
@@ -314,6 +313,16 @@ public class DefaultTableRenderer extends TableRenderer {
 			final Rectangle bounds = dropItemToDraw.getFullBounds();
 			final int arcSize = Math.min(3, bounds.height / 3);
 			gc.drawRoundRectangle(bounds.x, bounds.y, bounds.width - 1, bounds.height, arcSize, arcSize);
+		} else if (dropInsertBefore == itemCount) {
+			final int y;
+			if (itemCount > 0) {
+				final TableItem lastItem = table.getItem(itemCount - 1);
+				final Rectangle lastItemBounds = lastItem.getBounds();
+				y = lastItemBounds.y + lastItemBounds.height + 1;
+			} else {
+				y = caTop;
+			}
+			drawDropInsertBeforeIndicator(gc, ca, y);
 		}
 	}
 
@@ -485,5 +494,11 @@ public class DefaultTableRenderer extends TableRenderer {
 
 	private void drawVLine(GC gc, int x, int y1, int y2) {
 		gc.drawLine(x, y1, x, y2);
+	}
+
+	private static void drawDropInsertBeforeIndicator(GC gc, Rectangle ca, int y) {
+		// use foreground color
+		gc.drawLine(ca.x, y - 1, ca.x + ca.width, y - 1);
+		gc.drawLine(ca.x, y, ca.x + ca.width, y);
 	}
 }
