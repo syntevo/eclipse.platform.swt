@@ -529,7 +529,7 @@ public class Table extends CustomComposite {
 			}
 			else {
 				verticalBar.setVisible(false);
-				verticalBar.setValues(0, 0, 0, 1, 1, 1);
+				verticalBar.setValues(0, 0, 1, 1, 1, 1);
 				_setTopIndex(0);
 			}
 			return;
@@ -572,7 +572,7 @@ public class Table extends CustomComposite {
 			_setTopIndex(topIndex);
 		}
 		else {
-			verticalBar.setValues(0, 0, 0, 1, 1, 1);
+			verticalBar.setValues(0, 0, 1, 1, 1, 1);
 			verticalBar.setVisible(false);
 			_setTopIndex(0);
 		}
@@ -588,7 +588,7 @@ public class Table extends CustomComposite {
 		}
 		else {
 			horizontalBar.setVisible(false);
-			horizontalBar.setValues(0, 0, 0, 1, 1, 1);
+			horizontalBar.setValues(0, 0, 1, 1, 1, 1);
 		}
 	}
 
