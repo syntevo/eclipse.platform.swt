@@ -560,7 +560,12 @@ public class Table extends CustomComposite {
 			availableHeight -= horizontalBarHeight;
 
 			fullyVisibleItemCount = getVisibleItemCount(false, availableHeight);
-			needsVerticalScrollBar = itemCount > fullyVisibleItemCount;
+			if (!needsVerticalScrollBar) {
+				needsVerticalScrollBar = itemCount > fullyVisibleItemCount;
+				if (needsVerticalScrollBar) {
+					availableWidth -= verticalBarWidth;
+				}
+			}
 		}
 
 		if (needsVerticalScrollBar) {
