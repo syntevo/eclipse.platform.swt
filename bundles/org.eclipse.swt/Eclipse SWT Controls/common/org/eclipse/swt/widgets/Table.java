@@ -3220,19 +3220,24 @@ public class Table extends CustomComposite {
 	int calculateColumnWidth(TableColumn column) {
 		final GC gc = new GC(this);
 		try {
-			int colIndex = indexOf(column);
+			final int colIndex = indexOf(column);
 			int width = 0;
-			final boolean virtual = isVirtual();
-			final TableItem[] items = getItems();
-			for (TableItem item : items) {
-				if (virtual && !checkData(item, false)) {
-					continue;
+			if (isVirtual()) {
+				final int itemCount = getItemCount();
+				final int max = 50;
+				width = Math.max(width, measureVirtualColumnWidths(0, Math.min(max, itemCount), colIndex, gc));
+				if (itemCount > max) {
+					final int partlyVisibleItemCount = getVisibleItemCount(true);
+					final int topIndex = getTopIndex();
+					width = Math.max(width, measureVirtualColumnWidths(Math.max(topIndex - max, 0), Math.min(topIndex + partlyVisibleItemCount + max, itemCount), colIndex, gc));
 				}
-				Rectangle bounds = item.getBounds(colIndex);
-				Point size = renderer.computeCellSize(item, colIndex, gc, null, null);
-				bounds.width = size.x;
-				final Event event = sendMeasureItem(item, colIndex, gc, bounds);
-				width = Math.max(width, event.width);
+			}
+			else {
+				final TableItem[] items = getItems();
+				for (TableItem item : items) {
+					final int itemWidth = measureColumnWidth(item, colIndex, gc);
+					width = Math.max(width, itemWidth);
+				}
 			}
 
 			final Point headerSize = renderer.computeHeaderSize(column, gc);
@@ -3242,6 +3247,28 @@ public class Table extends CustomComposite {
 		} finally {
 			gc.dispose();
 		}
+	}
+
+	private int measureVirtualColumnWidths(int from, int toExclusive, int colIndex, GC gc) {
+		int width = 0;
+		for (int i = from; i < toExclusive; i++) {
+			TableItem item = _getItem(i);
+			if (!checkData(item, false)) {
+				continue;
+			}
+
+			int itemWidth = measureColumnWidth(item, colIndex, gc);
+			width = Math.max(width, itemWidth);
+		}
+		return width;
+	}
+
+	private int measureColumnWidth(TableItem item, int colIndex, GC gc) {
+		Rectangle bounds = item.getBounds(colIndex);
+		Point size = renderer.computeCellSize(item, colIndex, gc, null, null);
+		bounds.width = size.x;
+		Event event = sendMeasureItem(item, colIndex, gc, bounds);
+		return event.width;
 	}
 
 	private void setLineHeight(int height) {
