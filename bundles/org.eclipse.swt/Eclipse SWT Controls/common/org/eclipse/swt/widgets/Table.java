@@ -595,6 +595,7 @@ public class Table extends CustomComposite {
 			horizontalBar.setVisible(false);
 			horizontalBar.setValues(0, 0, 1, 1, 1, 1);
 		}
+		hScrollPos = horizontalBar.getSelection();
 	}
 
 	@Override
