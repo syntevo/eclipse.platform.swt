@@ -50,7 +50,6 @@ final class TableColumnsHandler {
 			TableColumn c = table.getColumn(columnResizeActive);
 			int x = c.getXScrolled();
 			c.setWidth(event.x - x);
-			table.redraw();
 			return;
 		}
 
