@@ -778,10 +778,6 @@ public class TableItem extends Item {
 	 */
 	public Rectangle getImageBounds(int index) {
 		checkWidget();
-		return DPIUtil.scaleDown(getImageBoundsInPixels(index), 100);
-	}
-
-	Rectangle getImageBoundsInPixels(int index) {
 		if (!parent.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
 		int itemIndex = getItemIndex();
 		if (itemIndex == -1) {
@@ -894,10 +890,6 @@ public class TableItem extends Item {
 	 */
 	public Rectangle getTextBounds(int index) {
 		checkWidget();
-		return DPIUtil.scaleDown(getTextBoundsInPixels(index), 100);
-	}
-
-	Rectangle getTextBoundsInPixels(int index) {
 		if (!parent.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
 		int itemIndex = getItemIndex();
 		if (itemIndex == -1) {

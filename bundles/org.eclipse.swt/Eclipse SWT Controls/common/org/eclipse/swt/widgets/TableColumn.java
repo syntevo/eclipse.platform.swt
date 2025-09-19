@@ -671,10 +671,6 @@ public class TableColumn extends Item {
 
 	private void setHeight(int height) {
 		checkWidget();
-		setHeightInPixels(DPIUtil.scaleUp(height, 100));
-	}
-
-	private void setHeightInPixels(int height) {
 		if (height < 0) return;
 		int index = parent.indexOf(this);
 		if (index == -1) return;

@@ -1216,7 +1216,7 @@ public class Table extends CustomComposite {
 	 */
 	public int getGridLineWidth() {
 		checkWidget();
-		return DPIUtil.scaleDown(getGridLineWidthInPixels(), 100);
+		return DPIUtil.pixelToPoint(getGridLineWidthInPixels(), 100);
 	}
 
 	int getGridLineWidthInPixels() {
