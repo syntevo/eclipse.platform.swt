@@ -911,6 +911,7 @@ private long getMenuItemIconSelectedBitmapHandle() {
 }
 
 private int adaptZoomForMenuItem(int currentZoom, Image image) {
+	currentZoom = DPIUtil.getZoomForAutoscaleProperty(currentZoom);
 	int primaryMonitorZoomAtAppStartUp = getPrimaryMonitorZoomAtStartup();
 	/*
 	 * Windows has inconsistent behavior when setting the size of MenuItem image and
