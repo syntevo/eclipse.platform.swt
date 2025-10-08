@@ -210,7 +210,7 @@ public DragSource(Control control, int style) {
 		}
 		if (event.type == SWT.DragDetect) {
 			if (!DragSource.this.isDisposed()) {
-				if (event.widget instanceof Table || event.widget instanceof Tree) {
+				if (/*event.widget instanceof Table ||*/ event.widget instanceof Tree) {
 					DragSource.this.dragOutlineViewStart(event);
 				} else {
 					DragSource.this.drag(event);

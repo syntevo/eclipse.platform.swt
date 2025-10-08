@@ -1,0 +1,1311 @@
+/*******************************************************************************
+ * Copyright (c) 2000, 2015 IBM Corporation and others.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0/
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.swt.widgets;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Instances of this class represent a selectable user interface object that
+ * represents an item in a table.
+ * <dl>
+ * <dt><b>Styles:</b></dt>
+ * <dd>(none)</dd>
+ * <dt><b>Events:</b></dt>
+ * <dd>(none)</dd>
+ * </dl>
+ * <p>
+ * IMPORTANT: This class is <em>not</em> intended to be subclassed.
+ * </p>
+ *
+ * @see <a href="http://www.eclipse.org/swt/snippets/#table">Table, TableItem,
+ *      TableColumn snippets</a>
+ * @see <a href="http://www.eclipse.org/swt/">Sample code and further
+ *      information</a>
+ * @noextend This class is not intended to be subclassed by clients.
+ */
+public class TableItem extends Item {
+
+	private Table table;
+	private String[] strings;
+	private Image[] images;
+	private Font font;
+	private Font[] cellFont;
+	private boolean checked;
+	private boolean grayed;
+	boolean cached;
+	private int imageIndent;
+	private Color background;
+	private Color foreground;
+	private Color[] cellBackground;
+	private Color[] cellForeground;
+
+	private int itemIndex = -2;
+
+	/**
+	 * Constructs a new instance of this class given its parent (which must be a
+	 * <code>Table</code>) and a style value describing its behavior and appearance.
+	 * The item is added to the end of the items maintained by its parent.
+	 * <p>
+	 * The style value is either one of the style constants defined in class
+	 * <code>SWT</code> which is applicable to instances of this class, or must be
+	 * built by <em>bitwise OR</em>'ing together (that is, using the
+	 * <code>int</code> "|" operator) two or more of those <code>SWT</code> style
+	 * constants. The class description lists the style constants that are
+	 * applicable to the class. Style bits are also inherited from superclasses.
+	 * </p>
+	 *
+	 * @param parent a composite control which will be the parent of the new
+	 *               instance (cannot be null)
+	 * @param style  the style of control to construct
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the parent
+	 *                                     is null</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     parent</li>
+	 *                                     <li>ERROR_INVALID_SUBCLASS - if this
+	 *                                     class is not an allowed subclass</li>
+	 *                                     </ul>
+	 *
+	 * @see SWT
+	 * @see Widget#checkSubclass
+	 * @see Widget#getStyle
+	 */
+	public TableItem(Table parent, int style) {
+		this(parent, style, checkNull(parent).getItemCount(), true);
+
+		_addListener(style, null);
+	}
+
+	/**
+	 * Constructs a new instance of this class given its parent (which must be a
+	 * <code>Table</code>), a style value describing its behavior and appearance,
+	 * and the index at which to place it in the items maintained by its parent.
+	 * <p>
+	 * The style value is either one of the style constants defined in class
+	 * <code>SWT</code> which is applicable to instances of this class, or must be
+	 * built by <em>bitwise OR</em>'ing together (that is, using the
+	 * <code>int</code> "|" operator) two or more of those <code>SWT</code> style
+	 * constants. The class description lists the style constants that are
+	 * applicable to the class. Style bits are also inherited from superclasses.
+	 * </p>
+	 *
+	 * @param parent a composite control which will be the parent of the new
+	 *               instance (cannot be null)
+	 * @param style  the style of control to construct
+	 * @param index  the zero-relative index to store the receiver in its parent
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the parent
+	 *                                     is null</li>
+	 *                                     <li>ERROR_INVALID_RANGE - if the index is
+	 *                                     not between 0 and the number of elements
+	 *                                     in the parent (inclusive)</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     parent</li>
+	 *                                     <li>ERROR_INVALID_SUBCLASS - if this
+	 *                                     class is not an allowed subclass</li>
+	 *                                     </ul>
+	 *
+	 * @see SWT
+	 * @see Widget#checkSubclass
+	 * @see Widget#getStyle
+	 */
+	public TableItem(Table parent, int style, int index) {
+		this(parent, style, index, true);
+	}
+
+	private TableItem(Table parent, int style, int index, boolean create) {
+		super(parent, style);
+
+		if (index < 0 || index > parent.getItemCount()) error(SWT.ERROR_INVALID_RANGE);
+
+		this.table = parent;
+		if (create) {
+			parent.createItem(this, index);
+		}
+	}
+
+	@Override
+	protected void checkSubclass() {
+		if (!isValidSubclass()) {
+			error(SWT.ERROR_INVALID_SUBCLASS);
+		}
+	}
+
+	@Override
+	void destroyWidget() {
+		table.destroyItem(this);
+		releaseHandle();
+	}
+
+	static Table checkNull(Table control) {
+		if (control == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+		return control;
+	}
+
+	void clear() {
+		clearCache();
+		text = "";
+		image = null;
+		strings = null;
+		images = null;
+		imageIndent = 0;
+		checked = grayed = false;
+		font = null;
+		background = null;
+		foreground = null;
+		cellFont = null;
+		cellBackground = cellForeground = null;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = false;
+		}
+	}
+
+	/**
+	 * Returns the receiver's background color.
+	 *
+	 * @return the background color
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 2.0
+	 */
+	public Color getBackground() {
+		checkWidget();
+
+		if (background != null) {
+			return background;
+		}
+
+		return table.getBackground();
+	}
+
+	Color _getBackground() {
+		return background;
+	}
+
+	/**
+	 * Returns the background color at the given column index in the receiver.
+	 *
+	 * @param index the column index
+	 * @return the background color
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.0
+	 */
+	public Color getBackground(int index) {
+		checkWidget();
+		final Color color = _getBackgroundOrNull(index);
+		return color != null ? color : getBackground();
+	}
+
+	Color _getBackgroundOrNull(int index) {
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 <= index && index <= count - 1
+				&& cellBackground != null) {
+			return cellBackground[index];
+		}
+		return null;
+	}
+
+	/**
+	 * Returns a rectangle describing the size and location of the receiver's text
+	 * and image relative to its parent.
+	 *
+	 * This exclude the checkbox if the table has style SWT.CHECK.
+	 *
+	 * @return the bounding rectangle of the receiver's text
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.2
+	 */
+	public Rectangle getBounds() {
+		Rectangle bounds = getFullBounds();
+		handleLeadingIndent(bounds);
+		return bounds;
+	}
+
+	private int getItemIndex() {
+		if (this.itemIndex == -2) {
+			this.itemIndex = table.indexOf(this);
+		}
+		return this.itemIndex;
+	}
+
+	Rectangle getFullBounds() {
+		if (!table.checkData(this, true)) {
+			error(SWT.ERROR_WIDGET_DISPOSED);
+		}
+
+		int itemIndex = getItemIndex();
+		if (itemIndex == -1) {
+			return new Rectangle(0, 0, 0, 0);
+		}
+
+		final int relativeIndex = itemIndex - table.getTopIndex();
+		int y = relativeIndex * (table.getItemHeight() + table.getGridSize());
+		if (table.getHeaderVisible()) {
+			y += table.getHeaderHeight();
+		}
+		final int width = table.getWidth();
+		return new Rectangle(-table.getHScrollPos(), y, width, table.getItemHeight());
+	}
+
+	/**
+	 * Returns a rectangle describing the receiver's size and location relative to
+	 * its parent at a column in the table.
+	 *
+	 * @param index the index that specifies the column
+	 * @return the receiver's bounding column rectangle
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public Rectangle getBounds(int index) {
+		checkWidget();
+
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+
+		if (table.getColumnCount() == 0) {
+			if (index == 0) {
+				return getBounds();
+			}
+			return new Rectangle(0, 0, 0, 0);
+		}
+
+		if (index < 0 || index >= table.getColumnCount()) {
+			return new Rectangle(0, 0, 0, 0);
+		}
+
+		final TableColumn column = table.getColumn(index);
+
+		final int relativeIndex = itemIndex - table.getTopIndex();
+		int y = table.getHeaderHeight();
+		y += relativeIndex * (table.getItemHeight() + table.getGridSize());
+		final Rectangle bounds = new Rectangle(column.getXScrolled(), y, column.getWidth(), table.getItemHeight());
+
+		if (index == 0) {
+			handleLeadingIndent(bounds);
+		}
+
+		return bounds;
+	}
+
+	private void handleLeadingIndent(Rectangle bounds) {
+		final int shift = table.renderer.getLeftIndent();
+		// reduce width by shift. This cell must be by default smaller than the others.
+		// If there is a checkbox, this also must be considered.
+		bounds.width = Math.max(0, bounds.width - shift);
+		bounds.x += shift;
+	}
+
+	/**
+	 * Returns <code>true</code> if the receiver is checked, and false otherwise.
+	 * When the parent does not have the <code>CHECK</code> style, return false.
+	 *
+	 * @return the checked state of the checkbox
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public boolean getChecked() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return (table.style & SWT.CHECK) != 0 && checked;
+	}
+
+	/**
+	 * Returns the font that the receiver will use to paint textual information for
+	 * this item.
+	 *
+	 * @return the receiver's font
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.0
+	 */
+	public Font getFont() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return font != null ? font : table.getFont();
+	}
+
+	/**
+	 * Returns the font that the receiver will use to paint textual information for
+	 * the specified cell in this item.
+	 *
+	 * @param index the column index
+	 * @return the receiver's font
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.0
+	 */
+	public Font getFont(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) {
+			return getFont();
+		}
+		if (cellFont == null || cellFont[index] == null) {
+			return getFont();
+		}
+		return cellFont[index];
+	}
+
+	/**
+	 * Returns the foreground color that the receiver will use to draw.
+	 *
+	 * @return the receiver's foreground color
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 2.0
+	 */
+	public Color getForeground() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		if (foreground == null) {
+			return table.getForeground();
+		}
+		return foreground;
+	}
+
+	/**
+	 *
+	 * Returns the foreground color at the given column index in the receiver.
+	 *
+	 * @param index the column index
+	 * @return the foreground color
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.0
+	 */
+	public Color getForeground(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) {
+			return getForeground();
+		}
+		Color cellColor = cellForeground != null ? cellForeground[index] : null;
+		return cellColor == null ? getForeground() : cellColor;
+	}
+
+	/**
+	 * Returns <code>true</code> if the receiver is grayed, and false otherwise.
+	 * When the parent does not have the <code>CHECK</code> style, return false.
+	 *
+	 * @return the grayed state of the checkbox
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public boolean getGrayed() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return (table.style & SWT.CHECK) != 0 && grayed;
+	}
+
+	@Override
+	public Image getImage() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return super.getImage();
+	}
+
+	/**
+	 * Returns the image stored at the given column index in the receiver, or null
+	 * if the image has not been set or if the column does not exist.
+	 *
+	 * @param index the column index
+	 * @return the image stored at the given column index in the receiver
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public Image getImage(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		if (index == 0) {
+			return getImage();
+		}
+		if (images != null && 0 <= index && index < images.length) {
+			return images[index];
+		}
+		return null;
+	}
+
+	/**
+	 * Returns a rectangle describing the size and location relative to its parent
+	 * of an image at a column in the table. An empty rectangle is returned if index
+	 * exceeds the index of the table's last column.
+	 *
+	 * @param index the index that specifies the column
+	 * @return the receiver's bounding image rectangle
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public Rectangle getImageBounds(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		int itemIndex = getItemIndex();
+		if (itemIndex == -1) {
+			return new Rectangle(0, 0, 0, 0);
+		}
+
+		final GC gc = new GC(table);
+		try {
+			final Rectangle imageBounds = new Rectangle(0, 0, 0, 0);
+			if (getImage(index) != null) {
+				table.renderer.computeCellSize(this, index, gc, imageBounds, null);
+			}
+
+			return imageBounds;
+		}
+		finally {
+			gc.dispose();
+		}
+	}
+
+	/**
+	 * Gets the image indent.
+	 *
+	 * @return the indent
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public int getImageIndent() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return imageIndent;
+	}
+
+	@Override
+	String getNameText() {
+		if ((table.style & SWT.VIRTUAL) != 0 && !cached) {
+			return "*virtual*"; //$NON-NLS-1$
+		}
+		return super.getNameText();
+	}
+
+	/**
+	 * Returns the receiver's parent, which must be a <code>Table</code>.
+	 *
+	 * @return the receiver's parent
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public Table getParent() {
+		checkWidget();
+		return table;
+	}
+
+	@Override
+	public String getText() {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		return super.getText();
+	}
+
+	/**
+	 * Returns the text stored at the given column index in the receiver, or empty
+	 * string if the text has not been set.
+	 *
+	 * @param index the column index
+	 * @return the text stored at the given column index in the receiver
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public String getText(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		if (index == 0) {
+			return getText();
+		}
+		if (strings != null && 0 <= index && index < strings.length) {
+			String string = strings[index];
+			if (string != null) {
+				return string;
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * Returns a rectangle describing the size and location relative to its parent
+	 * of the text at a column in the table. An empty rectangle is returned if index
+	 * exceeds the index of the table's last column.
+	 *
+	 * @param index the index that specifies the column
+	 * @return the receiver's bounding text rectangle
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @since 3.3
+	 */
+	public Rectangle getTextBounds(int index) {
+		checkWidget();
+		if (!table.checkData(this, true)) error(SWT.ERROR_WIDGET_DISPOSED);
+		int itemIndex = getItemIndex();
+		final Rectangle textBounds = new Rectangle(0, 0, 0, 0);
+		if (itemIndex >= 0) {
+			final GC gc = new GC(table);
+			try {
+				table.renderer.computeCellSize(this, index, gc, null, textBounds);
+			}
+			finally {
+				gc.dispose();
+			}
+		}
+		return textBounds;
+	}
+
+	void redraw() {
+		final Table table = getParent();
+		final Point size = table.getSize();
+		if (size.x == 0 || size.y == 0) {
+			return;
+		}
+
+		int index = getItemIndex();
+		if (index < table.getTopIndex() || index > table.getLastVisibleIndex()) return;
+
+		Rectangle b = getFullBounds();
+		table.redraw(b.x, b.y, b.width, table.getItemHeight(), true);
+	}
+
+	@Override
+	void releaseHandle() {
+		super.releaseHandle();
+		table = null;
+	}
+
+	@Override
+	void releaseWidget() {
+		super.releaseWidget();
+		strings = null;
+		images = null;
+		cellFont = null;
+		cellBackground = cellForeground = null;
+	}
+
+	/**
+	 * Sets the receiver's background color to the color specified by the argument,
+	 * or to the default system color for the item if the argument is null.
+	 *
+	 * @param color the new color (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 2.0
+	 */
+	public void setBackground(Color color) {
+		checkWidget();
+		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (background == color) {
+			return;
+		}
+		background = color;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the background color at the given column index in the receiver to the
+	 * color specified by the argument, or to the default system color for the item
+	 * if the argument is null.
+	 *
+	 * @param index the column index
+	 * @param color the new color (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 3.0
+	 */
+	public void setBackground(int index, Color color) {
+		checkWidget();
+		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) return;
+		Color cellColor = null;
+		if (color != null) {
+			cellColor = color;
+		}
+		if (cellBackground == null) {
+			cellBackground = new Color[count];
+			for (int i = 0; i < count; i++) {
+				cellBackground[i] = null;
+			}
+		}
+		if (cellBackground[index] == cellColor) {
+			return;
+		}
+		cellBackground[index] = cellColor;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the checked state of the checkbox for this item. This state change only
+	 * applies if the Table was created with the SWT.CHECK style.
+	 *
+	 * @param checked the new checked state of the checkbox
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public void setChecked(boolean checked) {
+		checkWidget();
+		if ((table.style & SWT.CHECK) == 0) return;
+		if (this.checked == checked) return;
+		setChecked(checked, false);
+	}
+
+	void setChecked(boolean checked, boolean notify) {
+		this.checked = checked;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		if (notify) {
+			Event event = new Event();
+			event.item = this;
+			event.detail = SWT.CHECK;
+			table.sendSelectionEvent(SWT.Selection, event, false);
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the font that the receiver will use to paint textual information for
+	 * this item to the font specified by the argument, or to the default font for
+	 * that kind of control if the argument is null.
+	 *
+	 * @param font the new font (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 3.0
+	 */
+	public void setFont(Font font) {
+		checkWidget();
+
+		clearCache();
+
+		Table.logNotImplemented();
+
+		if (font != null && font.isDisposed()) {
+			error(SWT.ERROR_INVALID_ARGUMENT);
+		}
+		Font oldFont = this.font;
+		Font newFont = font;
+		if (oldFont == newFont) return;
+		this.font = newFont;
+		if (oldFont != null && oldFont.equals(newFont)) return;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+
+		redraw();
+	}
+
+	/**
+	 * Sets the font that the receiver will use to paint textual information for the
+	 * specified cell in this item to the font specified by the argument, or to the
+	 * default font for that kind of control if the argument is null.
+	 *
+	 * @param index the column index
+	 * @param font  the new font (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 3.0
+	 */
+	public void setFont(int index, Font font) {
+		checkWidget();
+
+		clearCache();
+		Table.logNotImplemented();
+
+		if (font != null && font.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) return;
+		if (cellFont == null) {
+			if (font == null) return;
+			cellFont = new Font[count];
+		}
+		Font oldFont = cellFont[index];
+		if (oldFont == font) return;
+		cellFont[index] = font;
+		if (oldFont != null && oldFont.equals(font)) return;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the receiver's foreground color to the color specified by the argument,
+	 * or to the default system color for the item if the argument is null.
+	 *
+	 * @param color the new color (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 2.0
+	 */
+	public void setForeground(Color color) {
+		checkWidget();
+		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		if (foreground == color) return;
+		foreground = color;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the foreground color at the given column index in the receiver to the
+	 * color specified by the argument, or to the default system color for the item
+	 * if the argument is null.
+	 *
+	 * @param index the column index
+	 * @param color the new color (or null)
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the
+	 *                                     argument has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 *
+	 * @since 3.0
+	 */
+	public void setForeground(int index, Color color) {
+		checkWidget();
+		if (color != null && color.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) return;
+		Color pixel = null;
+		if (color != null) {
+			pixel = color;
+		}
+		if (cellForeground == null) {
+			cellForeground = new Color[count];
+			for (int i = 0; i < count; i++) {
+				cellForeground[i] = null;
+			}
+		}
+		if (cellForeground[index] == pixel) return;
+		cellForeground[index] = pixel;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the grayed state of the checkbox for this item. This state change only
+	 * applies if the Table was created with the SWT.CHECK style.
+	 *
+	 * @param grayed the new grayed state of the checkbox;
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 */
+	public void setGrayed(boolean grayed) {
+		checkWidget();
+		if ((table.style & SWT.CHECK) == 0) return;
+		if (this.grayed == grayed) return;
+		this.grayed = grayed;
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+		redraw();
+	}
+
+	/**
+	 * Sets the image for multiple columns in the table.
+	 *
+	 * @param images the array of new images
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the array of
+	 *                                     images is null</li>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if one of
+	 *                                     the images has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 */
+	public void setImage(Image[] images) {
+		checkWidget();
+		if (images == null) error(SWT.ERROR_NULL_ARGUMENT);
+		for (int i = 0; i < images.length; i++) {
+			setImage(i, images[i]);
+		}
+
+		clearCache();
+	}
+
+	/**
+	 * Sets the receiver's image at a column.
+	 *
+	 * @param index the column index
+	 * @param image the new image
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_INVALID_ARGUMENT - if the image
+	 *                                     has been disposed</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 */
+	public void setImage(int index, Image image) {
+		checkWidget();
+		if (image != null && image.isDisposed()) error(SWT.ERROR_INVALID_ARGUMENT);
+		Image oldImage = null;
+		if (index == 0) {
+			if (image != null && image.type == SWT.ICON && image.equals(this.image)) return;
+			oldImage = this.image;
+			super.setImage(image);
+		}
+		int count = Math.max(1, table.getColumnCount());
+		if (0 > index || index > count - 1) return;
+		if (images == null && index != 0) {
+			images = new Image[count];
+			images[0] = image;
+		}
+		if (images != null) {
+			if (image != null && image.type == SWT.ICON && image.equals(images[index])) return;
+			oldImage = images[index];
+			images[index] = image;
+		}
+		if ((table.style & SWT.VIRTUAL) != 0) {
+			cached = true;
+		}
+
+		if (index == 0) {
+			table.setScrollWidth(this, false);
+		}
+		boolean drawText = (image == null && oldImage != null) || (image != null && oldImage == null);
+
+		clearCache();
+		redraw();
+	}
+
+	@Override
+	public void setImage(Image image) {
+		checkWidget();
+		setImage(0, image);
+
+		clearCache();
+	}
+
+	/**
+	 * Sets the indent of the first column's image, expressed in terms of the
+	 * image's width.
+	 *
+	 * @param indent the new indent
+	 *
+	 * @exception SWTException
+	 *                         <ul>
+	 *                         <li>ERROR_WIDGET_DISPOSED - if the receiver has been
+	 *                         disposed</li>
+	 *                         <li>ERROR_THREAD_INVALID_ACCESS - if not called from
+	 *                         the thread that created the receiver</li>
+	 *                         </ul>
+	 *
+	 * @deprecated this functionality is not supported on most platforms
+	 */
+	@Deprecated
+	public void setImageIndent(int indent) {
+		checkWidget();
+
+		Table.logNotImplemented();
+
+		if (indent < 0) return;
+		if (imageIndent == indent) return;
+		imageIndent = indent;
+
+		clearCache();
+		redraw();
+	}
+
+	/**
+	 * Sets the text for multiple columns in the table.
+	 * <p>
+	 * Note: If control characters like '\n', '\t' etc. are used in the string, then
+	 * the behavior is platform dependent.
+	 * </p>
+	 *
+	 * @param strings the array of new strings
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the text is
+	 *                                     null</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 */
+	public void setText(String[] strings) {
+		checkWidget();
+		if (strings == null) error(SWT.ERROR_NULL_ARGUMENT);
+		for (int i = 0; i < strings.length; i++) {
+			String string = strings[i];
+			if (string != null) {
+				setText(i, string);
+			}
+		}
+
+		clearCache();
+	}
+
+	void clearCache() {
+		this.itemIndex = -2;
+	}
+
+	/**
+	 * Sets the receiver's text at a column
+	 * <p>
+	 * Note: If control characters like '\n', '\t' etc. are used in the string, then
+	 * the behavior is platform dependent.
+	 * </p>
+	 *
+	 * @param index  the column index
+	 * @param string the new text
+	 *
+	 * @exception IllegalArgumentException
+	 *                                     <ul>
+	 *                                     <li>ERROR_NULL_ARGUMENT - if the text is
+	 *                                     null</li>
+	 *                                     </ul>
+	 * @exception SWTException
+	 *                                     <ul>
+	 *                                     <li>ERROR_WIDGET_DISPOSED - if the
+	 *                                     receiver has been disposed</li>
+	 *                                     <li>ERROR_THREAD_INVALID_ACCESS - if not
+	 *                                     called from the thread that created the
+	 *                                     receiver</li>
+	 *                                     </ul>
+	 */
+	public void setText(int index, String string) {
+		checkWidget();
+		if (string == null) error(SWT.ERROR_NULL_ARGUMENT);
+		if (index < 0) return;
+
+		try {
+			if (index == 0) {
+				if (string.equals(text)) return;
+				super.setText(string);
+			}
+			else {
+				int count = Math.max(1, table.getColumnCount());
+				if (index >= count) return;
+				if (strings == null) {
+					strings = new String[count];
+					strings[index] = text;
+				} else if (strings.length < count) {
+					String[] newStrings = new String[count];
+					System.arraycopy(strings, 0, newStrings, 0, strings.length);
+					strings = newStrings;
+				}
+				if (string.equals(strings[index])) return;
+				strings[index] = string;
+			}
+		} finally {
+			clearCache();
+		}
+
+		redraw();
+	}
+
+	@Override
+	public void setText(String string) {
+		checkWidget();
+		setText(0, string);
+		table.itemChanged(this);
+	}
+
+	void columnAdded(int index) {
+		if (index < 0 || index > table.getColumnCount()) SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+
+		if (strings != null) {
+			List<String> newStrings = new ArrayList<>(Math.max(strings.length, index) + 1);
+			newStrings.addAll(Arrays.asList(strings));
+			if (index < newStrings.size()) {
+				newStrings.add(index, null);
+			}
+			strings = newStrings.toArray(new String[0]);
+		}
+
+		if (images != null) {
+			List<Image> newImages = new ArrayList<>(Math.max(images.length, index) + 1);
+			newImages.addAll(Arrays.asList(images));
+			if (index < newImages.size()) {
+				newImages.add(index, null);
+			}
+			images = newImages.toArray(new Image[0]);
+		}
+	}
+
+	void columnRemoved(int index) {
+		if (strings != null && index >= 0 && index < strings.length) {
+			List<String> newTexts = new ArrayList<>(Arrays.asList(strings));
+			newTexts.remove(index);
+			strings = newTexts.toArray(new String[0]);
+		}
+
+		if (images != null && index >= 0 && index < images.length) {
+			List<Image> newImages = new ArrayList<>(Arrays.asList(images));
+			newImages.remove(index);
+			images = newImages.toArray(new Image[0]);
+		}
+	}
+
+	boolean isInCheckArea(Point p) {
+		final Rectangle bounds = getBounds();
+		if (p.y < bounds.y || p.y >= bounds.y + bounds.height) {
+			return false;
+		}
+		return p.x < bounds.x;
+	}
+
+	void toggleCheck() {
+		this.checked = !this.checked;
+		redraw();
+	}
+}
