@@ -196,6 +196,40 @@ public final class ListLikeModel {
 		// don't change anchor
 	}
 
+	public void extendSelectionRangeTo(int index) {
+		checkIndex(index);
+
+		if (selection.isEmpty()) {
+			selectRangeTo(index);
+			return;
+		}
+
+		int min = Integer.MAX_VALUE;
+		int max = -1;
+		for (int i : selection) {
+			if (i < min) {
+				min = i;
+			}
+			if (i > max) {
+				max = i;
+			}
+		}
+
+		if (index < min) {
+			for (int i = index; i < min; i++) {
+				selection.add(i);
+			}
+		}
+		else if (index > max) {
+			for (int i = max + 1; i <= index; i++) {
+				selection.add(i);
+			}
+		}
+
+		current = index;
+		// don't change anchor
+	}
+
 	public void moveSelectionAbsolute(int index, boolean shiftPressed, boolean ctrlOrCmdPressed) {
 		checkIndex(index);
 

@@ -704,6 +704,17 @@ public class Table extends CustomComposite {
 	private void clickAtRow(int index, boolean shiftPressed, boolean ctrlOrCmdPressed) {
 		final boolean multiSelection = (style & SWT.MULTI) != 0;
 		if (multiSelection) {
+			// windows only
+			if (shiftPressed && ctrlOrCmdPressed) {
+				final int anchor = selectionModel.getAnchor();
+				if (anchor < 0 && selectionModel.getCount() > 0 && selectionModel.selectionCount() == 1) {
+					selectionModel.setSelection(selectionModel.getSelectionIndex());
+				}
+				else {
+					selectionModel.extendSelectionRangeTo(index);
+				}
+				return;
+			}
 			if (ctrlOrCmdPressed) {
 				selectionModel.toggleSelection(index);
 				return;
