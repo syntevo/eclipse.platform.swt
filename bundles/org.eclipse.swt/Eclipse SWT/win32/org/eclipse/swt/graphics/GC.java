@@ -354,12 +354,19 @@ void checkGC(int mask) {
 		}
 		if ((state & DRAW_OFFSET) != 0) {
 			int effectiveLineWidth = data.lineWidth < 1 ? 1 : Math.round(data.lineWidth);
-			if (effectiveLineWidth % 2 == 1) {
+			final int zoom = getZoom();
+			final int unzoomedEffectiveLineWidth = Math.max(1, Math.round(Win32DPIUtils.pixelToPoint(drawable, data.lineWidth, zoom)));
+			float shifting = 0;
+			if (unzoomedEffectiveLineWidth % 2 == 1) {
+				shifting = Win32DPIUtils.pointToPixel(drawable, 0.5f, zoom);
+			}
+
+			if (shifting != 0) {
 				PointF offset = new PointF();
 				// In case the effective line width is odd, shift coordinates by (0.5, 0.5).
 				// I.e., a line starting at (0,0) will effectively start in the pixel right
 				// below that coordinate with its center at (0.5, 0.5).
-				offset.X = offset.Y = 0.5f;
+				offset.X = offset.Y = shifting;
 				// The offset will be applied to the coordinate system of the GC; so transform
 				// it from the drawing coordinate system to the coordinate system of the GC by
 				// applying the inverse transformation as the one applied to the GC and correct
