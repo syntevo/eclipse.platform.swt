@@ -2311,6 +2311,13 @@ private class DrawRectangleOperation extends Operation {
 
 	@Override
 	void apply() {
+		if (data.gdipGraphics == 0) {
+			Rectangle rectangle = new Rectangle(this.rectangle.x, this.rectangle.y, this.rectangle.width + 1, this.rectangle.height + 1);
+			Rectangle rect = Win32DPIUtils.pointToPixel(drawable, rectangle, getZoom());
+			drawRectangleInPixels(rect.x, rect.y, rect.width - 1, rect.height - 1);
+			return;
+		}
+
 		Rectangle rect = Win32DPIUtils.pointToPixel(drawable, rectangle, getZoom());
 		drawRectangleInPixels(rect.x, rect.y, rect.width, rect.height);
 	}
@@ -2411,9 +2418,16 @@ private class DrawRoundRectangleOperation extends Operation {
 	@Override
 	void apply() {
 		int zoom = getZoom();
-		Rectangle rect = Win32DPIUtils.pointToPixel(drawable, rectangle, zoom);
 		int scaledArcWidth = Win32DPIUtils.pointToPixel (drawable, arcWidth, zoom);
 		int scaledArcHeight = Win32DPIUtils.pointToPixel (drawable, arcHeight, zoom);
+		if (data.gdipGraphics == 0) {
+			Rectangle rectangle = new Rectangle(this.rectangle.x, this.rectangle.y, this.rectangle.width + 1, this.rectangle.height + 1);
+			Rectangle rect = Win32DPIUtils.pointToPixel(drawable, rectangle, zoom);
+			drawRoundRectangleInPixels(rect.x, rect.y, rect.width - 1, rect.height - 1, scaledArcWidth, scaledArcHeight);
+			return;
+		}
+
+		Rectangle rect = Win32DPIUtils.pointToPixel(drawable, rectangle, zoom);
 		drawRoundRectangleInPixels(rect.x, rect.y, rect.width, rect.height, scaledArcWidth, scaledArcHeight);
 	}
 }
