@@ -15,6 +15,8 @@ package org.eclipse.swt.tests.junit;
 import static org.eclipse.swt.tests.junit.SwtTestUtil.assertSWTProblem;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.nio.file.Path;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
@@ -22,9 +24,9 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageDataProvider;
 import org.eclipse.swt.graphics.ImageFileNameProvider;
 import org.eclipse.swt.widgets.Display;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 
 /**
  * When executed locally (outside Tycho build), this tests needs to be run as
@@ -33,8 +35,8 @@ import org.junit.rules.TemporaryFolder;
  */
 public class Test_org_eclipse_swt_internal_SVGRasterizer {
 
-	@ClassRule
-	public static TemporaryFolder tempFolder = new TemporaryFolder();
+	@TempDir
+	static Path tempFolder;
 
 	private static String getPath(String fileName) {
 		return SwtTestUtil.getPath(fileName, tempFolder).toString();
@@ -54,17 +56,11 @@ public class Test_org_eclipse_swt_internal_SVGRasterizer {
 
 	@Test
 	public void test_ConstructorLorg_eclipse_swt_graphics_Device_ImageDataProvider() {
-		ImageDataProvider validImageDataProvider = zoom -> {
-			String fileName = "collapseall.svg";
-			return new ImageData(getPath(fileName));
-		};
+		ImageDataProvider validImageDataProvider = zoom -> (zoom == 100) ? new ImageData(getPath("collapseall.svg")) : null;
 		Image image = new Image(Display.getDefault(), validImageDataProvider);
 		image.dispose();
 
-		ImageDataProvider corruptImageDataProvider = zoom -> {
-			String fileName = "corrupt.svg";
-			return new ImageData(getPath(fileName));
-		};
+		ImageDataProvider corruptImageDataProvider = zoom -> (zoom == 100) ? new ImageData(getPath("corrupt.svg")) : null;
 		SWTException e = assertThrows(SWTException.class,
 				() -> new Image(Display.getDefault(), corruptImageDataProvider));
 		assertSWTProblem("Incorrect exception thrown for provider with corrupt images", SWT.ERROR_INVALID_IMAGE, e);

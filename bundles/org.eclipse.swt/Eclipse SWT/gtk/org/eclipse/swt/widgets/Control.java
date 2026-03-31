@@ -194,11 +194,7 @@ void drawBackground (Control control, long gdkResource, long cr, int x, int y, i
 			cairo_rectangle_int_t regionRect = new cairo_rectangle_int_t ();
 			int [] fetchedHeight = new int [1];
 			int [] fetchedWidth = new int [1];
-			if (GTK.GTK4) {
-				gdk_surface_get_size(gdkResource, fetchedWidth, fetchedHeight);
-			} else {
-				gdk_window_get_size(gdkResource, fetchedWidth, fetchedHeight);
-			}
+			gdk_surface_get_size(gdkResource, fetchedWidth, fetchedHeight);
 			regionRect.x = 0;
 			regionRect.y = 0;
 			regionRect.width = fetchedWidth[0];
@@ -1394,6 +1390,11 @@ public void setRegion (Region region) {
 	long topHandle = topHandle ();
 
 	if (OS.G_OBJECT_TYPE(topHandle) == GTK.GTK_TYPE_WINDOW()) {
+		if (GTK.GTK4) {
+			//TODO gtk_widget_shape_combine_region is removed and one has to hook at the rendering layer as per
+			// https://gitlab.gnome.org/GNOME/gtk/-/commit/0ce19eed083c79c5fb4091db3ecaf528346e610f
+			return;
+		}
 		GTK3.gtk_widget_shape_combine_region(topHandle, shape_region);
 		/*
 		 * Bug in GTK: on Wayland, pixels in window outside shape_region
@@ -3420,15 +3421,26 @@ int gtk_gesture_press_event (long gesture, int n_press, double x, double y, long
 		if (!cancelled) {
 			result = GTK4.GTK_EVENT_SEQUENCE_CLAIMED;
 		}
-		if ((state & MENU) != 0) {
-			if (eventButton == 3) {
+		if (eventButton == 3) {
+			if ((state & MENU) != 0 || menu != null) {
 				if (showMenu ((int)x, (int)y)) {
+					result = GTK4.GTK_EVENT_SEQUENCE_CLAIMED;
+				}
+			} else if ((state & MENU) == 0) {
+				if (showMenu((int) x, (int) y)) {
 					result = GTK4.GTK_EVENT_SEQUENCE_CLAIMED;
 				}
 			}
 		}
-	} else if (n_press == 2) {
+	} else if (n_press >= 2) {
 		boolean cancelled = sendMouseEvent(SWT.MouseDoubleClick, eventButton, n_press, 0, false, eventTime, x, y, false, eventState);
+
+		//Issue 344, DoubleClick event currently unsupported below sendMouseEvent(). Until DoubleClickSupport is
+		//added this will catch failed events and try MouseDown instead.
+		if (cancelled) {
+			cancelled = sendMouseEvent(SWT.MouseDown, eventButton, n_press, 0, false, eventTime, x, y, false, eventState);
+		}
+
 		if (!cancelled) {
 			result = GTK4.GTK_EVENT_SEQUENCE_CLAIMED;
 		}
@@ -3451,7 +3463,7 @@ int gtk_gesture_release_event (long gesture, int n_press, double x, double y, lo
 	lastInput.x = (int) eventX[0];
 	lastInput.y = (int) eventY[0];
 	if (containedInRegion(lastInput.x, lastInput.y)) return GTK4.GTK_EVENT_SEQUENCE_NONE;
-	boolean cancelled = sendMouseEvent(SWT.MouseUp, eventButton, display.clickCount, 0, false, eventTime, 0, 0, false, eventState);
+	boolean cancelled = sendMouseEvent(SWT.MouseUp, eventButton, display.clickCount, 0, false, eventTime, x, y, false, eventState);
 	int result = GTK4.GTK_EVENT_SEQUENCE_NONE;
 	if (!cancelled) {
 		result = GTK4.GTK_EVENT_SEQUENCE_CLAIMED;
@@ -3704,7 +3716,7 @@ boolean checkSubwindow () {
 }
 
 @Override
-long gtk_event_after (long widget, long gdkEvent) {
+long gtk3_event_after (long widget, long gdkEvent) {
 	int eventType = GDK.gdk_event_get_event_type(gdkEvent);
 	eventType = fixGdkEventTypeValues(eventType);
 	switch (eventType) {
@@ -3731,10 +3743,9 @@ long gtk_event_after (long widget, long gdkEvent) {
 		}
 		case GDK.GDK_FOCUS_CHANGE: {
 			if (!isFocusHandle (widget)) break;
-			boolean [] focusIn = new boolean [1];
 			GdkEventFocus gdkEventFocus = new GdkEventFocus ();
 			GTK3.memmove (gdkEventFocus, gdkEvent, GdkEventFocus.sizeof);
-			focusIn[0] = gdkEventFocus.in != 0;
+			boolean focusIn = gdkEventFocus.in != 0;
 
 			/*
 			 * Feature in GTK. The GTK combo box popup under some window managers
@@ -3746,7 +3757,7 @@ long gtk_event_after (long widget, long gdkEvent) {
 			 * NOTE: This code runs for all menus.
 			 */
 			Display display = this.display;
-			if (focusIn[0]) {
+			if (focusIn) {
 				if (display.ignoreFocus) {
 					display.ignoreFocus = false;
 					break;
@@ -3761,7 +3772,7 @@ long gtk_event_after (long widget, long gdkEvent) {
 					}
 				}
 			}
-			sendFocusEvent (focusIn[0] ? SWT.FocusIn : SWT.FocusOut);
+			sendFocusEvent (focusIn ? SWT.FocusIn : SWT.FocusOut);
 			break;
 		}
 	}
@@ -3983,7 +3994,7 @@ boolean gtk4_key_press_event(long controller, int keyval, int keycode, int state
 }
 
 @Override
-long gtk_key_press_event (long widget, long event) {
+long gtk3_key_press_event (long widget, long event) {
 	int [] eventKeyval = new int [1];
 	GDK.gdk_event_get_keyval(event, eventKeyval);
 
@@ -4010,7 +4021,7 @@ long gtk_key_press_event (long widget, long event) {
 	if (translateTraversal (event)) return 1;
 	// widget could be disposed at this point
 	if (isDisposed ()) return 0;
-	return super.gtk_key_press_event (widget, event);
+	return super.gtk3_key_press_event (widget, event);
 }
 
 @Override
@@ -4026,13 +4037,13 @@ void gtk4_key_release_event(long controller, int keyval, int keycode, int state,
 }
 
 @Override
-long gtk_key_release_event (long widget, long event) {
+long gtk3_key_release_event (long widget, long event) {
 	if (!hasFocus ()) return 0;
 	long imHandle = imHandle ();
 	if (imHandle != 0) {
 		if (GTK3.gtk_im_context_filter_keypress(imHandle, event)) return 1;
 	}
-	return super.gtk_key_release_event (widget, event);
+	return super.gtk3_key_release_event (widget, event);
 }
 
 @Override
@@ -4136,8 +4147,6 @@ void gtk4_motion_event(long controller, double x, double y, long event) {
 
 @Override
 long gtk_motion_notify_event (long widget, long event) {
-	int result;
-
 	double[] eventX = new double[1];
 	double[] eventY = new double[1];
 	GDK.gdk_event_get_coords(event, eventX, eventY);
@@ -4150,12 +4159,10 @@ long gtk_motion_notify_event (long widget, long event) {
 	if ((dragDetectionQueue != null) && OS.isWayland()) {
 		boolean dragging = false;
 		if ((state & DRAG_DETECT) != 0 && wantDragDropDetection ()) {
-				boolean [] consume = new boolean [1];
-				if (dragDetect ((int) eventX[0], (int) eventY[0], true, true, consume)) {
-					dragging = true;
-					if (consume [0]) result = 1;
+			boolean [] consume = new boolean [1];
+			if (dragDetect ((int) eventX[0], (int) eventY[0], true, true, consume)) {
+				dragging = true;
 				if (isDisposed ()) return 1;
-			} else {
 			}
 		}
 		if (dragging) {
@@ -4175,7 +4182,7 @@ long gtk_motion_notify_event (long widget, long event) {
 				GDK.gdk_event_get_state(event, eventState);
 			}
 
-			if (sendDragEvent (eventButton[0], eventState[0], scaledEvent.x, scaledEvent.y, false)){
+			if (sendDragEvent (eventButton[0], eventState[0], scaledEvent.x, scaledEvent.y, false)) {
 				return 1;
 			}
 		}
@@ -4228,23 +4235,15 @@ long gtk_motion_notify_event (long widget, long event) {
 		}
 	}
 
-	result = sendMouseEvent(SWT.MouseMove, 0, time, x, y, isHint, state[0]) ? 0 : 1;
-	return result;
+	return sendMouseEvent(SWT.MouseMove, 0, time, x, y, isHint, state[0])
+			? 0 : 1;
 }
 
 @Override
-long gtk_popup_menu (long widget) {
+long gtk3_popup_menu (long widget) {
 	if (!hasFocus()) return 0;
 	int [] x = new int [1], y = new int [1];
-	if (GTK.GTK4) {
-		/*
-		 * TODO: calling gdk_window_get_device_position() with a 0
-		 * for the GdkWindow uses gdk_get_default_root_window(),
-		 * which doesn't exist on GTK4.
-		 */
-	} else {
-		display.getWindowPointerPosition (0, x, y, null);
-	}
+	display.getWindowPointerPosition (0, x, y, null);
 	return showMenu (x [0], y [0], SWT.MENU_KEYBOARD) ? 1 : 0;
 }
 
@@ -4706,24 +4705,11 @@ void redrawChildren () {
 
 void redrawWidget (int x, int y, int width, int height, boolean redrawAll, boolean all, boolean trim) {
 	if (!GTK.gtk_widget_get_realized(handle)) return;
-	GdkRectangle rect = new GdkRectangle ();
 	if (GTK.GTK4) {
-		long surface = paintSurface ();
-		if (redrawAll) {
-			int [] w = new int [1], h = new int [1];
-			gdk_surface_get_size (surface, w, h);
-			rect.width = w [0];
-			rect.height = h [0];
-		} else {
-			rect.x = x;
-			rect.y = y;
-			rect.width = Math.max (0, width);
-			rect.height = Math.max (0, height);
-		}
-		/* TODO: GTK4 no ability to invalidate surfaces, may need to keep track of
-		 * invalid regions ourselves and do gdk_surface_queue_expose. Will need a different way to force redraws
-		 * New "render" signal? */
+		// GTK4 has no ability to invalidate surfaces or regions/rectangle, mark the whole widget for redraw
+		GTK.gtk_widget_queue_draw(handle);
 	} else {
+		GdkRectangle rect = new GdkRectangle ();
 		long window = paintWindow ();
 		if (redrawAll) {
 			int [] w = new int [1], h = new int [1];
@@ -4835,16 +4821,19 @@ void releaseWidget () {
 @Override
 void destroyWidget() {
 	if (GTK.GTK4) {
-		// Remove widget from hierarchy  by removing it from parent container
-		if (parent != null) {
-			long currHandle = topHandle();
-			if(GTK.GTK_IS_WINDOW(currHandle)) {
-				GTK4.gtk_window_destroy(currHandle);
-			}
-			else {
+		long currHandle = topHandle();
+		if (GTK.GTK_IS_WINDOW(currHandle)) {
+			// GTK windows don't have a parent, so destroy it now
+			GTK4.gtk_window_destroy(currHandle);
+		} else if (parent != null) {
+			if (fixedHandle != 0) {
+				// Remove widget from hierarchy by removing it from parent container
 				OS.swt_fixed_remove(parent.parentingHandle(), fixedHandle);
 			}
+		} else {
+			assert false : "widgets must have a parent or be a GtkWindow";
 		}
+
 		releaseHandle();
 	} else {
 		super.destroyWidget();
@@ -5110,6 +5099,7 @@ boolean sendMouseEvent (int type, int button, int count, int detail, boolean sen
 						flushQueueOnDnd();
 					} else {
 						dragDetectionQueue.add(event);
+						return true;
 					}
 					break;
 				case SWT.MouseUp:
@@ -5179,6 +5169,9 @@ void setBackground () {
  * if the argument is null.
  * <p>
  * Note: This operation is a hint and may be overridden by the platform.
+ * </p>
+ * <p>
+ * Note: The background color can be overridden by setting a background image.
  * </p>
  * @param color the new color (or null)
  *
@@ -5284,6 +5277,9 @@ void setBackgroundGdkRGBA (long handle, GdkRGBA rgba) {
  * <p>
  * Note: This operation is a hint and may be overridden by the platform.
  * For example, on Windows the background of a Button cannot be changed.
+ * </p>
+ * <p>
+ * Note: Setting a background image overrides a set background color.
  * </p>
  * @param image the new image (or null)
  *
@@ -6810,8 +6806,10 @@ void update (boolean all, boolean flush) {
 	if(GTK.GTK4) GTK.gtk_widget_queue_draw(handle);
 	if (!GTK.gtk_widget_get_visible (topHandle ())) return;
 	if (!GTK.gtk_widget_get_realized (handle)) return;
-	long window = paintWindow ();
-	if (flush) display.flushExposes (window, all);
+	if (flush && OS.isX11()) {
+		long window = paintWindow ();
+		display.flushExposes (window, all);
+	}
 }
 
 void updateBackgroundMode () {

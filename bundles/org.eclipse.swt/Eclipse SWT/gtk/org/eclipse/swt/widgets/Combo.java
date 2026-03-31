@@ -494,7 +494,6 @@ Point computeNativeSize (long h, int wHint, int hHint, boolean changed) {
  * <p>
  * The current selection is copied to the clipboard.
  * </p>
- *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
@@ -1661,7 +1660,7 @@ long gtk_draw (long widget, long cairo) {
 }
 
 @Override
-long gtk_event_after (long widget, long gdkEvent)  {
+long gtk3_event_after (long widget, long gdkEvent)  {
 	/*
 	* Feature in GTK. Depending on where the user clicks, GTK prevents
 	* the left mouse button event from being propagated. The fix is to
@@ -1681,13 +1680,8 @@ long gtk_event_after (long widget, long gdkEvent)  {
 		case GDK.GDK_BUTTON_PRESS: {
 			int [] eventButton = new int [1];
 			int [] eventState = new int [1];
-			if (GTK.GTK4) {
-				eventButton[0] = GDK.gdk_button_event_get_button(gdkEvent);
-				eventState[0] = GDK.gdk_event_get_modifier_state(gdkEvent);
-			} else {
-				GDK.gdk_event_get_button(gdkEvent, eventButton);
-				GDK.gdk_event_get_state(gdkEvent, eventState);
-			}
+			GDK.gdk_event_get_button(gdkEvent, eventButton);
+			GDK.gdk_event_get_state(gdkEvent, eventState);
 
 			int eventTime = GDK.gdk_event_get_time(gdkEvent);
 
@@ -1708,13 +1702,9 @@ long gtk_event_after (long widget, long gdkEvent)  {
 		case GDK.GDK_FOCUS_CHANGE: {
 			if ((style & SWT.READ_ONLY) == 0) {
 				boolean [] focusIn = new boolean [1];
-				if (GTK.GTK4) {
-					focusIn[0] = GDK.gdk_focus_event_get_in(gdkEvent);
-				} else {
-					GdkEventFocus gdkEventFocus = new GdkEventFocus ();
-					GTK3.memmove (gdkEventFocus, gdkEvent, GdkEventFocus.sizeof);
-					focusIn[0] = gdkEventFocus.in != 0;
-				}
+				GdkEventFocus gdkEventFocus = new GdkEventFocus ();
+				GTK3.memmove (gdkEventFocus, gdkEvent, GdkEventFocus.sizeof);
+				focusIn[0] = gdkEventFocus.in != 0;
 				if (focusIn[0]) {
 					GTK.gtk_widget_set_focus_on_click(handle, false);
 				} else {
@@ -1724,7 +1714,7 @@ long gtk_event_after (long widget, long gdkEvent)  {
 			break;
 		}
 	}
-	return super.gtk_event_after(widget, gdkEvent);
+	return super.gtk3_event_after(widget, gdkEvent);
 }
 
 @Override
@@ -1783,8 +1773,8 @@ long gtk_insert_text (long widget, long new_text, long new_text_length, long pos
 }
 
 @Override
-long gtk_key_press_event (long widget, long event) {
-	long result = super.gtk_key_press_event (widget, event);
+long gtk3_key_press_event (long widget, long event) {
+	long result = super.gtk3_key_press_event (widget, event);
 	if (result != 0) {
 		gdkEventKey = 0;
 		fixIM ();
@@ -1796,11 +1786,7 @@ long gtk_key_press_event (long widget, long event) {
 		int oldIndex = GTK.gtk_combo_box_get_active (handle);
 		int newIndex = oldIndex;
 		int [] eventKeyval = new int [1];
-		if (GTK.GTK4) {
-			eventKeyval[0] = GDK.gdk_key_event_get_keyval(event);
-		} else {
-			GDK.gdk_event_get_keyval(event, eventKeyval);
-		}
+		GDK.gdk_event_get_keyval(event, eventKeyval);
 
 		switch (eventKeyval[0]) {
 			case GDK.GDK_Down:
@@ -1955,7 +1941,12 @@ long paintSurface () {
  * The selected text is deleted from the widget
  * and new text inserted from the clipboard.
  * </p>
- *
+ * <p>
+ * <strong>Note:</strong> Pasting data to controls may occurs asynchronously. The widget
+ * text may not reflect the updated value immediately after calling this method.
+ * The new text will appear once pending events are processed in the event loop.
+ * Use {@link Display#asyncExec(Runnable)} before accessing <code>getText()</code>.
+ * </p>
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
@@ -2704,6 +2695,17 @@ void updateCss() {
 	// Deal with background
 	if (background != null) {
 		final String colorString = display.gtk_rgba_to_css_string(background);
+		GdkRGBA menuBackground = new GdkRGBA();
+		menuBackground.red = background.red;
+		menuBackground.green = background.green;
+		menuBackground.blue = background.blue;
+		menuBackground.alpha = 1.0;
+		/* Ensures that the popup menu is not transparent and as a result unreadable
+		 * This way effects like "light" transparency (alpha > 0.85) can not be achieved.
+		 * Having any transparency of the popup is generally unwanted as it hurts visibility so
+		 * if such a feature is usable to anyone it would need new dedicated API.
+		 */
+		final String menuColorString = display.gtk_rgba_to_css_string(menuBackground);
 
 		/*
 		 * Use 'background:' instead of 'background-color:' to also override
@@ -2711,7 +2713,7 @@ void updateCss() {
 		 * 'background-image:' for 'GtkToggleButton' used in READ_ONLY combo.
 		 */
 		css.append("* {background: " + colorString + ";}\n");
-		css.append("menu {background: " + colorString + ";}\n");
+		css.append("menu {background: " + menuColorString + ";}\n");
 
 		/*
 		 * Setting background color for '*' also affects selection background,

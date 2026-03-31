@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,12 +14,15 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
+import static org.eclipse.swt.tests.junit.SwtTestUtil.JENKINS_DETECT_ENV_VAR;
+import static org.eclipse.swt.tests.junit.SwtTestUtil.JENKINS_DETECT_REGEX;
 import static org.eclipse.swt.tests.junit.SwtTestUtil.assertSWTProblem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -37,7 +40,6 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.DPIUtil;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -46,8 +48,10 @@ import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Synchronizer;
 import org.eclipse.test.Screenshots;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 
 /**
@@ -55,7 +59,6 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
  *
  * @see org.eclipse.swt.widgets.Display
  */
-@SuppressWarnings("restriction")
 public class Test_org_eclipse_swt_widgets_Display {
 
 private static boolean isRunningOnEclipseOrgHudson =
@@ -67,7 +70,6 @@ private static final boolean BUG_492569 = SwtTestUtil.isWindows && isRunningOnEc
 @Test
 public void test_Constructor() {
 	Display disp = new Display();
-	System.out.println("org.eclipse.swt.internal.DPIUtil.getDeviceZoom(): " + DPIUtil.getDeviceZoom());
 	disp.dispose();
 	if (SwtTestUtil.isGTK) {
 		System.out.println("org.eclipse.swt.internal.gtk.version=" + System.getProperty("org.eclipse.swt.internal.gtk.version"));
@@ -99,12 +101,9 @@ public void test_addFilterILorg_eclipse_swt_widgets_Listener() {
 
 	Display display = new Display();
 	try {
-		try {
-			display.addFilter(SWT.Dispose, null);
-			fail("No exception thrown for addFilter with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for addFilter with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+				() -> display.addFilter(SWT.Dispose, null), "No exception thrown for addFilter with null argument");
+		assertSWTProblem("Incorrect exception thrown for addFilter with null argument", SWT.ERROR_NULL_ARGUMENT, e);
 
 		display.addFilter(SWT.Close, listener);
 	} finally {
@@ -129,12 +128,9 @@ public void test_addListenerILorg_eclipse_swt_widgets_Listener() {
 
 	Display display = new Display();
 	try {
-		try {
-			display.addListener(SWT.Close, null);
-			fail("No exception thrown for addListener with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for addListener with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+				() -> display.addListener(SWT.Close, null), "No exception thrown for addListener with null argument");
+		assertSWTProblem("Incorrect exception thrown for addListener with null argument", SWT.ERROR_NULL_ARGUMENT, e);
 
 		display.addListener(SWT.Dispose, listener);
 	} finally {
@@ -143,11 +139,11 @@ public void test_addListenerILorg_eclipse_swt_widgets_Listener() {
 	assertFalse(callbackReceived[CLOSE_CALLBACK]);
 	assertTrue(callbackReceived[DISPOSE_CALLBACK]);
 
-	display = new Display();
+	Display display2 = new Display();
 	try {
-		display.addListener(SWT.Close, listener);
+		display2.addListener(SWT.Close, listener);
 	} finally {
-		display.close();
+		display2.close();
 	}
 	assertTrue(callbackReceived[CLOSE_CALLBACK]);
 }
@@ -339,6 +335,7 @@ public void test_getCursorControl() {
 	}
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_getCursorLocation() {
 	Display display = new Display();
@@ -643,18 +640,14 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 		overlayShellRtoL1.dispose();
 		overlayShellRtoL2.dispose();
 
-		try {
-			result = display.map(button1, button2, 0, 0);
-			fail("No exception thrown for map from control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
-		try {
-			result = display.map(button2, button1, 0, 0);
-			fail("No exception thrown for map to control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
+		IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button1, button2, 0, 0), "No exception thrown for map from control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e1);
+		IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, 0, 0), "No exception thrown for map to control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e2);
 
 		shell.dispose();
 	} finally {
@@ -772,18 +765,16 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 		overlayShellRtoL1.dispose();
 		overlayShellRtoL2.dispose();
 
-		try {
-			result = display.map(button1, button2, 0, 0, 100, 100);
-			fail("No exception thrown for map from control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
-		try {
-			result = display.map(button2, button1, 0, 0, 100, 100);
-			fail("No exception thrown for map to control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
+		IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button1, button2, 0, 0, 100, 100),
+				"No exception thrown for map from control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e1);
+		IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, 0, 0, 100, 100),
+				"No exception thrown for map to control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e2);
 
 		shell.dispose();
 	} finally {
@@ -903,25 +894,18 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 		overlayShellRtoL1.dispose();
 		overlayShellRtoL2.dispose();
 
-		try {
-			result = display.map(button1, button2, point);
-			fail("No exception thrown for map from control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
-		try {
-			result = display.map(button2, button1, point);
-			fail("No exception thrown for map to control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
+		IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button1, button2, point), "No exception thrown for map from control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e1);
+		IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, point), "No exception thrown for map to control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e2);
 
-		try {
-			result = display.map(button2, button1, (Point) null);
-			fail("No exception thrown for null point");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for point being null", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, (Point) null), "No exception thrown for null point");
+		assertSWTProblem("Incorrect exception thrown for point being null", SWT.ERROR_NULL_ARGUMENT, e3);
 
 		shell.dispose();
 	} finally {
@@ -1040,25 +1024,18 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 		overlayShellRtoL1.dispose();
 		overlayShellRtoL2.dispose();
 
-		try {
-			result = display.map(button1, button2, rect);
-			fail("No exception thrown for map from control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
-		try {
-			result = display.map(button2, button1, rect);
-			fail("No exception thrown for map to control being disposed");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT, e);
-		}
+		IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button1, button2, rect), "No exception thrown for map from control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map from control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e1);
+		IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, rect), "No exception thrown for map to control being disposed");
+		assertSWTProblem("Incorrect exception thrown for map to control being disposed", SWT.ERROR_INVALID_ARGUMENT,
+				e2);
 
-		try {
-			result = display.map(button2, button1, (Rectangle) null);
-			fail("No exception thrown for null point");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for rectangle being null", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class,
+				() -> display.map(button2, button1, (Rectangle) null), "No exception thrown for null point");
+		assertSWTProblem("Incorrect exception thrown for rectangle being null", SWT.ERROR_NULL_ARGUMENT, e3);
 
 		shell.dispose();
 	} finally {
@@ -1067,29 +1044,25 @@ public void test_mapLorg_eclipse_swt_widgets_ControlLorg_eclipse_swt_widgets_Con
 }
 
 @Test
+@DisabledIfEnvironmentVariable(named = JENKINS_DETECT_ENV_VAR, matches = JENKINS_DETECT_REGEX, disabledReason = "Display.post tests don't run reliably on Jenkins - see https://github.com/eclipse-platform/eclipse.platform.swt/issues/2571")
+@Tag("gtk4-todo")
+@Tag("gtk3-wayland-todo")
 public void test_postLorg_eclipse_swt_widgets_Event() {
-	if (SwtTestUtil.isGTK || SwtTestUtil.isCocoa || SwtTestUtil.isWindows ) {
-		//TODO Fix/revisit GTK, Cocoa and Win10 failure test-case via bug 553754
-		if (SwtTestUtil.verbose) {
-			System.out.println("Excluded test_postLorg_eclipse_swt_widgets_Event(org.eclipse.swt.tests.junit.Test_org_eclipse_swt_widgets_Display)");
-		}
-		return;
-	}
-
 	final int KEYCODE = SWT.SHIFT;
 
 	Display display = new Display();
 	try {
-		try {
-			display.post(null);
-			fail("No exception thrown for post with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for post with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, ()-> display.post(null), "No exception thrown for post with null argument");
+		assertSWTProblem("Incorrect exception thrown for post with null argument", SWT.ERROR_NULL_ARGUMENT, ex);
 
 		Shell shell = new Shell(display, SWT.NO_TRIM);
 		shell.setBounds(display.getBounds());
-		shell.open();
+
+		// The display.post needs to successfully obtain the focused window (at least on GTK3)
+		// so we can send events to it. This openShell gives SWT/GTK time to draw/focus/etc
+		// the window so that org.eclipse.swt.widgets.Display.findFocusedWindow()
+		// returns non-zero
+		SwtTestUtil.openShell(shell);
 
 		Event event;
 
@@ -1097,7 +1070,7 @@ public void test_postLorg_eclipse_swt_widgets_Event() {
 		event = new Event();
 		event.type = SWT.KeyDown;
 		event.keyCode = -1;  // bogus key code; default 0 character
-		assertTrue(display.post(event), "Display#post failed, probably because screen is not rendered (bug 407862)");  //$NON-NLS-1$
+		assertTrue(display.post(event), "Display#post failed, probably because screen is not rendered (bug 407862) or because Shell is not focussed");  //$NON-NLS-1$
 		// don't test KeyDown/KeyUp with a character to avoid sending to
 		// random window if test shell looses focus
 
@@ -1124,14 +1097,22 @@ public void test_postLorg_eclipse_swt_widgets_Event() {
 
 		event = new Event();
 		event.type = SWT.MouseDown;
-		assertFalse(display.post(event));  // missing button
+		if (!SwtTestUtil.isGTK) {
+			// GTK's post implementation has long allowed a button value of 0, the
+			// behavior of posting an event with button == 0 is undefined on GTK
+			assertFalse(display.post(event));  // missing button
+		}
 		event.button = 1;
 		shell.setFocus();
 		assertTrue(display.post(event));
 
 		event = new Event();
 		event.type = SWT.MouseUp;
-		assertFalse(display.post(event));  // missing button
+		if (!SwtTestUtil.isGTK) {
+			// GTK's post implementation has long allowed a button value of 0, the
+			// behavior of posting an event with button == 0 is undefined on GTK
+			assertFalse(display.post(event));  // missing button
+		}
 		event.button = 1;
 		shell.setFocus();
 		assertTrue(display.post(event));
@@ -1178,12 +1159,8 @@ public void test_removeFilterILorg_eclipse_swt_widgets_Listener() {
 
 	Display display = new Display();
 	try {
-		try {
-			display.removeFilter(SWT.Dispose, null);
-			fail("No exception thrown for removeFilter with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for removeFilter with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> display.removeFilter(SWT.Dispose, null), "No exception thrown for removeFilter with null argument");
+		assertSWTProblem("Incorrect exception thrown for removeFilter with null argument", SWT.ERROR_NULL_ARGUMENT, ex);
 
 		display.addFilter(SWT.Close, listener);
 		display.removeFilter(SWT.Close, listener);
@@ -1209,12 +1186,11 @@ public void test_removeListenerILorg_eclipse_swt_widgets_Listener() {
 
 	Display display = new Display();
 	try {
-		try {
-			display.removeListener(SWT.Close, null);
-			fail("No exception thrown for removeListener with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for removeListener with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+				() -> display.removeListener(SWT.Close, null),
+				"No exception thrown for removeListener with null argument");
+		assertSWTProblem("Incorrect exception thrown for removeListener with null argument", SWT.ERROR_NULL_ARGUMENT,
+				ex);
 
 		display.addListener(SWT.Dispose, listener);
 		display.removeListener(SWT.Dispose, listener);
@@ -1230,6 +1206,7 @@ public void test_setAppNameLjava_lang_String() {
 	Display.setAppName("My Application Name");
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_setCursorLocationII(TestInfo info) {
 	Display display = new Display();
@@ -1242,7 +1219,7 @@ public void test_setCursorLocationII(TestInfo info) {
 		display.setCursorLocation(location.x, location.y); // don't put cursor into a corner, since that could trigger special platform events
 		drainEventQueue(display, 150); // workaround for https://bugs.eclipse.org/492569
 		Point actual = display.getCursorLocation();
-		if (!BUG_492569 && SwtTestUtil.isX11) {
+		if (!BUG_492569 && SwtTestUtil.isX11()) {
 			if (!location.equals(actual)) {
 				Screenshots.takeScreenshot(getClass(), info.getDisplayName()); // Bug 528968 This call causes crash on Wayland.
 				fail("\nExpected:"+location.toString()+"  Actual:"+actual.toString());
@@ -1256,6 +1233,7 @@ public void test_setCursorLocationII(TestInfo info) {
 	}
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_setCursorLocationLorg_eclipse_swt_graphics_Point(TestInfo info) {
 	Display display = new Display();
@@ -1266,15 +1244,13 @@ public void test_setCursorLocationLorg_eclipse_swt_graphics_Point(TestInfo info)
 
 		Point location = new Point(100, 50);
 		display.setCursorLocation(location); // don't put cursor into a corner, since that could trigger special platform events
-		try {
-			display.setCursorLocation(null);
-			fail("No exception thrown for null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for setCursorLocation with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+				() -> display.setCursorLocation(null), "No exception thrown for null argument");
+		assertSWTProblem("Incorrect exception thrown for setCursorLocation with null argument", SWT.ERROR_NULL_ARGUMENT,
+				ex);
 		drainEventQueue(display, 150); // workaround for https://bugs.eclipse.org/492569
 		Point actual = display.getCursorLocation();
-		if (!BUG_492569 && SwtTestUtil.isX11) {
+		if (!BUG_492569 && SwtTestUtil.isX11()) {
 			if (!location.equals(actual)) {
 				Screenshots.takeScreenshot(getClass(), info.getDisplayName()); // Bug 528968 This call causes crash on Wayland.
 				fail("\nExpected:"+location.toString()+"  Actual:"+actual.toString());
@@ -1326,12 +1302,10 @@ public void test_setSynchronizerLorg_eclipse_swt_widgets_Synchronizer() {
 	final boolean[] asyncExec3Ran = new boolean[] {false};
 
 	try {
-		try {
-			display.setSynchronizer(null);
-			fail("No exception thrown for post with null argument");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for set synchronizer with null argument", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> display.setSynchronizer(null),
+				"No exception thrown for post with null argument");
+		assertSWTProblem("Incorrect exception thrown for set synchronizer with null argument", SWT.ERROR_NULL_ARGUMENT,
+				ex);
 
 		class MySynchronizer extends Synchronizer {
 			boolean invoked = false;
@@ -1365,6 +1339,13 @@ public void test_setSynchronizerLorg_eclipse_swt_widgets_Synchronizer() {
 	}
 }
 
+/*
+ * this test false passes on GTK4 when not run in isolation. The test probably
+ * needs some work to ensure it is a valid test, such as making sure that it is
+ * the display.wake that wakes the first display.sleep call. Also checking the
+ * first call to display.sleep does return true.
+ */
+@Tag("gtk4-todo")
 @Test
 public void test_sleep() {
 	final Display display = new Display();
@@ -1462,9 +1443,9 @@ public void test_syncCall_dispose() {
 public void test_syncCall_RuntimeException() {
 	final Display display = new Display();
 	try {
-		int depth=display.syncCall(() -> {throw new IllegalArgumentException("42");});
-		fail("should not be reached "+depth);
-	} catch (RuntimeException e) {
+		RuntimeException e = assertThrows(RuntimeException.class, () -> display.syncCall(() -> {
+			throw new IllegalArgumentException("42");
+		}));
 		assertEquals("42", e.getMessage());
 	} finally {
 		display.dispose();
@@ -1474,9 +1455,9 @@ public void test_syncCall_RuntimeException() {
 public void test_syncCall_Exception() {
 	final Display display = new Display();
 	try {
-		int depth=display.syncCall(() -> {throw new IOException("42");});
-		fail("should not be reached "+depth);
-	} catch (IOException e) {
+		IOException e = assertThrows(IOException.class, () -> display.syncCall(() -> {
+			throw new IOException("42");
+		}));
 		assertEquals("42", e.getMessage());
 	} finally {
 		display.dispose();
@@ -1486,12 +1467,11 @@ public void test_syncCall_Exception() {
 public void test_syncCall_SWTException() {
 	final Display display = new Display();
 	display.dispose();
-	try {
-		int magic=display.syncCall(() -> {display.dispose(); return 42;});
-		fail("should not be reached "+magic);
-	} catch (SWTException e) {
-		assertEquals("Device is disposed", e.getMessage());
-	}
+	SWTException e = assertThrows(SWTException.class, () -> display.syncCall(() -> {
+		display.dispose();
+		return 42;
+	}));
+	assertEquals("Device is disposed", e.getMessage());
 }
 @Test
 public void test_syncCall_concurrentCallable() throws Exception {
@@ -1509,9 +1489,7 @@ public void test_syncCall_concurrentCallable_Exception() {
 	final Display display = new Display();
 	try {
 		java.util.concurrent.Callable<Integer> c=() -> {throw new IOException("42");};
-		int depth=display.syncCall(c::call);
-		fail("should not be reached "+depth);
-	} catch (Exception e) {
+		Exception e = assertThrows(Exception.class, () ->display.syncCall(c::call));
 		assertEquals("42", e.getMessage());
 	} finally {
 		display.dispose();
@@ -1525,12 +1503,9 @@ public void test_timerExecILjava_lang_Runnable() {
 		final boolean[] timerExecRan = new boolean[] {false};
 		final boolean[] threadRan = new boolean[] {false};
 
-		try {
-			display.timerExec(0, null);
-			fail("No exception thrown for timerExec with null runnable");
-		} catch (IllegalArgumentException e) {
-			assertSWTProblem("Incorrect exception thrown for timerExec with null runnable", SWT.ERROR_NULL_ARGUMENT, e);
-		}
+		IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> display.timerExec(0, null),
+				"No exception thrown for timerExec with null runnable");
+		assertSWTProblem("Incorrect exception thrown for timerExec with null runnable", SWT.ERROR_NULL_ARGUMENT, e);
 
 		display.timerExec(-100, () -> timerExecRan[0] = true);
 
@@ -1618,6 +1593,18 @@ public void test_getWarnings() {
 		// Since the behavior is platform specific, there's
 		// no good test for the result value.
 	} finally {
+		display.dispose();
+	}
+}
+
+@Test
+public void test_manyDispose() {
+	int i = 0;
+	// We iterate a number slightly bigger than MAX_CALLBACKS
+	// If a single non-static callback isn't disposed then the
+	// callback table will be filled and this test will fail
+	while (i++ < 300) {
+		final Display display = new Display();
 		display.dispose();
 	}
 }

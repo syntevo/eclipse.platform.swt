@@ -142,6 +142,10 @@ public class NativeImageLoader {
 		return Arrays.stream(imgDataArray).map(data -> new ElementAtZoom<>(data, streamAtZoom.zoom())).toList();
 	}
 
+	public static ImageData load(InputStream streamAtZoom, ImageLoader imageLoader, int width, int height) {
+		return FileFormat.load(streamAtZoom, imageLoader, width, height);
+	}
+
 	/**
 	 * Return true if the image is an interlaced PNG file. This is used to check
 	 * whether ImageLoaderEvent should be fired when loading images.
@@ -192,8 +196,6 @@ public class NativeImageLoader {
 		};
 	}
 
-	private static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
-
 	/**
 	 * Convert GdkPixbuf pointer to Java object ImageData
 	 *
@@ -204,7 +206,7 @@ public class NativeImageLoader {
 		int width = GDK.gdk_pixbuf_get_width(pixbuf);
 		int height = GDK.gdk_pixbuf_get_height(pixbuf);
 
-		if (width > MAX_SIZE || height > MAX_SIZE) {
+		if (width > ImageLoader.MAX_SIZE || height > ImageLoader.MAX_SIZE) {
 			SWT.error(SWT.ERROR_INVALID_IMAGE);
 		}
 

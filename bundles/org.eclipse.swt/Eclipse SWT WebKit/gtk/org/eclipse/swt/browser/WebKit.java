@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 
 import org.eclipse.swt.*;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.*;
 import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.gtk.*;
@@ -95,6 +96,13 @@ class WebKit extends WebBrowser {
 	String tlsErrorUriString;
 	URI tlsErrorUri;
 	String tlsErrorType;
+
+	private final ControlListener browserMoveListener = ControlListener.controlMovedAdapter(this::browserShellMoved);
+	private Point searchShellLocation;
+	private Shell searchShell;
+	private String searchText;
+	boolean enableSearch;
+
 
 	boolean firstLoad = true;
 	static boolean FirstCreate = true;
@@ -201,6 +209,9 @@ class WebKit extends WebBrowser {
 	/** Flag indicating whether TLS errors (like self-signed certificates) are to be ignored. */
 	static final boolean ignoreTls;
 
+	/** Flag that disables browser searching added on top of the WebKit browser. */
+	static final boolean disableBrowserSearchGlobally;
+
 	static {
 			Proc2 = new Callback (WebKit.class, "Proc", 2); //$NON-NLS-1$
 			Proc3 = new Callback (WebKit.class, "Proc", 3); //$NON-NLS-1$
@@ -213,7 +224,11 @@ class WebKit extends WebBrowser {
 
 			NativeClearSessions = () -> {
 				if (!WebKitGTK.LibraryLoaded) return;
-				if (WebKitGTK.webkit_get_minor_version() >= 16) {
+				if (GTK.GTK4) {
+					long session = WebKitGTK.webkit_network_session_get_default();
+					long manager = WebKitGTK.webkit_network_session_get_website_data_manager(session);
+					WebKitGTK.webkit_website_data_manager_clear(manager, 64, 0, 0, 0, 0);
+				} else if (WebKitGTK.webkit_get_minor_version() >= 16) {
 					long context = WebKitGTK.webkit_web_context_get_default();
 					long manager = WebKitGTK.webkit_web_context_get_website_data_manager (context);
 					WebKitGTK.webkit_website_data_manager_clear(manager, WebKitGTK.WEBKIT_WEBSITE_DATA_COOKIES, 0, 0, 0, 0);
@@ -248,6 +263,7 @@ class WebKit extends WebBrowser {
 				NativePendingCookies = null;
 			}
 			ignoreTls = "true".equals(System.getProperty("org.eclipse.swt.internal.webkitgtk.ignoretlserrors"));
+			disableBrowserSearchGlobally = "true".equals(System.getProperty("org.eclipse.swt.internal.webkitgtk.disableBrowserSearch"));
 	}
 
 	@Override
@@ -784,12 +800,23 @@ public void create (Composite parent, int style) {
 				onResize (event);
 				break;
 			}
+			case SWT.KeyDown: {
+				if (!disableBrowserSearchGlobally && enableSearch && event.keyCode == 'f' && (event.stateMask & SWT.CTRL) == SWT.CTRL) {
+					openSearchDialog();
+				}
+				break;
+			}
 		}
 	};
 	browser.addListener (SWT.Dispose, listener);
 	browser.addListener (SWT.FocusIn, listener);
 	browser.addListener (SWT.KeyDown, listener);
 	browser.addListener (SWT.Resize, listener);
+
+	browser.addDisposeListener(e -> closeSearchDialog());
+	browser.addControlListener(ControlListener.controlResizedAdapter(this::browserShellMoved));
+	browser.addControlListener(ControlListener.controlMovedAdapter(this::browserShellMoved));
+	browser.getShell().addControlListener(browserMoveListener);
 
 	/*
 	* Bug in WebKitGTK.  MouseOver/MouseLeave events are not consistently sent from
@@ -835,6 +862,9 @@ public boolean close () {
 //         false = blocks disposal. In Browser.java, user is told widget was not disposed.
 // See Snippet326.
 boolean close (boolean showPrompters) {
+	if (browser != null && !browser.isDisposed()) {
+		browser.getShell().removeControlListener(browserMoveListener);
+	}
 	// don't execute any JavaScript if it's disabled or requested to get disabled
 	// we need to check jsEnabledOnNextPage here because jsEnabled is updated asynchronously
 	// and may not reflect the proper state (bug 571746 and bug 567881)
@@ -924,7 +954,11 @@ private static class Webkit2AsyncToSync {
 	private static Callback getCookie_callback;
 
 	static {
-		runjavascript_callback = new Callback(Webkit2AsyncToSync.class, "runjavascript_callback", void.class, new Type[] {long.class, long.class, long.class});
+		if (GTK.GTK4) {
+			runjavascript_callback = new Callback(Webkit2AsyncToSync.class, "gtk4_runjavascript_callback", void.class, new Type[] {long.class, long.class, long.class});
+		} else {
+			runjavascript_callback = new Callback(Webkit2AsyncToSync.class, "gtk3_runjavascript_callback", void.class, new Type[] {long.class, long.class, long.class});
+		}
 		getText_callback = new Callback(Webkit2AsyncToSync.class, "getText_callback", void.class, new Type[] {long.class, long.class, long.class});
 		setCookie_callback = new Callback(Webkit2AsyncToSync.class, "setCookie_callback", void.class, new Type[] {long.class, long.class, long.class});
 		getCookie_callback = new Callback(Webkit2AsyncToSync.class, "getCookie_callback", void.class, new Type[] {long.class, long.class, long.class});
@@ -933,7 +967,7 @@ private static class Webkit2AsyncToSync {
 	/** Object used to return data from callback to original call */
 	private static class Webkit2AsyncReturnObj {
 		boolean callbackFinished = false;
-		Object returnValue = null; // As note, if browser is disposed during excution, null is returned.
+		Object returnValue = null; // As note, if browser is disposed during execution, null is returned.
 
 		/** 0=no error. >0 means error. **/
 		int errorNum = 0;
@@ -1026,13 +1060,26 @@ private static class Webkit2AsyncToSync {
 	static Object runjavascript(String script, Browser browser, long webView) {
 		if (nonBlockingEvaluate > 0) {
 			// Execute script, but do not wait for async call to complete. (assume it does). Bug 512001.
-			WebKitGTK.webkit_web_view_run_javascript(webView, Converter.wcsToMbcs(script, true), 0, 0, 0);
+			if (GTK.GTK4) {
+				byte[] wcsToMbcs = Converter.wcsToMbcs(script, false);
+				WebKitGTK.webkit_web_view_evaluate_javascript(webView, wcsToMbcs, wcsToMbcs.length, 0, 0, 0, 0, 0);
+			} else {
+				WebKitGTK.webkit_web_view_run_javascript(webView, Converter.wcsToMbcs(script, true), 0, 0, 0);
+			}
 			return null;
 		} else {
 			// Callback logic: Initiate an async callback and wait for it to finish.
 			// The callback comes back in runjavascript_callback(..) below.
-			Consumer <Integer> asyncFunc = (callbackId) ->
-				WebKitGTK.webkit_web_view_run_javascript(webView, Converter.wcsToMbcs(script, true), 0, runjavascript_callback.getAddress(), callbackId);
+			Consumer<Integer> asyncFunc = (callbackId) -> {
+				if (GTK.GTK4) {
+					byte[] wcsToMbcs = Converter.wcsToMbcs(script, false);
+					WebKitGTK.webkit_web_view_evaluate_javascript(webView, wcsToMbcs, wcsToMbcs.length, 0, 0, 0,
+							runjavascript_callback.getAddress(), callbackId);
+				} else {
+					WebKitGTK.webkit_web_view_run_javascript(webView, Converter.wcsToMbcs(script, true), 0, runjavascript_callback.getAddress(),
+							callbackId);
+				}
+			};
 
 			Webkit2AsyncReturnObj retObj = execAsyncAndWaitForReturn(browser, asyncFunc, " The following javascript was executed:\n" + script +"\n\n");
 
@@ -1048,7 +1095,36 @@ private static class Webkit2AsyncToSync {
 	}
 
 	@SuppressWarnings("unused") // Only called directly from C (from javascript).
-	private static void runjavascript_callback (long GObject_source, long GAsyncResult, long user_data) {
+	private static void gtk4_runjavascript_callback (long GObject_source, long GAsyncResult, long user_data) {
+		int callbackId = (int) user_data;
+		Webkit2AsyncReturnObj retObj = CallBackMap.getObj(callbackId);
+
+		if (retObj != null) { // retObj can be null if there was a timeout.
+			long [] gerror = new long [1]; // GError **
+			long jsc_value = WebKitGTK.webkit_web_view_evaluate_javascript_finish(GObject_source, GAsyncResult, gerror);
+			if (jsc_value == 0) {
+				long errMsg = OS.g_error_get_message(gerror[0]);
+				String msg = Converter.cCharPtrToJavaString(errMsg, false);
+				OS.g_error_free(gerror[0]);
+
+				retObj.errorNum = SWT.ERROR_FAILED_EVALUATE;
+				retObj.errorMsg = msg != null ? msg : "";
+			} else {
+				try {
+					retObj.returnValue = gtk4_convertToJava(jsc_value);
+				} catch (IllegalArgumentException ex) {
+					retObj.errorNum = SWT.ERROR_INVALID_RETURN_VALUE;
+					retObj.errorMsg = "Type of return value not is not valid. For supported types see: Browser.evaluate() JavaDoc";
+				}
+				OS.g_object_unref (jsc_value);
+			}
+			retObj.callbackFinished = true;
+		}
+		Display.getCurrent().wake();
+	}
+
+	@SuppressWarnings("unused") // Only called directly from C (from javascript).
+	private static void gtk3_runjavascript_callback (long GObject_source, long GAsyncResult, long user_data) {
 		int callbackId = (int) user_data;
 		Webkit2AsyncReturnObj retObj = CallBackMap.getObj(callbackId);
 
@@ -1067,7 +1143,7 @@ private static class Webkit2AsyncToSync {
 				long value = WebKitGTK.webkit_javascript_result_get_value (js_result);
 
 				try {
-					retObj.returnValue = convertToJava(context, value);
+					retObj.returnValue = gtk3_convertToJava(context, value);
 				} catch (IllegalArgumentException ex) {
 					retObj.errorNum = SWT.ERROR_INVALID_RETURN_VALUE;
 					retObj.errorMsg = "Type of return value not is not valid. For supported types see: Browser.evaluate() JavaDoc";
@@ -1133,8 +1209,14 @@ private static class Webkit2AsyncToSync {
 	}
 
 	static boolean setCookie(String cookieUrl, String cookieValue) {
-		long context = WebKitGTK.webkit_web_context_get_default();
-		long cookieManager = WebKitGTK.webkit_web_context_get_cookie_manager(context);
+		long cookieManager;
+		if (GTK.GTK4) {
+			long session = WebKitGTK.webkit_network_session_get_default();
+			cookieManager = WebKitGTK.webkit_network_session_get_cookie_manager(session);
+		} else {
+			long context = WebKitGTK.webkit_web_context_get_default();
+			cookieManager = WebKitGTK.webkit_web_context_get_cookie_manager(context);
+		}
 		byte[] bytes = Converter.wcsToMbcs (cookieUrl, true);
 		long uri;
 		if (WebKitGTK.soup_get_major_version()==2) {
@@ -1170,7 +1252,11 @@ private static class Webkit2AsyncToSync {
 				setCookie_callback.getAddress(), callbackID);
 		Webkit2AsyncReturnObj retObj = execAsyncAndWaitForReturn(cookieBrowser, asyncFunc, " setCookie() was called");
 
-		WebKitGTK.soup_uri_free (uri);
+		if (WebKitGTK.soup_get_major_version()==2) {
+			WebKitGTK.soup_uri_free (uri);
+		} else {
+			OS.g_uri_unref(uri);
+		}
 
 		if (retObj.swtAsyncTimeout) {
 			return false;
@@ -1200,8 +1286,14 @@ private static class Webkit2AsyncToSync {
 	}
 
 	static String getCookie(String cookieUrl, String cookieName) {
-		long context = WebKitGTK.webkit_web_context_get_default();
-		long cookieManager = WebKitGTK.webkit_web_context_get_cookie_manager(context);
+		long cookieManager;
+		if (GTK.GTK4) {
+			long session = WebKitGTK.webkit_network_session_get_default();
+			cookieManager = WebKitGTK.webkit_network_session_get_cookie_manager(session);
+		} else {
+			long context = WebKitGTK.webkit_web_context_get_default();
+			cookieManager = WebKitGTK.webkit_web_context_get_cookie_manager(context);
+		}
 		byte[] uri = Converter.wcsToMbcs (cookieUrl, true);
 		if (nonBlockingEvaluate > 0) {
 			System.err.println("SWT Webkit: getCookie() called inside a synchronous callback, which can lead to a deadlock.\n"
@@ -2184,7 +2276,7 @@ long webkit_create_web_view (long web_view, long frame) {
 		parentBrowser = browser;
 		fireOpenWindowListeners.run();// Permit evaluate()/execute() to execute scripts in listener, but do not provide return value.
 	} catch (Exception e) {
-		throw e; // rethrow execption if thrown, but decrement counter first.
+		throw e; // rethrow exception if thrown, but decrement counter first.
 	} finally {
 		parentBrowser = null;
 		nonBlockingEvaluate--;
@@ -2295,7 +2387,16 @@ long webkit_hovering_over_link (long web_view, long title, long uri) {
 long webkit_decide_policy (long web_view, long decision, int decision_type, long user_data) {
 	switch (decision_type) {
 	case WebKitGTK.WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
-		long request = WebKitGTK. webkit_navigation_policy_decision_get_request(decision);
+		long request;
+		if (GTK.GTK4) {
+			long navigation = WebKitGTK. webkit_navigation_policy_decision_get_navigation_action(decision);
+			if (navigation == 0) {
+				return 0;
+			}
+			request = WebKitGTK.webkit_navigation_action_get_request(navigation);
+		} else {
+			request = WebKitGTK. webkit_navigation_policy_decision_get_request(decision);
+		}
 		if (request == 0){
 			return 0;
 		}
@@ -2665,7 +2766,141 @@ private void webkit_settings_set(byte [] property, int value) {
 	OS.g_object_set(settings, property, value, 0);
 }
 
-static Object convertToJava (long ctx, long value) {
+private void browserShellMoved(ControlEvent e) {
+	closeSearchDialog();
+	searchShellLocation = null;
+}
+
+private void closeSearchDialog() {
+	if (searchShell != null && !searchShell.isDisposed()) {
+		searchShellLocation = searchShell.getLocation();
+		searchShell.close();
+		if (searchText != null && webView != 0) {
+			long findController = WebKitGTK.webkit_web_view_get_find_controller(webView);
+			WebKitGTK.webkit_find_controller_search_finish(findController);
+		}
+		searchText = null;
+	}
+}
+
+private void openSearchDialog() {
+	if (webView == 0 || (searchShell != null && !searchShell.isDisposed())) {
+		return;
+	}
+	Shell browserShell = browser.getShell();
+	Shell shell = new Shell(browserShell, SWT.TOOL | SWT.MODELESS);
+	Rectangle browserArea = browser.getClientArea();
+	int height = 45;
+	Point location;
+	if (searchShellLocation != null) {
+		location = searchShellLocation;
+	} else {
+		location = browser.toDisplay(0, 0);
+		location.y += Math.max(0, browserArea.height - height);
+	}
+	shell.setLocation(location);
+	shell.setSize(250, height);
+	GridLayout l = new GridLayout();
+	l.marginWidth = 8;
+	l.marginHeight = 8;
+	l.numColumns = 4;
+	shell.setLayout(l);
+	Text text = new Text(shell, SWT.BORDER);
+	text.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+	Cursor defaultCursor = Display.getCurrent().getSystemCursor(SWT.CURSOR_ARROW);
+	Button next = new Button(shell, SWT.FLAT | SWT.ARROW | SWT.DOWN);
+	next.setCursor(defaultCursor);
+	Button previous = new Button(shell, SWT.FLAT | SWT.ARROW | SWT.UP);
+	previous.setCursor(defaultCursor);
+	shell.setCursor(Display.getCurrent().getSystemCursor(SWT.CURSOR_SIZEALL));
+	boolean[] mouseDown = new boolean[1];
+	int[] xPos = new int[1];
+	int[] yPos = new int[1];
+	shell.addMouseListener(new MouseAdapter() {
+		@Override
+		public void mouseUp(MouseEvent arg0) {
+			mouseDown[0] = false;
+		}
+		@Override
+		public void mouseDown(MouseEvent e) {
+			mouseDown[0] = true;
+			xPos[0] = e.x;
+			yPos[0] = e.y;
+		}
+	});
+	shell.addMouseMoveListener(e -> {
+		if (mouseDown[0]) {
+			shell.setLocation(shell.getLocation().x + (e.x - xPos[0]), shell.getLocation().y + (e.y - yPos[0]));
+		}
+	});
+	long findController = WebKitGTK.webkit_web_view_get_find_controller(webView);
+	Runnable searchNext = () -> search(findController, text::getText, WebKitGTK::webkit_find_controller_search_next);
+	Runnable searchPrevious = () -> search(findController, text::getText, WebKitGTK::webkit_find_controller_search_previous);
+	next.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> searchNext.run()));
+	previous.addSelectionListener(SelectionListener.widgetSelectedAdapter(e -> searchPrevious.run()));
+	text.addKeyListener(KeyListener.keyPressedAdapter(e -> {
+		if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR) {
+			searchNext.run();
+		}
+	}));
+	shell.addDisposeListener(e -> {
+		searchShellLocation = searchShell.getLocation();
+		WebKitGTK.webkit_find_controller_search_finish(findController);
+		searchShell = null;
+	});
+	shell.open();
+	searchShell = shell;
+}
+
+private void search(long findController, Supplier<String> currentText, Consumer<Long> incrementSearch) {
+	int maxMatchesCount = WebKitGTK.G_MAXUINT; // TODO: how to set no max count here?
+	int searchOptions = WebKitGTK.WEBKIT_FIND_OPTIONS_WRAP_AROUND;
+	String text = currentText.get();
+	if (!text.equals(searchText)) {
+		if (searchText != null) {
+			WebKitGTK.webkit_find_controller_search_finish(findController);
+		}
+		searchText = text;
+		byte[] textToSearch = Converter.wcsToMbcs(searchText, true);
+		WebKitGTK.webkit_find_controller_search(findController, textToSearch, searchOptions, maxMatchesCount);
+	} else {
+		incrementSearch.accept(Long.valueOf(findController));
+	}
+}
+
+static Object gtk4_convertToJava(long jsc_value) {
+	if (WebKitGTK.jsc_value_is_boolean(jsc_value)) {
+		return WebKitGTK.jsc_value_to_boolean(jsc_value);
+	} else if (WebKitGTK.jsc_value_is_number(jsc_value)) {
+		double result = WebKitGTK.jsc_value_to_double(jsc_value);
+		return Double.valueOf(result);
+	} else if (WebKitGTK.jsc_value_is_string(jsc_value)) {
+		long string = WebKitGTK.jsc_value_to_string(jsc_value);
+		if (string == 0)
+			return ""; //$NON-NLS-1$
+		return Converter.cCharPtrToJavaString(string, true);
+	} else if (WebKitGTK.jsc_value_is_null(jsc_value) || WebKitGTK.jsc_value_is_undefined(jsc_value)) {
+		return null;
+	} else if (WebKitGTK.jsc_value_is_object(jsc_value)) {
+		long jsc_length = WebKitGTK.jsc_value_object_get_property(jsc_value, Converter.wcsToMbcs(PROPERTY_LENGTH, true));
+		if (WebKitGTK.jsc_value_is_number(jsc_length)) {
+			int length = WebKitGTK.jsc_value_to_int32(jsc_length);
+			Object[] result = new Object[length];
+			for (int i = 0; i < length; i++) {
+				long jsc_value_at_i = WebKitGTK.jsc_value_object_get_property_at_index (jsc_value, i);
+				if (jsc_value_at_i != 0) {
+					result[i] = gtk4_convertToJava (jsc_value_at_i);
+				}
+			}
+			return result;
+		}
+	}
+
+	SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+	return null;
+}
+
+static Object gtk3_convertToJava (long ctx, long value) {
 	int type = WebKitGTK.JSValueGetType (ctx, value);
 	switch (type) {
 		case WebKitGTK.kJSTypeBoolean: {
@@ -2701,7 +2936,7 @@ static Object convertToJava (long ctx, long value) {
 				for (int i = 0; i < length; i++) {
 					long current = WebKitGTK.JSObjectGetPropertyAtIndex (ctx, value, i, null);
 					if (current != 0) {
-						result[i] = convertToJava (ctx, current);
+						result[i] = gtk3_convertToJava (ctx, current);
 					}
 				}
 				return result;

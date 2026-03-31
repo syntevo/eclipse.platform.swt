@@ -13,12 +13,12 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
-import java.time.Instant;
+import static org.eclipse.swt.tests.junit.SwtTestUtil.JENKINS_DETECT_ENV_VAR;
+import static org.eclipse.swt.tests.junit.SwtTestUtil.JENKINS_DETECT_REGEX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyListener;
@@ -35,8 +35,10 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Widget;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.widgets.Text
@@ -46,18 +48,18 @@ import org.junit.Test;
 public class Test_org_eclipse_swt_widgets_Text extends Test_org_eclipse_swt_widgets_Scrollable {
 
 @Override
-@Before
+@BeforeEach
 public void setUp() {
 	super.setUp();
 	shell.pack();
-	shell.open();
+	SwtTestUtil.openShell(shell);
 	makeCleanEnvironment(false); // use multi-line by default
 }
 
 @Override
 @Test
 public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
-	assertThrows("No exception thrown for parent == null", IllegalArgumentException.class, () ->	text = new Text(null, 0));
+	assertThrows(IllegalArgumentException.class, () ->	text = new Text(null, 0));
 
 	int[] cases = {0, SWT.SINGLE, SWT.MULTI, SWT.MULTI | SWT.V_SCROLL, SWT.MULTI | SWT.H_SCROLL, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL,
 					SWT.WRAP};
@@ -68,20 +70,20 @@ public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
 @Test
 public void test_addModifyListenerLorg_eclipse_swt_events_ModifyListener() {
 	ModifyListener listener = event -> listenerCalled = true;
-	assertThrows("Expected exception not thrown", IllegalArgumentException.class, ()-> text.addModifyListener(null));
+	assertThrows(IllegalArgumentException.class, ()-> text.addModifyListener(null));
 
 	// test whether all content modifying API methods send a Modify event
 	text.addModifyListener(listener);
 	listenerCalled = false;
 	text.setText("new text");
-	assertTrue("setText does not send event", listenerCalled);
+	assertTrue(listenerCalled);
 
 	listenerCalled = false;
 	text.removeModifyListener(listener);
 	// cause to call the listener.
 	text.setText("line");
-	assertFalse("Listener not removed", listenerCalled);
-	assertThrows("Expected exception not thrown", IllegalArgumentException.class, ()-> text.removeModifyListener(null));
+	assertFalse(listenerCalled);
+	assertThrows(IllegalArgumentException.class, ()-> text.removeModifyListener(null));
 }
 
 @Test
@@ -127,61 +129,61 @@ public void test_addVerifyListenerLorg_eclipse_swt_events_VerifyListener() {
 	text.setText("");
 
 	// test null listener case
-	assertThrows("Expected exception not thrown", IllegalArgumentException.class, ()->	text.addVerifyListener(null));
+	assertThrows(IllegalArgumentException.class, ()->	text.addVerifyListener(null));
 
 	// test append case
 	VerifyListener listener = event -> {
 		listenerCalled = true;
-		assertEquals("Verify event data invalid", 0, event.start);
-		assertEquals("Verify event data invalid", 0, event.end);
-		assertEquals("Verify event data invalid", line, event.text);
+		assertEquals(0, event.start);
+		assertEquals(0, event.end);
+		assertEquals(line, event.text);
 		event.text = newLine;
 	};
 	text.addVerifyListener(listener);
 	listenerCalled = false;
 	text.append(line);
-	assertTrue("append does not send event", listenerCalled);
-	assertEquals("Listener failed", newLine, text.getText());
+	assertTrue(listenerCalled);
+	assertEquals(newLine, text.getText());
 	text.removeVerifyListener(listener);
 
 	// test insert case
 	listener = event -> {
 		listenerCalled = true;
-		assertEquals("Verify event data invalid", 8, event.start);
-		assertEquals("Verify event data invalid", 8, event.end);
-		assertEquals("Verify event data invalid", line, event.text);
+		assertEquals(8, event.start);
+		assertEquals(8, event.end);
+		assertEquals(line, event.text);
 		event.text = newLine;
 	};
 	text.addVerifyListener(listener);
 	listenerCalled = false;
 	text.insert(line);
-	assertTrue("insert does not send event", listenerCalled);
-	assertEquals("Listener failed", newLine + newLine, text.getText());
+	assertTrue(listenerCalled);
+	assertEquals(newLine + newLine, text.getText());
 	text.removeVerifyListener(listener);
 
 	// test setText case
 	listener = event -> {
 		listenerCalled = true;
-		assertEquals("Verify event data invalid", 0, event.start);
-		assertEquals("Verify event data invalid", 16, event.end);
-		assertEquals("Verify event data invalid", line, event.text);
+		assertEquals(0, event.start);
+		assertEquals(16, event.end);
+		assertEquals(line, event.text);
 		event.text = newLine;
 	};
 	text.addVerifyListener(listener);
 	text.setText(line);
-	assertTrue("setText does not send event", listenerCalled);
-	assertEquals("Listener failed", newLine, text.getText());
+	assertTrue(listenerCalled);
+	assertEquals(newLine, text.getText());
 
 	// test remove case
 	listenerCalled = false;
 	text.removeVerifyListener(listener);
 	text.setText(line);
-	assertFalse("Listener not removed", listenerCalled);
+	assertFalse(listenerCalled);
 }
 
 @Test
 public void test_appendLjava_lang_String() {
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class, ()->text.append(null));
+	assertThrows(IllegalArgumentException.class, ()->text.append(null));
 
 	text.setText("01");
 	text.append("23");
@@ -204,7 +206,7 @@ public void test_appendLjava_lang_String() {
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
 
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class, ()->text.append(null));
+	assertThrows(IllegalArgumentException.class, ()->text.append(null));
 
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
@@ -264,6 +266,7 @@ public void test_computeSizeIIZ() {
 	// super class test is sufficient
 }
 
+@Tag("clipboard")
 @Test
 public void test_copy() {
 	if (SwtTestUtil.isCocoa) {
@@ -288,6 +291,11 @@ public void test_copy() {
 
 	text.setText("");
 	text.paste();
+	// Spin the event loop to let GTK process the clipboard + entry update
+	Display display = text.getDisplay();
+	while (display.readAndDispatch()) {
+	    // loop until no more events
+	}
 	assertEquals("00000", text.getText());
 
 	// tests a SINGLE line text editor
@@ -307,6 +315,9 @@ public void test_copy() {
 
 	text.setText("");
 	text.paste();
+	while (display.readAndDispatch()) {
+	    // loop until no more events
+	}
 	assertEquals("00000", text.getText());
 }
 
@@ -515,8 +526,10 @@ public void test_getLineCount() {
 public void test_getLineDelimiter() {
 	String platform = SWT.getPlatform();
 	String delimiter = text.getLineDelimiter();
-	if (platform.equals("win32")) {
-		assertEquals("\r\n", delimiter);
+	switch(platform) {
+		case "win32" -> assertEquals("\r\n", delimiter);
+		case "cocoa" -> assertEquals ("\r", delimiter);
+		default-> assertEquals("\n", delimiter);
 	}
 }
 
@@ -853,7 +866,7 @@ public void test_getTopPixel() {
 @Test
 public void test_insertLjava_lang_String() {
 	text.setBounds(0, 0, 500, 500);
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class, ()->text.insert(null));
+	assertThrows(IllegalArgumentException.class, ()->text.insert(null));
 
 	assertEquals("", text.getText());
 	text.insert("");
@@ -873,7 +886,7 @@ public void test_insertLjava_lang_String() {
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
 
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class, ()->text.insert(null));
+	assertThrows(IllegalArgumentException.class, ()->text.insert(null));
 
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
@@ -899,7 +912,7 @@ public void test_insertLjava_lang_String() {
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
 
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class, ()->text.insert(null));
+	assertThrows(IllegalArgumentException.class, ()->text.insert(null));
 }
 
 @Override
@@ -914,13 +927,14 @@ public void test_isVisible() {
 
 	control.setVisible(true);
 	shell.setVisible(true);
-	assertTrue("Window should be visible", control.isVisible());
+	assertTrue(control.isVisible());
 	shell.setVisible(false);
-	assertFalse("Window should not be visible", control.isVisible());
+	assertFalse(control.isVisible());
 }
 
+@Tag("clipboard")
 @Test
-public void test_paste() {
+public void test_paste() throws InterruptedException {
 	if (SwtTestUtil.isCocoa) {
 		// TODO Fix Cocoa failure.
 		if (SwtTestUtil.verbose) {
@@ -933,12 +947,16 @@ public void test_paste() {
 	text.setSelection(2, 4);
 	assertEquals("01234567890", text.getText());
 	text.copy();
+	SwtTestUtil.processEvents(100, null);
 	text.setSelection(0);
 	text.paste();
+	SwtTestUtil.processEvents(1000, () -> "2301234567890".equals(text.getText()));
 	assertEquals("2301234567890", text.getText());
 	text.copy();
+	SwtTestUtil.processEvents(100, null);
 	text.setSelection(3);
 	text.paste();
+	SwtTestUtil.processEvents(1000, () -> "230231234567890".equals(text.getText()));
 	assertEquals("230231234567890", text.getText());
 
 	text.setText("0" + delimiterString + "1");
@@ -946,7 +964,9 @@ public void test_paste() {
 	text.copy();
 	text.setSelection(0);
 	text.paste();
-	assertEquals("0" + delimiterString + "1" + "0" + delimiterString + "1", text.getText());
+	String expected = "0" + delimiterString + "1" + "0" + delimiterString + "1";
+	SwtTestUtil.processEvents(1000, () -> expected.equals(text.getText()));
+	assertEquals(expected, text.getText());
 
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
@@ -957,10 +977,12 @@ public void test_paste() {
 	text.copy();
 	text.setSelection(0);
 	text.paste();
+	SwtTestUtil.processEvents(1000, () -> "2301234567890".equals(text.getText()));
 	assertEquals("2301234567890", text.getText());
 	text.copy();
 	text.setSelection(3);
 	text.paste();
+	SwtTestUtil.processEvents(1000, () -> "230231234567890".equals(text.getText()));
 	assertEquals("230231234567890", text.getText());
 
 	// tests a SINGLE line text editor
@@ -972,8 +994,11 @@ public void test_paste() {
 	text.setSelection(0);
 	text.paste();
 
-	if (SwtTestUtil.fCheckSWTPolicy)
+	if (SwtTestUtil.fCheckSWTPolicy) {
+		String expected2 = "0" + delimiterString + "1" + "0" + delimiterString + "1";
+		SwtTestUtil.processEvents(1000, () -> expected2.equals(text.getText()));
 		assertEquals("0" + delimiterString + "1" + "0" + delimiterString + "1", text.getText());
+	}
 }
 
 @Test
@@ -1079,16 +1104,14 @@ public void test_setEditableZ() {
 	assertTrue(text.getEditable());
 }
 
+@Tag("gtk4-todo")
 @Override
 @Test
 public void test_setFontLorg_eclipse_swt_graphics_Font() {
 	FontData fontData = text.getFont().getFontData()[0];
-	int lineHeight;
-	Font font;
-
-	font = new Font(text.getDisplay(), fontData.getName(), 8, fontData.getStyle());
+	Font font = new Font(text.getDisplay(), fontData.getName(), 8, fontData.getStyle());
 	text.setFont(font);
-	lineHeight = text.getLineHeight();
+	int lineHeight = text.getLineHeight();
 	text.setFont(null);
 	font.dispose();
 	font = new Font(text.getDisplay(), fontData.getName(), 12, fontData.getStyle());
@@ -1182,7 +1205,7 @@ public void test_setSelectionII() {
 @Test
 public void test_setSelectionLorg_eclipse_swt_graphics_Point() {
 	text.setText("dsdsdasdslaasdas");
-	assertThrows("No exception thrown for selection == null", IllegalArgumentException.class, ()->text.setSelection((Point) null));
+	assertThrows(IllegalArgumentException.class, ()->text.setSelection((Point) null));
 
 	text.setText("01234567890");
 	text.setSelection(new Point(2, 2));
@@ -1205,7 +1228,7 @@ public void test_setSelectionLorg_eclipse_swt_graphics_Point() {
 	makeCleanEnvironment(true);
 
 	text.setText("dsdsdasdslaasdas");
-	assertThrows("No exception thrown for selection == null", IllegalArgumentException.class, ()->text.setSelection((Point) null));
+	assertThrows(IllegalArgumentException.class, ()->text.setSelection((Point) null));
 
 	// tests a SINGLE line text editor
 	makeCleanEnvironment(true);
@@ -1260,7 +1283,7 @@ public void test_setTextLimitI() {
 
 @Test
 public void test_setTextLjava_lang_String() {
-	assertThrows("No exception thrown for string == null", IllegalArgumentException.class,()->text.setText(null));
+	assertThrows(IllegalArgumentException.class, ()->text.setText(null));
 
 	text.setText("");
 
@@ -1423,6 +1446,8 @@ public void test_consistency_DragDetect () {
 	consistencyEvent(30, 10, 50, 0, ConsistencyUtility.MOUSE_DRAG);
 }
 
+@Tag("gtk4-todo")
+@Tag("clipboard")
 @Test
 public void test_consistency_Segments () {
 	if (SwtTestUtil.isCocoa) {
@@ -1443,7 +1468,7 @@ public void test_consistency_Segments () {
 		}
 		listenerCalled = true;
 	};
-	assertThrows("No exception thrown for addSegmentListener(null)", IllegalArgumentException.class,()->text.addSegmentListener(null));
+	assertThrows(IllegalArgumentException.class, ()->text.addSegmentListener(null));
 	boolean[] singleLine = {false, true};
 	for (int i = singleLine.length; i-- > 0;) {
 		makeCleanEnvironment(singleLine[i]);
@@ -1545,10 +1570,16 @@ private void doSegmentsTest (boolean isListening) {
  * Bug 565164 - SWT.BS event no longer working
  */
 @Test
-public void test_backspaceAndDelete() {
+@Tag("gtk4-todo")
+@DisabledIfEnvironmentVariable(named = JENKINS_DETECT_ENV_VAR, matches = JENKINS_DETECT_REGEX, disabledReason = "Display.post tests don't run reliably on Jenkins - see https://github.com/eclipse-platform/eclipse.platform.swt/issues/2571")
+public void test_backspaceAndDelete() throws InterruptedException {
 	shell.open();
 	text.setSize(10, 50);
-	final Instant timeOut = Instant.now().plusSeconds(10);
+	// The display.post needs to successfully obtain the focused window (at least on GTK3)
+	// so we can send events to it. This processEvents gives SWT/GTK time to draw/focus/etc
+	// the window so that org.eclipse.swt.widgets.Display.findFocusedWindow()
+	// returns non-zero
+	SwtTestUtil.processEvents();
 
 	Display display = Display.getDefault();
 
@@ -1557,28 +1588,16 @@ public void test_backspaceAndDelete() {
 	Event backspace = keyEvent(SWT.BS, SWT.KeyDown, display.getFocusControl());
 	Event backspaceUp = keyEvent(SWT.BS, SWT.KeyUp, display.getFocusControl());
 
-	display.post(a);
-	display.post(aUp);
+	assertTrue(display.post(a));
+	assertTrue(display.post(aUp));
 
-	while (Instant.now().isBefore(timeOut)) {
-		if (text.getText().length() == 1) break;
+	SwtTestUtil.processEvents(10000, () -> text.getText().length() == 1);
+	assertEquals(1, text.getText().length());
 
-		if (!shell.isDisposed()) {
-			display.readAndDispatch();
-		}
-	}
+	assertTrue(display.post(backspace));
+	assertTrue(display.post(backspaceUp));
 
-	display.post(backspace);
-	display.post(backspaceUp);
-
-	while (Instant.now().isBefore(timeOut)) {
-		if (text.getText().length() == 0) break;
-
-		if (!shell.isDisposed()) {
-			display.readAndDispatch();
-		}
-	}
-
+	SwtTestUtil.processEvents(10000, () -> text.getText().length() == 0);
 	assertEquals(0, text.getText().length());
 }
 

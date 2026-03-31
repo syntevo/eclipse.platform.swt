@@ -195,6 +195,7 @@ public Optional<String> openDialog () {
 	directoryPath = null;
 	panel = NSOpenPanel.openPanel();
 	if (panel == null) {
+//		throw new SWTException(SWT.ERROR_INVALID_RETURN_VALUE);
 		return Optional.empty();
 	}
 

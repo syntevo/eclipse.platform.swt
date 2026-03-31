@@ -112,7 +112,6 @@ public class Text extends Scrollable {
 		WNDCLASS lpWndClass = new WNDCLASS ();
 		OS.GetClassInfo (0, EditClass, lpWndClass);
 		EditProc = lpWndClass.lpfnWndProc;
-		DPIZoomChangeRegistry.registerHandler(Text::handleDPIChange, Text.class);
 	}
 
 /**
@@ -703,10 +702,12 @@ public void clearSelection () {
 	OS.SendMessage (handle, OS.EM_SETSEL, -1, 0);
 }
 
-@Override Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
+@Override
+Point computeSizeInPixels (Point hintInPoints, int zoom, boolean changed) {
 	checkWidget ();
+	Point hintInPixels = Win32DPIUtils.pointToPixelAsSufficientlyLargeSize(hintInPoints, zoom);
 	int height = 0, width = 0;
-	if (wHint == SWT.DEFAULT || hHint == SWT.DEFAULT) {
+	if (hintInPoints.x == SWT.DEFAULT || hintInPoints.y == SWT.DEFAULT) {
 		long newFont, oldFont = 0;
 		long hDC = OS.GetDC (handle);
 		newFont = OS.SendMessage (handle, OS.WM_GETFONT, 0, 0);
@@ -718,9 +719,9 @@ public void clearSelection () {
 		RECT rect = new RECT ();
 		int flags = OS.DT_CALCRECT | OS.DT_EDITCONTROL | OS.DT_NOPREFIX;
 		boolean wrap = (style & SWT.MULTI) != 0 && (style & SWT.WRAP) != 0;
-		if (wrap && wHint != SWT.DEFAULT) {
+		if (wrap && hintInPoints.x != SWT.DEFAULT) {
 			flags |= OS.DT_WORDBREAK;
-			rect.right = wHint;
+			rect.right = hintInPixels.x;
 		}
 		int length = OS.GetWindowTextLength (handle);
 		if (length != 0) {
@@ -730,7 +731,7 @@ public void clearSelection () {
 			Arrays.fill (buffer, '\0'); // erase sensitive data
 			width = rect.right - rect.left;
 		}
-		if (wrap && hHint == SWT.DEFAULT) {
+		if (wrap && hintInPoints.y == SWT.DEFAULT) {
 			int newHeight = rect.bottom - rect.top;
 			if (newHeight != 0) height = newHeight;
 		}
@@ -745,8 +746,8 @@ public void clearSelection () {
 	}
 	if (width == 0) width = DEFAULT_WIDTH;
 	if (height == 0) height = DEFAULT_HEIGHT;
-	if (wHint != SWT.DEFAULT) width = wHint;
-	if (hHint != SWT.DEFAULT) height = hHint;
+	if (hintInPoints.x != SWT.DEFAULT) width = hintInPixels.x;
+	if (hintInPoints.y != SWT.DEFAULT) height = hintInPixels.y;
 	Rectangle trim = computeTrimInPixels (0, 0, width, height);
 	return new Point (trim.width, trim.height);
 }
@@ -789,7 +790,6 @@ public void clearSelection () {
  * <p>
  * The current selection is copied to the clipboard.
  * </p>
- *
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
@@ -986,7 +986,7 @@ public int getCaretLineNumber () {
  */
 public Point getCaretLocation () {
 	checkWidget ();
-	return DPIUtil.scaleDown(getCaretLocationInPixels(), getZoom());
+	return Win32DPIUtils.pixelToPointAsLocation(getCaretLocationInPixels(), getZoom());
 }
 
 Point getCaretLocationInPixels () {
@@ -1211,7 +1211,7 @@ public String getLineDelimiter () {
  */
 public int getLineHeight () {
 	checkWidget ();
-	return DPIUtil.scaleDown(getLineHeightInPixels (), getZoom());
+	return DPIUtil.pixelToPoint(getLineHeightInPixels (), getZoom());
 }
 
 int getLineHeightInPixels () {
@@ -1554,7 +1554,7 @@ public int getTopIndex () {
  */
 public int getTopPixel () {
 	checkWidget ();
-	return DPIUtil.scaleDown(getTopPixelInPixels(), getZoom());
+	return DPIUtil.pixelToPoint(getTopPixelInPixels(), getZoom());
 }
 
 int getTopPixelInPixels () {
@@ -1628,7 +1628,12 @@ boolean isUseWsBorder () {
  * The selected text is deleted from the widget
  * and new text inserted from the clipboard.
  * </p>
- *
+ * <p>
+ * <strong>Note:</strong> Pasting data to controls may occurs asynchronously. The widget
+ * text may not reflect the updated value immediately after calling this method.
+ * The new text will appear once pending events are processed in the event loop.
+ * Use {@link Display#asyncExec(Runnable)} before accessing <code>getText()</code>.
+ * </p>
  * @exception SWTException <ul>
  *    <li>ERROR_WIDGET_DISPOSED - if the receiver has been disposed</li>
  *    <li>ERROR_THREAD_INVALID_ACCESS - if not called from the thread that created the receiver</li>
@@ -2489,7 +2494,7 @@ int untranslateOffset (int offset) {
 void updateMenuLocation (Event event) {
 	Point pointInPixels = display.mapInPixels (this, null, getCaretLocationInPixels ());
 	int zoom = getZoom();
-	event.setLocation(DPIUtil.scaleDown(pointInPixels.x, zoom), DPIUtil.scaleDown(pointInPixels.y + getLineHeightInPixels (), zoom));
+	event.setLocation(DPIUtil.pixelToPoint(pointInPixels.x, zoom), DPIUtil.pixelToPoint(pointInPixels.y + getLineHeightInPixels (), zoom));
 }
 
 @Override
@@ -3149,10 +3154,9 @@ LRESULT wmKeyDown (long hwnd, long wParam, long lParam) {
 	return result;
 }
 
-private static void handleDPIChange(Widget widget, int newZoom, float scalingFactor) {
-	if (!(widget instanceof Text text)) {
-		return;
-	}
-	text.setMargins();
+@Override
+void handleDPIChange(Event event, float scalingFactor) {
+	super.handleDPIChange(event, scalingFactor);
+	setMargins();
 }
 }

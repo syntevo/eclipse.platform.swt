@@ -85,10 +85,13 @@ public class WebKitGTK extends C {
 	public static final int G_TLS_CERTIFICATE_GENERIC_ERROR = 6;
 	public static final int G_TLS_CERTIFICATE_VALIDATE_ALL = 7;
 
-	public static final int WEBKIT_WEBSITE_DATA_COOKIES = 1 << 8;
+	public static final int WEBKIT_WEBSITE_DATA_COOKIES = GTK.GTK4 ? 64 : 1 << 8;
 
 	public static final int WEBKIT_USER_SCRIPT_INJECT_AT_DOCUMENT_START = 0;
 	public static final int WEBKIT_USER_CONTENT_INJECT_TOP_FRAME = 1;
+
+	public static final int G_MAXUINT = 65535;
+	public static final int WEBKIT_FIND_OPTIONS_WRAP_AROUND = 1 << 4;
 
 	/** Signals */
 
@@ -351,6 +354,12 @@ public static final native int webkit_get_minor_version();
 public static final native long webkit_navigation_policy_decision_get_request(long decision);
 
 /** @method flags=dynamic */
+public static final native long webkit_navigation_policy_decision_get_navigation_action(long decision);
+
+/** @method flags=dynamic */
+public static final native long webkit_navigation_action_get_request(long navigation);
+
+/** @method flags=dynamic */
 public static final native void webkit_policy_decision_download(long decision);
 
 /** @method flags=dynamic */
@@ -361,6 +370,12 @@ public static final native long webkit_web_context_get_default();
 
 /** @method flags=dynamic */
 public static final native long webkit_network_session_get_default();
+
+/** @method flags=dynamic */
+public static final native long webkit_network_session_get_cookie_manager(long session);
+
+/** @method flags=dynamic */
+public static final native long webkit_network_session_get_website_data_manager(long session);
 
 /** @method flags=dynamic */
 public static final native long webkit_web_context_get_cookie_manager(long context);
@@ -419,8 +434,6 @@ public static final native long webkit_web_view_get_window_properties(long webVi
  * @param rectangle cast=(GdkRectangle *),flags=no_in
  */
 public static final native void webkit_window_properties_get_geometry(long webKitWindowProperties, GdkRectangle rectangle);
-
-
 
 /** @method flags=dynamic */
 public static final native void webkit_web_view_go_back(long web_view);
@@ -481,6 +494,81 @@ public static final native long webkit_web_resource_get_data_finish(long WebKitW
 /*WebKitJavascriptResult * webkit_web_view_run_javascript_finish (WebKitWebView *web_view, GAsyncResult *result, GError **error);*/
 public static final native long webkit_web_view_run_javascript_finish(long web_view, long GAsyncResult, long [] gerror);
 
+/*
+ * void webkit_web_view_evaluate_javascript ( WebKitWebView* web_view, const
+ * char* script, gssize length, const char* world_name, const char* source_uri,
+ * GCancellable* cancellable, GAsyncReadyCallback callback, gpointer user_data )
+ */
+/**
+ * @method flags=dynamic
+ */
+public static final native void webkit_web_view_evaluate_javascript(long web_view, byte[] script, long length,
+		long world_name, long source_uri, long cancellable, long callback, long user_data);
+
+/**
+ * @method flags=dynamic
+ * @param error cast=(GError **)
+ */
+/*
+ * JSCValue* webkit_web_view_evaluate_javascript_finish ( WebKitWebView*
+ * web_view, GAsyncResult* result, GError** error )
+ */
+public static final native long webkit_web_view_evaluate_javascript_finish(long web_view, long result, long [] error);
+
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_boolean(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_to_boolean(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_string(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native long jsc_value_to_string(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_null(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_undefined(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_object(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_number(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native double jsc_value_to_double(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native int jsc_value_to_int32(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native boolean jsc_value_is_typed_array(long value);
+/**
+ * @method flags=dynamic
+ */
+public static final native long jsc_value_object_get_property(long value, byte[] name);
+/**
+ * @method flags=dynamic
+ */
+public static final native long jsc_value_object_get_property_at_index(long value, int index);
+
+
 /** @method flags=dynamic */
 public static final native void webkit_web_view_stop_loading(long web_view);
 
@@ -534,6 +622,23 @@ public static final native long webkit_user_script_new (byte[] source, int injec
 
 /** @method flags=dynamic */
 public static final native void webkit_user_script_unref (long user_script);
+
+
+/** @method flags=dynamic */
+public static final native long webkit_web_view_get_find_controller(long webView);
+
+/** @method flags=dynamic */
+/* 			    void webkit_find_controller_search (WebKitFindController *find_controller, const gchar *search_text, guint32 find_options, guint max_match_count); **/
+public static final native void webkit_find_controller_search(long findController, byte[] textToSearch, int options, int max_match_count);
+
+/** @method flags=dynamic */
+public static final native long webkit_find_controller_search_next(long findController);
+
+/** @method flags=dynamic */
+public static final native long webkit_find_controller_search_previous(long findController);
+
+/** @method flags=dynamic */
+public static final native long webkit_find_controller_search_finish(long findController);
 
 /* --------------------- start SWT natives --------------------- */
 public static final native int GdkRectangle_sizeof();

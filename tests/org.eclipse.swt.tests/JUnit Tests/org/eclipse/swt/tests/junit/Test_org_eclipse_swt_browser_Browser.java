@@ -17,16 +17,16 @@ import static org.eclipse.swt.browser.LocationListener.changedAdapter;
 import static org.eclipse.swt.browser.LocationListener.changingAdapter;
 import static org.eclipse.swt.browser.ProgressListener.completedAdapter;
 import static org.eclipse.swt.browser.VisibilityWindowListener.showAdapter;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -82,29 +81,23 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.FixMethodOrder;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.browser.Browser
  *
  * @see org.eclipse.swt.browser.Browser
  */
-@RunWith(Parameterized.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_widgets_Composite {
-
 	// TODO Reduce to reasonable value
 	private static Duration MAXIMUM_BROWSER_CREATION_TIME = Duration.ofSeconds(90);
 
@@ -128,8 +121,7 @@ public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_w
 	int secondsToWaitTillFail; // configured in setUp() to allow individual tests to override this.
 	// CONFIG END
 
-	@Rule
-	public TestName name = new TestName();
+	private TestInfo testInfo;
 
 	Browser browser;
 	boolean isEdge = false;
@@ -147,24 +139,13 @@ public class Test_org_eclipse_swt_browser_Browser extends Test_org_eclipse_swt_w
 	List<Browser> createdBroswers = new ArrayList<>();
 	static List<String> descriptors = new ArrayList<>();
 
-	private final int swtBrowserSettings;
+	protected int swtBrowserSettings;
 
-@Parameters(name = "browser flags: {0}")
-public static Collection<Object[]> browserFlagsToTest() {
-	List<Object[]> browserFlags = new ArrayList<>();
-	browserFlags.add(new Object[] {SWT.NONE});
-	if (SwtTestUtil.isWindows) {
-		// Execute IE tests after Edge, because IE starts some OS timer that conflicts with Edge event handling
-		browserFlags.add(new Object[] {SWT.IE});
-	}
-	return browserFlags;
+public Test_org_eclipse_swt_browser_Browser() {
+	this.swtBrowserSettings = SWT.NONE;
 }
 
-public Test_org_eclipse_swt_browser_Browser(int swtBrowserSettings) {
-	this.swtBrowserSettings = swtBrowserSettings;
-}
-
-@BeforeClass
+@BeforeAll
 public static void setupEdgeEnvironment() {
 	// Initialize Edge environment before any test runs to isolate environment setup
 	// as this takes quite long in GitHub Actions builds
@@ -178,9 +159,9 @@ public static void setupEdgeEnvironment() {
 	}
 }
 
-@Override
-@Before
-public void setUp() {
+@BeforeEach
+public void setUp(TestInfo testInfo) {
+	this.testInfo = testInfo;
 	super.setUp();
 	testNumber ++;
 	secondsToWaitTillFail = Math.max(15, debug_show_browser_timeout_seconds);
@@ -189,14 +170,14 @@ public void setUp() {
 	// To get around this, we print each test's name and if there is a crash, it will be printed right after.
 	// This is kept for future use as sometimes crashes can appear out of the blue with no changes in SWT code.
 	// E.g an upgrade from WebkitGtk2.16 to WebkitGtk2.18 caused random crashes because dispose logic was changed.
-	System.out.println("Running Test_org_eclipse_swt_browser_Browser#" + name.getMethodName());
+	System.out.println("Running Test_org_eclipse_swt_browser_Browser#" + testInfo.getDisplayName());
 
 	shell.setLayout(new FillLayout());
 	browser = createBrowser(shell, swtBrowserSettings);
 
 	isEdge = browser.getBrowserType().equals("edge");
 
-	String shellTitle = name.getMethodName();
+	String shellTitle = testInfo.getDisplayName();
 	if (SwtTestUtil.isGTK) {
 
 		// Note, webkitGtk version is only available once Browser is instantiated.
@@ -213,7 +194,7 @@ public void setUp() {
 		processUiEvents();
 
 		descriptors = Collections.unmodifiableList(getOpenedDescriptors());
-		System.out.println("\n### Descriptors opened BEFORE " + name.getMethodName() + ": " + descriptors.size());
+		System.out.println("\n### Descriptors opened BEFORE " + testInfo.getDisplayName() + ": " + descriptors.size());
 	}
 }
 
@@ -250,7 +231,7 @@ protected void afterDispose(Display display) {
 			disposedBrowsers ++;
 		}
 	}
-	assertEquals("Found " + disposedBrowsers + " not disposed browsers!", 0, disposedBrowsers);
+	assertEquals(0, disposedBrowsers);
 	boolean verbose = false;
 	if(verbose) {
 		if(testNumber % 2 == 0) {
@@ -283,7 +264,7 @@ protected void afterDispose(Display display) {
 
 private int reportOpenedDescriptors() {
 	List<String> newDescriptors = getOpenedDescriptors();
-	System.out.println("\n### Descriptors opened AFTER " + name.getMethodName() + ": " + newDescriptors.size());
+	System.out.println("\n### Descriptors opened AFTER " + testInfo.getDisplayName() + ": " + newDescriptors.size());
 	int count = newDescriptors.size();
 	int diffToPrevious = count - descriptors.size();
 	int diffToInitial = count - initialOpenedDescriptors.size();
@@ -312,13 +293,14 @@ private Browser createBrowser(Shell s, int flags) {
 	b.getUrl();
 	createdBroswers.add(b);
 	Duration createDuration = Duration.between(createStartTime, Instant.now());
-	assertTrue("creating browser took too long: " + createDuration.toMillis() + "ms", createDuration.minus(MAXIMUM_BROWSER_CREATION_TIME).isNegative());
+	assertTrue(createDuration.minus(MAXIMUM_BROWSER_CREATION_TIME).isNegative());
 	return b;
 }
 
 /**
  * Test that if Browser is constructed with the parent being "null", Browser throws an exception.
  */
+@Test
 @Override
 public void test_ConstructorLorg_eclipse_swt_widgets_CompositeI() {
 	Browser browser = createBrowser(shell, swtBrowserSettings);
@@ -397,7 +379,7 @@ private class EdgeBrowserApplication extends Thread {
 
 @Test
 public void test_Constructor_multipleInstantiationsInDifferentThreads() {
-	assumeTrue("This test is intended for Edge only", isEdge);
+	assumeTrue(isEdge, "This test is intended for Edge only");
 
 	int numberOfApplication = 5;
 	List<EdgeBrowserApplication> browserApplications = new ArrayList<>();
@@ -437,6 +419,7 @@ public void test_evalute_Cookies () {
 	assertFalse(res.isEmpty());
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_ClearAllSessionCookies () {
 	final AtomicBoolean loaded = new AtomicBoolean(false);
@@ -466,6 +449,7 @@ public void test_ClearAllSessionCookies () {
 	assertTrue(e2 == null || e2.isEmpty());
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_get_set_Cookies() {
 	final AtomicBoolean loaded = new AtomicBoolean(false);
@@ -495,7 +479,7 @@ public void test_getChildren() {
 	if (SwtTestUtil.isWindows && !isEdge) {
 		int childCount = composite.getChildren().length;
 		String msg = "Browser on Win32 is a special case, the first child is an OleFrame (ActiveX control). Actual child count is: " + childCount;
-		assertEquals(msg, 1, childCount);
+		assertEquals(1, childCount, msg);
 	} else {
 		super.test_getChildren();
 	}
@@ -537,7 +521,7 @@ public void test_CloseWindowListener_close () {
 	browser.setText("<script language='JavaScript'>window.close()</script>");
 	shell.open();
 	boolean passed = waitForPassCondition(browserCloseListenerFired::get);
-	assertTrue("Test timed out.", passed);
+	assertTrue(passed);
 }
 
 @Test
@@ -581,7 +565,7 @@ public void test_LocationListener_changing() {
 	shell.open();
 	browser.setText("Hello world");
 	boolean passed = waitForPassCondition(changingFired::get);
-	assertTrue("LocationListener.changing() event was never fired", passed);
+	assertTrue(passed);
 }
 
 @Test
@@ -591,7 +575,10 @@ public void test_LocationListener_changed() {
 	shell.open();
 	browser.setText("Hello world");
 	boolean passed = waitForPassCondition(changedFired::get);
-	assertTrue("LocationListener.changed() event was never fired", passed);
+	String errorMsg = String.format(
+			"LocationListener.changed() event was never fired. Browser URL after waitForPassCondition: %s",
+			browser.getUrl());
+	assertTrue(passed, errorMsg);
 }
 @Test
 public void test_LocationListener_changed_twoSetTextCycles() {
@@ -600,10 +587,10 @@ public void test_LocationListener_changed_twoSetTextCycles() {
 	shell.open();
 	browser.setText("Hello world");
 	boolean passed = waitForPassCondition(() -> changedCount.get() == 1);
-	assertTrue("LocationListener.changed() event was never fired", passed);
+	assertTrue(passed);
 	browser.setText("2nd text");
 	passed = waitForPassCondition(() -> changedCount.get() == 2);
-	assertTrue("LocationListener.changed() event was not fired for the 2nd text change", passed);
+	assertTrue(passed);
 }
 
 @Test
@@ -654,10 +641,12 @@ public void test_LocationListener_then_ProgressListener() {
 	AtomicBoolean locationChanged = new AtomicBoolean(false);
 	AtomicBoolean progressChanged = new AtomicBoolean(false);
 	AtomicBoolean progressChangedAfterLocationChanged = new AtomicBoolean(false);
+	AtomicReference<String> browserTextOnCompletedEvent = new AtomicReference<>();
 
 	browser.addLocationListener(changedAdapter(event ->	locationChanged.set(true)));
 
 	browser.addProgressListener(completedAdapter(event -> {
+		browserTextOnCompletedEvent.set(browser.getText());
 		if (locationChanged.get()) {
 			progressChangedAfterLocationChanged.set(true);
 		}
@@ -671,16 +660,17 @@ public void test_LocationListener_then_ProgressListener() {
 	String errorMsg = "\nUnexpected listener states. Expecting true for all, but have:\n"
 			+ "Location changed: " + locationChanged.get() + "\n"
 			+ "ProgressChangedAfterLocationChanged: " + progressChangedAfterLocationChanged.get() + "\n"
-			+ "progressChanged: " + progressChanged.get();
-
-	assertTrue(errorMsg, progressChangedAfterLocationChanged.get());
+			+ "progressChanged: " + progressChanged.get() + "\n"
+			+ "browser text on completed event: " + browserTextOnCompletedEvent.get() + "\n"
+			+ "browser text after waitForPassCondition: " + browser.getText();
+	assertTrue(progressChangedAfterLocationChanged.get(), errorMsg);
 }
 
 @Test
 /**
- * "event.doit = false" in Location.changing() should stop 'Loction.changed & progress.completed' from getting fired.
+ * "event.doit = false" in Location.changing() should stop 'Location.changed & progress.completed' from getting fired.
  */
-public void test_LocationListener_ProgressListener_cancledLoad () {
+public void test_LocationListener_ProgressListener_canceledLoad () {
 
 	AtomicBoolean locationChanging = new AtomicBoolean(false);
 	AtomicBoolean unexpectedLocationChanged = new AtomicBoolean(false);
@@ -733,7 +723,7 @@ public void test_LocationListener_ProgressListener_cancledLoad () {
 			+ "ProgressChanged unexpectedly (should be false): " + unexpectedProgressCompleted.get() + (unexpectedProgressCompleted.get() ? " (" +unexpectedProgressCompletedDetails.get() +")": "")+ "\n";
 
 
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 
 	/* FOOTNOTE 1
 	 *
@@ -756,12 +746,12 @@ public void test_LocationListener_LocationListener_ordered_changing () {
 	browser.setText("You should not see this message.");
 	String url = getValidUrl();
 	browser.setUrl(url);
-	assertTrue("Change of locations do not fire in order: " + locations.toString(), waitForPassCondition(() -> locations.size() == 2));
-	assertTrue("Change of locations do not fire in order", locations.get(0).equals("about:blank") && locations.get(1).contains("testWebsiteWithTitle.html"));
+	assertTrue(waitForPassCondition(() -> locations.size() == 2));
+	assertTrue(locations.get(0).equals("about:blank") && locations.get(1).contains("testWebsiteWithTitle.html"));
 }
 
-@ClassRule
-public static TemporaryFolder tempFolder = new TemporaryFolder();
+@TempDir
+static Path tempFolder;
 
 private String getValidUrl() {
 	return SwtTestUtil.getPath("testWebsiteWithTitle.html", tempFolder).toUri().toString();
@@ -790,7 +780,7 @@ public void test_LocationListener_ProgressListener_noExtraEvents() {
 			+ "\nExpected one of each, but received:"
 			+ "\nChanged count: " + changedCount.get()
 			+ "\nCompleted count: " + completedCount.get();
-	assertTrue(errorMsg, passed);
+	assertTrue(passed, errorMsg);
 }
 
 @Test
@@ -819,13 +809,14 @@ public void test_OpenWindowListener_addAndRemove() {
 	for (int i = 0; i < 100; i++) browser.removeOpenWindowListener(listener);
 }
 
+@Tag("gtk4-todo")
 @Test
 public void test_OpenWindowListener_openHasValidEventDetails() {
 	AtomicBoolean openFiredCorrectly = new AtomicBoolean(false);
 	browser.addOpenWindowListener(event -> {
 		final Browser browserChild = createBrowser(shell, swtBrowserSettings);
-		assertSame("Expected Browser1 instance, but have another instance", browser, event.widget);
-		assertNull("Expected event.browser to be null", event.browser);
+		assertSame(browser, event.widget);
+		assertNull(event.browser);
 		openFiredCorrectly.set(true);
 		event.browser = browserChild;
 	});
@@ -837,10 +828,11 @@ public void test_OpenWindowListener_openHasValidEventDetails() {
 			""");
 
 	boolean passed = waitForPassCondition(openFiredCorrectly::get);
-	assertTrue("Test timed out. OpenWindow event not fired.", passed);
+	assertTrue(passed);
 }
 
 /** Test that a script 'window.open()' opens a child popup shell. */
+@Tag("gtk4-todo")
 @Test
 public void test_OpenWindowListener_open_ChildPopup() {
 	AtomicBoolean childCompleted = new AtomicBoolean(false);
@@ -874,10 +866,11 @@ public void test_OpenWindowListener_open_ChildPopup() {
 	boolean passed = waitForPassCondition(childCompleted::get);
 
 	String errMsg = "Test timed out.";
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 }
 
 /** Validate event order : Child's visibility should come before progress completed event */
+@Tag("gtk4-todo")
 @Test
 public void test_OpenWindow_Progress_Listener_ValidateEventOrder() {
 
@@ -923,10 +916,9 @@ public void test_OpenWindow_Progress_Listener_ValidateEventOrder() {
 			+"\nExpected true for the below, but have:"
 			+"\nVisibilityShowed:" + visibilityShowed.get()
 			+"\nChildCompleted:" + childCompleted.get();
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 
-	assertEquals("Child Visibility.show should have fired before progress completed",
-			List.of("Visibility.show", "Progress.completed"), List.copyOf(eventOrder));
+	assertEquals(List.of("Visibility.show", "Progress.completed"), List.copyOf(eventOrder));
 }
 
 @Test
@@ -986,6 +978,7 @@ public void test_ProgressListener_addAndRemove() {
 @Test
 public void test_ProgressListener_completed_Called() {
 	AtomicBoolean childCompleted = new AtomicBoolean(false);
+	AtomicReference<String> browserTextOnChangedEvent = new AtomicReference<>();
 	ProgressListener l = new ProgressListener() {
 
 		@Override
@@ -995,14 +988,16 @@ public void test_ProgressListener_completed_Called() {
 
 		@Override
 		public void changed(ProgressEvent event) {
-
+			browserTextOnChangedEvent.set(browser.getText());
 		}
 	};
 	browser.addProgressListener(l);
 	browser.setText("<html><body>This test ensures that the completed listener is called.</body></html>");
 	shell.open();
 	boolean passed = waitForPassCondition(childCompleted::get);
-	assertTrue(passed);
+	String errorMsg = "Browser text before completed: " + browserTextOnChangedEvent.get() +
+					"\nBrowser text after completed: " + browser.getText();
+	assertTrue(passed, errorMsg);
 }
 
 @Test
@@ -1028,7 +1023,7 @@ public void test_StatusTextListener_addAndRemove() {
  * Logic:
  * 1) Create a page that has a hyper link (covering the whole page)
  * 2) Move shell to top left corner
- * 3) Upon compleation of page load, move cursor across whole shell.
+ * 3) Upon completion of page load, move cursor across whole shell.
  *    (Note, in current jUnit, browser sometimes only takes up half the shell).
  * 4) StatusTextListener should get triggered. Test passes.
  * 5) Else timeout and fail.
@@ -1043,8 +1038,9 @@ public void test_StatusTextListener_addAndRemove() {
  * over the hyperlink (newer Webkit2+) browser.
  */
 @Test
+@Tag("gtk4-todo")
 public void test_StatusTextListener_hoverMouseOverLink() {
-	assumeFalse("no API in Edge for this", isEdge);
+	assumeFalse(isEdge, "no API in Edge for this");
 
 	AtomicBoolean statusChanged = new AtomicBoolean(false);
 	int size = 500;
@@ -1083,7 +1079,7 @@ public void test_StatusTextListener_hoverMouseOverLink() {
 	shell.open();
 	boolean passed = waitForPassCondition(statusChanged::get);
 	String msg = "Mouse movement over text was suppose to trigger StatusTextListener. But it didn't";
-	assertTrue(msg, passed);
+	assertTrue(passed, msg);
 }
 
 @Test
@@ -1121,7 +1117,7 @@ public void test_TitleListener_event() {
 	shell.open();
 	boolean passed = waitForPassCondition(titleListenerFired::get);
 	String errMsg = "Title listener never fired. Test timed out.";
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 }
 
 @Test
@@ -1130,7 +1126,7 @@ public void test_setText() {
 	Runnable browserSetFunc = () -> {
 		String html = "<html><title>Website Title</title><body>Html page with custom title</body></html>";
 		boolean opSuccess = browser.setText(html);
-		assertTrue("Expecting setText() to return true", opSuccess);
+		assertTrue(opSuccess);
 	};
 	validateTitleChanged(expectedTitle, browserSetFunc);
 }
@@ -1141,7 +1137,6 @@ public void test_setText() {
  */
 @Test
 public void test_setTextContainingScript_applicationLayerProgressListenerMustSeeUpToDateDom() {
-	assumeFalse("Toggling on Edge since I20250216-1800, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1843", isEdge);
 	AtomicBoolean completed = new AtomicBoolean();
 	browser.addProgressListener(ProgressListener.completedAdapter(event -> {
 		String script = """
@@ -1162,28 +1157,27 @@ public void test_setTextContainingScript_applicationLayerProgressListenerMustSee
 	browser.setText("""
 			<html>
 				<head>
-					<script src=\"file:///does/not/really/needs/to/exist.js\"></script>
+					<script>console.log("test");</script>
 				</head>
 				<body>
 					<h1>Hello, World!</h1>
 				</body>
 			</html>
 			""");
-	assertTrue("progress completion not reported", waitForPassCondition(completed::get));
-	assertTrue("title not set", waitForPassCondition(() -> title.get() != null));
-	assertTrue(
-			"unexpected title: " + title.get(), waitForPassCondition(() -> title.get().contains("ProgressListener: Found 1 h1 tag(s)")));
+	assertTrue(waitForPassCondition(completed::get));
+	assertTrue(waitForPassCondition(() -> title.get() != null));
+	assertTrue(waitForPassCondition(() -> title.get().contains("ProgressListener: Found 1 h1 tag(s)")));
 }
 
 @Test
 public void test_setUrl_local() {
-	assumeFalse("Test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/722", SwtTestUtil.isCocoa);
+	assumeFalse(SwtTestUtil.isCocoa, "Test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/722");
 	String expectedTitle = "Website Title";
 	Runnable browserSetFunc = () -> {
 		String url = getValidUrl();
 		testLogAppend("URL: " + url);
 		boolean opSuccess = browser.setUrl(url);
-		assertTrue("Expecting setUrl() to return true" + testLog.toString(), opSuccess);
+		assertTrue(opSuccess);
 	};
 	validateTitleChanged(expectedTitle, browserSetFunc);
 }
@@ -1191,7 +1185,7 @@ public void test_setUrl_local() {
 /** This test requires working Internet connection */
 @Test
 public void test_setUrl_remote() {
-	assumeFalse("Test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/722", SwtTestUtil.isCocoa);
+	assumeFalse(SwtTestUtil.isCocoa, "Test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/722");
 
 	// This test sometimes times out if build server has a bad connection. Thus for this test we have a longer timeout.
 	secondsToWaitTillFail = 35;
@@ -1199,14 +1193,14 @@ public void test_setUrl_remote() {
 	String url = "https://example.com"; // example.com loads very quickly and conveniently has a consistent title
 
 	// Skip this test if we don't have a working Internet connection.
-	assumeTrue("Skipping test due to bad internet connection", checkInternet(url));
+	assumeTrue(checkInternet(url), "Skipping test due to bad internet connection");
 	testLog.append("checkInternet() passed");
 
 	String expectedTitle = "Example Domain";
 	Runnable browserSetFunc = () -> {
 		testLog.append("Setting Browser url to:" + url);
 		boolean opSuccess = browser.setUrl(url);
-		assertTrue("Expecting setUrl() to return true", opSuccess);
+		assertTrue(opSuccess);
 	};
 	validateTitleChanged(expectedTitle, browserSetFunc);
 }
@@ -1220,7 +1214,7 @@ public void test_setUrl_remote_with_post() {
 	String url = "https://bugs.eclipse.org/bugs/buglist.cgi";
 
 	// Skip this test if we don't have a working Internet connection.
-	assumeTrue("Skipping test due to bad internet connection", checkInternet(url));
+	assumeTrue(checkInternet(url), "Skipping test due to bad internet connection");
 	testLog.append("checkInternet() passed");
 
 	Runnable browserSetFunc = () -> {
@@ -1228,7 +1222,7 @@ public void test_setUrl_remote_with_post() {
 		boolean opSuccess = browser.setUrl(
 				url, "bug_severity=enhancement&bug_status=NEW&email1=rgrunber&emailassigned_to1=1&emailtype1=substring",
 				null);
-		assertTrue("Expecting setUrl() to return true", opSuccess);
+		assertTrue(opSuccess);
 	};
 
 	final AtomicReference<Boolean> completed = new AtomicReference<>(false);
@@ -1240,26 +1234,26 @@ public void test_setUrl_remote_with_post() {
 	shell.open();
 
 	boolean hasFinished = waitForPassCondition(() -> completed.get().booleanValue());
-	assertTrue("Test timed out. ProgressListener not fired " + testLog.toString(), hasFinished);
+	assertTrue(hasFinished);
 
 	// Even a successful empty query returns about 10000 chars of HTML
 	int numChars = browser.getText().length();
-	assertTrue("Response data contained " + numChars + " chars.", numChars > 10000);
+	assertTrue(numChars > 10000);
 }
 
 private void validateTitleChanged(String expectedTitle, Runnable browserSetFunc) {
 	final AtomicReference<String> actualTitle = new AtomicReference<>("");
 	browser.addTitleListener(event ->  {
 		testLog.append("TitleListener fired");
-		assertNotNull("event title is empty" + testLog.toString(), event.title);
+		assertNotNull(event.title);
 		actualTitle.set(event.title);
 	});
 	browserSetFunc.run();
 	shell.open();
 
 	waitForPassCondition(() -> actualTitle.get().equals(expectedTitle));
-	assertTrue("Test timed out. TitleListener not fired", actualTitle.get().length() != 0);
-	assertEquals(testLog.toString(), expectedTitle, actualTitle.get());
+	assertTrue(actualTitle.get().length() != 0);
+	assertEquals(expectedTitle, actualTitle.get());
 }
 
 @Test
@@ -1317,6 +1311,7 @@ public void test_VisibilityWindowListener_addAndRemove() {
 }
 
 /** Verify that if multiple child shells are open, no duplicate visibility events are sent. */
+@Tag("gtk4-todo")
 @Test
 public void test_VisibilityWindowListener_multiple_shells() {
 		AtomicBoolean secondChildCompleted = new AtomicBoolean(false);
@@ -1370,13 +1365,14 @@ public void test_VisibilityWindowListener_multiple_shells() {
 		boolean passed = waitForPassCondition(secondChildCompleted::get);
 
 		String errMsg = "\nTest timed out.";
-		assertTrue(errMsg, passed);
+		assertTrue(passed, errMsg);
 }
 
 /**
  *  Validate that when javascript opens a new window and specifies size,
  *  it's size is passed to the visibility event correctly.
  */
+@Tag("gtk4-todo")
 @Test
 public void test_VisibilityWindowListener_eventSize() {
 
@@ -1425,7 +1421,7 @@ public void test_VisibilityWindowListener_eventSize() {
 			+ "\nexpected width=300, actual:" + result.get().x
 			+ "\nexpected height=100, actual:" + result.get().y
 			: "test timed out. Child's visibility Window listener didn't trigger";
-	assertTrue(errMsg + testLog.toString(), passed);
+	assertTrue(passed, errMsg);
 }
 
 @Override
@@ -1463,7 +1459,7 @@ public void test_setUrlWithNullArg() {
 /**
  * Logic:
  * - Load a page. Turn off javascript (which takes effect on next pageload)
- * - Load a second page. Try to execute some javascript. If javascript is exectuted then fail.
+ * - Load a second page. Try to execute some javascript. If javascript is executed then fail.
  */
 @Test
 public void test_setJavascriptEnabled() {
@@ -1483,8 +1479,7 @@ public void test_setJavascriptEnabled() {
 			} catch (Exception e) {
 				fail("1) if javascript is disabled, browser.evaluate() should return null. But an Exception was thrown");
 			}
-			assertNull("2) Javascript should not have executed. But not-null was returned:" + expectedNull,
-					expectedNull);
+			assertNull(expectedNull);
 
 			testPassed.set(true);
 			testFinished.set(true);
@@ -1495,7 +1490,7 @@ public void test_setJavascriptEnabled() {
 	browser.setText("First page with javascript enabled. This should not be visible as a second page should load");
 
 	waitForPassCondition(testFinished::get);
-	assertTrue("3) Javascript was executed on the second page. But it shouldn't have", testPassed.get());
+	assertTrue(testPassed.get());
 }
 
 /** Check that if there are two browser instances, turning off JS in one instance doesn't turn off JS in the other instance. */
@@ -1524,7 +1519,7 @@ public void test_setJavascriptEnabled_multipleInstances() {
 			pageLoadCount.set(3);
 
 			Boolean shouldBeNull = (Boolean) browser.evaluate("return true");
-			assertNull("1) Evaluate execution should be null, but 'true was returned'", shouldBeNull);
+			assertNull(shouldBeNull);
 			instanceOneFinishedCorrectly.set(true);
 		}
 	}));
@@ -1536,8 +1531,7 @@ public void test_setJavascriptEnabled_multipleInstances() {
 				pageLoadCountSecondInstance.set(3);
 
 				Boolean shouldBeTrue = (Boolean) browserSecondInsance.evaluate("return true");
-				assertTrue("2) Javascript should be executable in second instance (as javascript was not turned off), but it was not. "
-						+ "Expected:'someStr', Actual:"+shouldBeTrue, shouldBeTrue);
+				assertTrue(shouldBeTrue);
 				instanceTwoFinishedCorrectly.set(true);
 			}
 		}
@@ -1554,7 +1548,7 @@ public void test_setJavascriptEnabled_multipleInstances() {
 			"InstanceTwoFinishedCorrectly: " + instanceTwoFinishedCorrectly.get() + "\n" +
 			"Instance 1 & 2 page counts: " + pageLoadCount.get() + " & " + pageLoadCountSecondInstance.get();
 
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -1612,7 +1606,7 @@ public void test_LocationListener_evaluateInCallback() {
 		// Further, only 'changing' is fired if evaluation is invoked inside listeners.
 		passed = changingFinished.get();
 	}
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 }
 
 /** Verify that evaluation works inside an OpenWindowListener */
@@ -1631,7 +1625,7 @@ public void test_OpenWindowListener_evaluateInCallback() {
 	try { evaluated = (Boolean) browser.evaluate("return SWTopenListener"); } catch (SWTException e) {}
 	boolean passed = fired && evaluated;
 	String errMsg = "Event fired:" + fired + "   evaluated:" + evaluated;
-	assertTrue(errMsg, passed);
+	assertTrue(passed, errMsg);
 }
 
 /**
@@ -1753,7 +1747,7 @@ public void test_getText_html() {
  * https://github.com/eclipse-platform/eclipse.platform.swt/issues/2029
  */
 @Test
-public void test_getText_javscriptDisabled() {
+public void test_getText_javascriptDisabled() {
 	browser.setJavascriptEnabled(false);
 	String testString = "<html><head></head><body>hello<b>World</b></body></html>";
 	getText_helper(testString, testString);
@@ -1806,12 +1800,12 @@ private void getText_helper(String testString, String expectedOutput) {
 	}));
 	shell.open();
 	waitForPassCondition(finished::get);
-	String error_msg = finished.get() ?
+	String errMsg = finished.get() ?
 			"Test did not return correct string.\n"
 			+ "Expected:"+testString+"\n"
 			+ "Actual:"+returnString.get()
 			: "Test timed out";
-	assertEquals(error_msg, normalizeHtmlString(expectedOutput), normalizeHtmlString(returnString.get()));
+	assertEquals(normalizeHtmlString(expectedOutput), normalizeHtmlString(returnString.get()), errMsg);
 }
 
 private String normalizeHtmlString(String htmlString) {
@@ -1857,7 +1851,7 @@ public void test_execute_and_closeListener () {
 		disposedIntentionally = true;
 	String message = "Either browser.execute() did not work (if you still see the html page) or closeListener Was not triggered if "
 			+ "browser looks disposed, but test still fails.";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -1879,7 +1873,7 @@ public void test_evaluate_string() {
 	browser.setText("<html><body><p id='myid'>HelloWorld</p></body></html>");
 	shell.open();
 	boolean passed = waitForPassCondition(()-> "HelloWorld".equals(returnValue.get()));
-	assertTrue("Evaluation did not return a value. Or test timed out.", passed);
+	assertTrue(passed);
 }
 
 // Test where the script has the 'return' not in the beginning,
@@ -1894,7 +1888,7 @@ public void test_evaluate_returnMoved() {
 	browser.setText("test text");
 	shell.open();
 	boolean passed = waitForPassCondition(()-> "hello".equals(returnValue.get()));
-	assertTrue("Evaluation did not return a value. Or test timed out.", passed);
+	assertTrue(passed);
 }
 
 /**
@@ -1904,8 +1898,7 @@ public void test_evaluate_returnMoved() {
 @Test
 public void test_evaluate_number_normal() {
 	Double testNum = 123.0;
-	assertTrue("Failed to evaluate number: " + testNum.toString(),
-			evaluate_number_helper(testNum));
+	assertTrue(evaluate_number_helper(testNum));
 }
 
 /**
@@ -1915,8 +1908,7 @@ public void test_evaluate_number_normal() {
 @Test
 public void test_evaluate_number_negative() {
 	Double testNum = -123.0;
-	assertTrue("Failed to evaluate number: " + testNum.toString(),
-			evaluate_number_helper(testNum));
+	assertTrue(evaluate_number_helper(testNum));
 }
 
 /**
@@ -1926,8 +1918,7 @@ public void test_evaluate_number_negative() {
 @Test
 public void test_evaluate_number_big() {
 	Double testNum = 10000000000.0;
-	assertTrue("Failed to evaluate number: " + testNum.toString(),
-			evaluate_number_helper(testNum));
+	assertTrue(evaluate_number_helper(testNum));
 }
 
 boolean evaluate_number_helper(Double testNum) {
@@ -1962,7 +1953,7 @@ public void test_evaluate_boolean() {
 	browser.setText("<html><body>HelloWorld</body></html>");
 	shell.open();
 	boolean passed = waitForPassCondition(atomicBoolean::get);
-	assertTrue("Evaluation did not return a boolean. Or test timed out.", passed);
+	assertTrue(passed);
 }
 
 /**
@@ -1971,7 +1962,7 @@ public void test_evaluate_boolean() {
  */
 @Test
 public void test_evaluate_null() {
-	// Boolen only used as dummy placeholder so the object is not null.
+	// Boolean only used as dummy placeholder so the object is not null.
 	final AtomicReference<Object> returnValue = new AtomicReference<>(true);
 	browser.addProgressListener(completedAdapter(event -> {
 		returnValue.set(false);
@@ -1984,7 +1975,7 @@ public void test_evaluate_null() {
 	browser.setText("<html><body>HelloWorld</body></html>");
 	shell.open();
 	boolean passed = waitForPassCondition(() -> returnValue.get() == null);
-	assertTrue("Evaluate did not return a null (current value: " + returnValue.get() + "). Timed out.", passed);
+	assertTrue(passed);
 }
 
 /**
@@ -2029,7 +2020,7 @@ public void test_evaluate_invalid_return_value() {
 				+ " Expected ERROR_INVALID_RETURN_VALUE but got ERROR_FAILED_EVALUATE");
 	}
 	String message = exception.get() == -1 ? "Exception was not thrown. Test timed out" : "Exception thrown, but wrong code: " + exception.get();
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2062,7 +2053,7 @@ public void test_evaluate_evaluation_failed_exception() {
 	});
 	String message = "".equals(additionalErrorInfo.get()) ? "Javascript did not throw an error. Test timed out" :
 		"Javascript threw an error, but not the right one." + additionalErrorInfo.get();
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2101,7 +2092,7 @@ public void test_evaluate_array_numbers() {
 	});
 	String message = "".equals(additionalErrorInfo.get()) ? "Javascript did not call java" :
 				"Javascript called java, but passed wrong values: " + additionalErrorInfo.get();
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2140,7 +2131,7 @@ public void test_evaluate_array_strings () {
 			"Expected an array of strings, but did not receive array or got the wrong result."
 			: "Received a callback from javascript, but: " + additionalErrorInfo.get() +
 			" : " + atomicStringArray.toString();
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2177,7 +2168,7 @@ public void test_evaluate_array_mixedTypes () {
 	});
 	String message = "".equals(additionalErrorInfo.get()) ? "Javascript did not call java" :
 					"Javascript called java but passed wrong values: " + atomicArray.toString();
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2249,7 +2240,7 @@ public void test_BrowserFunction_callback () {
 	shell.open();
 	boolean passed = waitForPassCondition(javaCallbackExecuted::get);
 	String message = "Java failed to get a callback from javascript. Test timed out";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2261,7 +2252,7 @@ public void test_BrowserFunction_callback () {
  */
 @Test
 public void test_BrowserFunction_callback_stackedCalls() {
-	assumeFalse("Not currently working on Linux, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/2021", SwtTestUtil.isGTK);
+	assumeFalse(SwtTestUtil.isGTK, "Not currently working on Linux, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/2021");
 	AtomicInteger javaCallbackExecuted = new AtomicInteger();
 	final int DEPTH = 5;
 
@@ -2304,7 +2295,7 @@ public void test_BrowserFunction_callback_stackedCalls() {
 	shell.open();
 	boolean passed = waitForPassCondition(() -> javaCallbackExecuted.get() == DEPTH);
 	String message = "Java failed to get a callback from javascript. Test timed out";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 /**
@@ -2350,7 +2341,7 @@ public void test_BrowserFunction_callback_with_integer () {
 	shell.open();
 	boolean passed = waitForPassCondition(() -> returnInt.get() == 5);
 	String message = "Javascript should have passed an integer to Java, but this did not happen.";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -2397,7 +2388,7 @@ public void test_BrowserFunction_callback_with_boolean () {
 	shell.open();
 	boolean passed = waitForPassCondition(javaCallbackExecuted::get);
 	String message = "Javascript did not pass a boolean back to Java.";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -2444,7 +2435,7 @@ public void test_BrowserFunction_callback_with_String () {
 	boolean passed = waitForPassCondition(() -> "hellojava".equals(returnValue.get()));
 	String message = "Javascript was suppose to call java with a String, " +
 				"but it seems Java did not receive the call or an incorrect value was passed.";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -2507,7 +2498,7 @@ public void test_BrowserFunction_callback_with_multipleValues () {
 	//Screenshots.takeScreenshot(getClass(), "test_BrowserFunction_callback_with_multipleValues__AfterWaiting");
 
 	String msg = "Values not set. Test timed out. Array should be [\"hellojava\", 5, true], but is: " + atomicArray.toString();
-	assertTrue(msg, passed);
+	assertTrue(passed, msg);
 }
 
 
@@ -2577,7 +2568,7 @@ public void test_BrowserFunction_callback_with_javaReturningInt () {
 	shell.open();
 	boolean passed = waitForPassCondition(() -> returnInt.get() == 42);
 	String message = "Java should have returned something back to Javascript. But something went wrong";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -2631,7 +2622,7 @@ public void test_BrowserFunction_callback_with_javaReturningString () {
 	shell.open();
 	boolean passed = waitForPassCondition(() -> testString.equals(returnString.get()));
 	String message = "Java should have returned something back to Javascript. But something went wrong";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 
@@ -2680,7 +2671,7 @@ public void test_BrowserFunction_callback_afterPageReload() {
 	shell.open();
 	boolean passed = waitForPassCondition(javaCallbackExecuted::get);
 	String message = "A Javascript callback should work after a page has been reloaded, but something went wrong.";
-	assertTrue(message, passed);
+	assertTrue(passed, message);
 }
 
 @Test
@@ -2725,10 +2716,10 @@ public void test_BrowserFunction_multiprocess() {
 }
 
 @Test
-@Ignore("Too fragile on CI, Display.getDefault().post(event) does not work reliably")
+@Disabled("Too fragile on CI, Display.getDefault().post(event) does not work reliably")
 public void test_TabTraversalOutOfBrowser() {
-	assumeFalse("Not currently working on macOS, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1644", SwtTestUtil.isCocoa);
-	assumeFalse("Not currently working on Linux, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1644", SwtTestUtil.isGTK);
+	assumeFalse(SwtTestUtil.isCocoa, "Not currently working on macOS, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1644");
+	assumeFalse(SwtTestUtil.isGTK, "Not currently working on Linux, see https://github.com/eclipse-platform/eclipse.platform.swt/issues/1644");
 
 	Text text = new Text(shell, SWT.NONE);
 
@@ -2741,7 +2732,7 @@ public void test_TabTraversalOutOfBrowser() {
 	AtomicBoolean changedFired = new AtomicBoolean(false);
 	browser.addLocationListener(changedAdapter(e ->	changedFired.set(true)));
 	browser.setText("Hello world");
-	assertTrue("LocationListener.changed() event was never fired", waitForPassCondition(changedFired::get));
+	assertTrue(waitForPassCondition(changedFired::get));
 
 	// browser should have focus
 	assertTrue(browser.isFocusControl());
@@ -2758,7 +2749,7 @@ public void test_TabTraversalOutOfBrowser() {
 	Display.getDefault().post(event);
 
 	// focus should move to Text
-	assertTrue("Text did not gain focus", waitForPassCondition(textGainedFocus::get));
+	assertTrue(waitForPassCondition(textGainedFocus::get));
 	assertFalse(browser.isFocusControl());
 	assertTrue(text.isFocusControl());
 }

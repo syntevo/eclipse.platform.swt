@@ -129,6 +129,11 @@ public class GTK4 {
 	 * @param chars cast=(int)
 	 */
 	public static final native void gtk_editable_set_max_width_chars(long editable, int chars);
+	/**
+	 * @param editable cast=(GtkEditable *)
+	 * @param text cast=(const gchar *)
+	 */
+	public static final native void gtk_editable_set_text(long editable, byte[] text);
 
 	/* GtkPicture */
 	public static final native long gtk_picture_new();
@@ -196,17 +201,25 @@ public class GTK4 {
 	public static final native long gdk_content_formats_builder_free_to_formats(long builder);
 
 	/* GtkFileChooser */
-	/** @param chooser cast=(GtkFileChooser *) */
+	/**
+	 * @method flags=ignore_deprecations
+	 * @param chooser cast=(GtkFileChooser *)
+	 */
 	public static final native long gtk_file_chooser_get_files(long chooser);
-	/** @param chooser cast=(GtkFileChooser *) */
+	/**
+	 * @method flags=ignore_deprecations
+	 * @param chooser cast=(GtkFileChooser *)
+	 */
 	public static final native long gtk_file_chooser_get_file(long chooser);
 	/**
+	 * @method flags=ignore_deprecations
 	 * @param chooser cast=(GtkFileChooser *)
 	 * @param file cast=(GFile *)
 	 * @param error cast=(GError **)
 	 */
 	public static final native boolean gtk_file_chooser_set_current_folder(long chooser, long file, long error);
 	/**
+	 * @method flags=ignore_deprecations
 	 * @param chooser cast=(GtkFileChooser *)
 	 * @param file cast=(GFile *)
 	 * @param error cast=(GError **)
@@ -440,6 +453,7 @@ public class GTK4 {
 	public static final native void gtk_window_set_child(long window, long child);
 	/** @param window cast=(GtkWindow *) */
 	public static final native void gtk_window_destroy(long window);
+
 	/** @param window cast=(GtkWindow *) */
 	public static final native long gtk_window_get_icon_name(long window);
 	/**
@@ -449,6 +463,9 @@ public class GTK4 {
 	public static final native void gtk_window_set_icon_name(long window, long name);
 	/** @param window cast=(GtkWindow *) */
 	public static final native long gtk_window_get_titlebar(long window);
+
+	/** @param window cast=(GtkWindow *) */
+	public static final native void gtk_window_present(long window) ;
 
 	/* GtkShortcutController */
 	public static final native long gtk_shortcut_controller_new();
@@ -668,6 +685,18 @@ public class GTK4 {
 	/** @param widget cast=(GtkWidget *) */
 	public static final native long gtk_widget_get_clipboard(long widget);
 	/**
+	 * @param widget cast=(GtkWidget*)
+	 * @param width cast=(int *)
+	 * @param height cast=(int *)
+	 */
+	public static final native void gtk_widget_get_size_request(long widget, int[] width, int[] height);
+	/**
+	 * @param widget cast=(GtkWidget*)
+	 * @param width cast=(int)
+	 * @param height cast=(int)
+	 */
+	public static final native void gtk_widget_set_size_request(long widget, int width, int height);
+	/**
 	 * @param widget cast=(GtkWidget *)
 	 * @param allocation cast=(GtkAllocation *),flags=no_out
 	 */
@@ -826,6 +855,55 @@ public class GTK4 {
 	 */
 	public static final native long gdk_clipboard_get_content(long clipboard);
 	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param type cast=(GType)
+	 * @param io_priority cast=(int)
+	 * @param cancellable cast=(GCancellable *)
+	 * @param callback cast=(GAsyncReadyCallback)
+	 * @param user_data cast=(gpointer)
+	 */
+	public static final native void gdk_clipboard_read_value_async(long clipboard, long type, int io_priority, long cancellable, long callback, long user_data);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param result cast=(GAsyncResult *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native long gdk_clipboard_read_value_finish(long clipboard, long result, long[] error);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param mime_types cast=(const char **)
+	 * @param io_priority cast=(int)
+	 * @param cancellable cast=(GCancellable *)
+	 * @param callback cast=(GAsyncReadyCallback)
+	 * @param user_data cast=(gpointer)
+	 */
+	public static final native void gdk_clipboard_read_async(long clipboard, String[] mime_types, int io_priority, long cancellable, long callback, long user_data);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param result cast=(GAsyncResult *)
+	 * @param out_mime_type cast=(const char**)
+	 * @param error cast=(GError **)
+	 */
+	public static final native long gdk_clipboard_read_finish(long clipboard, long result, long[] out_mime_type, long[] error);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 */
+	public static final native boolean gdk_clipboard_is_local(long clipboard);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param io_priority cast=(int)
+	 * @param cancellable cast=(GCancellable *)
+	 * @param callback cast=(GAsyncReadyCallback)
+	 * @param user_data cast=(gpointer)
+	 */
+	public static final native void gdk_clipboard_store_async(long clipboard, int io_priority, long cancellable, long callback, long user_data);
+	/**
+	 * @param clipboard cast=(GdkClipboard*)
+	 * @param result cast=(GAsyncResult *)
+	 * @param error cast=(GError **)
+	 */
+	public static final native boolean gdk_clipboard_store_finish(long clipboard, long result, long[] error);
+	/**
 	 * @param provider cast=(GdkContentProvider *)
 	 * @param value cast=(GValue *)
 	 * @param error cast=(GError **)
@@ -851,6 +929,122 @@ public class GTK4 {
 	 * @param n_gtypes cast=(gsize *)
 	 */
 	public static final native long gdk_content_formats_get_gtypes(long formats, long[] n_gtypes);
+	/**
+	 * @param formats cast=(GdkContentFormats *)
+	 * @param n_mime_types cast=(gsize *)
+	 */
+	public static final native long gdk_content_formats_get_mime_types(long formats, long[] n_mime_types);
+	/**
+	 * @param type cast=(GType)
+	 * @param mime_type cast=(const char*)
+	 * @param serialize cast=(GdkContentSerializeFunc)
+	 * @param data cast=(gpointer)
+	 * @param notify cast=(GDestroyNotify)
+	 */
+	public static final native void gdk_content_register_serializer(long type, String mime_type, long serialize, long data, long notify);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_cancellable(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_gtype(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_mime_type(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_output_stream(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native int gdk_content_serializer_get_priority(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_task_data(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_user_data(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native long gdk_content_serializer_get_value(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 * @param error cast=(GError*)
+	 */
+	public static final native void gdk_content_serializer_return_error(long serializer, long error);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 */
+	public static final native void gdk_content_serializer_return_success(long serializer);
+	/**
+	 * @param serializer cast=(GdkContentSerializer*)
+	 * @param data cast=(gpointer)
+	 * @param notify cast=(GDestroyNotify)
+	 */
+	public static final native void gdk_content_serializer_set_task_data(long serializer, long data, long notify);
+	/**
+	 * @param mime_type cast=(const char*)
+	 * @param type cast=(GType)
+	 * @param deserialize cast=(GdkContentDeserializeFunc)
+	 * @param data cast=(gpointer)
+	 * @param notify cast=(GDestroyNotify)
+	 */
+	public static final native void gdk_content_register_deserializer(String mime_type, long type, long deserialize, long data, long notify);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_cancellable(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_gtype(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_input_stream(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_mime_type(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native int gdk_content_deserializer_get_priority(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_task_data(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_user_data(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native long gdk_content_deserializer_get_value(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 * @param error cast=(GError*)
+	 */
+	public static final native void gdk_content_deserializer_return_error(long deserializer, long error);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 */
+	public static final native void gdk_content_deserializer_return_success(long deserializer);
+	/**
+	 * @param deserializer cast=(GdkContentDeserializer*)
+	 * @param data cast=(gpointer)
+	 * @param notify cast=(GDestroyNotify)
+	 */
+	public static final native void gdk_content_deserializer_set_task_data(long deserializer, long data, long notify);
+
 
 	public static final native long gtk_gesture_rotate_new();
 

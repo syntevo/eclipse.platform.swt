@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,10 +13,10 @@
  *******************************************************************************/
 package org.eclipse.swt.tests.junit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,26 +24,26 @@ import java.io.InputStream;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Widget;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.widgets.Item
  *
  * @see org.eclipse.swt.widgets.Item
  */
-public class Test_org_eclipse_swt_widgets_Item extends Test_org_eclipse_swt_widgets_Widget {
+public abstract class Test_org_eclipse_swt_widgets_Item extends Test_org_eclipse_swt_widgets_Widget {
 
 @Override
-@Before
+@BeforeEach
 public void setUp() {
 	super.setUp();
 	loadImages();
 }
 
 @Override
-@After
+@AfterEach
 public void tearDown() {
 	super.tearDown();
 	freeImages();
@@ -63,15 +63,10 @@ public void test_setImageLorg_eclipse_swt_graphics_Image() {
 public void test_setTextLjava_lang_String() {
 	String testStr = "test string";
 	item.setText(testStr);
-	assertEquals("a", testStr, item.getText());
+	assertEquals(testStr, item.getText());
 	item.setText("");
-	assertTrue("b", item.getText().isEmpty());
-	try {
-		item.setText(null);
-		fail("No exception thrown for string == null");
-	}
-	catch (IllegalArgumentException e) {
-	}
+	assertTrue(item.getText().isEmpty());
+	assertThrows(IllegalArgumentException.class, () -> item.setText(null));
 }
 
 /* custom */

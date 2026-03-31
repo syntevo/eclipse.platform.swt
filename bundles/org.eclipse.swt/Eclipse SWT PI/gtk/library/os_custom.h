@@ -60,6 +60,7 @@
 #define FcConfigAppFontAddFile_LIB LIB_FONTCONFIG
 #define pango_attr_insert_hyphens_new_LIB LIB_PANGO
 #define g_uri_parse_LIB LIB_GLIB
+#define g_uri_unref_LIB LIB_GLIB
 
 /* Field accessors */
 #define G_OBJECT_CLASS_CONSTRUCTOR(arg0) (arg0)->constructor
@@ -186,5 +187,8 @@ jlong call_accessible_object_function (const char *method_name, const char *meth
 
 void swt_set_lock_functions();
 void swt_debug_on_fatal_warnings() ;
+
+char **swt_getArrayOfStringsUTF(JNIEnv *env, jobjectArray javaArray);
+void swt_releaseArrayOfStringsUTF(JNIEnv *env, jobjectArray javaArray, char **cStrings);
 
 #endif /* ORG_ECLIPSE_SWT_GTK_OS_CUSTOM_H (include guard, this should be the last line) */

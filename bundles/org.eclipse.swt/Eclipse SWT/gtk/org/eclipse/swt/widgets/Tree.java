@@ -276,6 +276,9 @@ static int checkStyle (int style) {
 long cellDataProc (long tree_column, long cell, long tree_model, long iter, long data) {
 	if (cell == ignoreCell) return 0;
 	TreeItem item = _getItem (iter);
+	if (item == null || item.isDisposed()) {
+		return 0;
+	}
 	if (item != null) OS.g_object_set_qdata (cell, Display.SWT_OBJECT_INDEX2, item.handle);
 	boolean isPixbuf = GTK.GTK_IS_CELL_RENDERER_PIXBUF (cell);
 	boolean isText = GTK.GTK_IS_CELL_RENDERER_TEXT (cell);
@@ -2316,14 +2319,9 @@ long gtk_row_activated (long tree, long path, long column) {
 }
 
 @Override
-long gtk_key_press_event (long widget, long event) {
+long gtk3_key_press_event (long widget, long event) {
 	int [] key = new int[1];
-
-	if (GTK.GTK4) {
-		key[0] = GDK.gdk_key_event_get_keyval(event);
-	} else {
-		GDK.gdk_event_get_keyval(event, key);
-	}
+	GDK.gdk_event_get_keyval(event, key);
 
 	switch (key[0]) {
 		case GDK.GDK_Return:
@@ -2338,7 +2336,7 @@ long gtk_key_press_event (long widget, long event) {
 			break;
 	}
 
-	return super.gtk_key_press_event (widget, event);
+	return super.gtk3_key_press_event (widget, event);
 }
 
 /**
@@ -2823,7 +2821,11 @@ void recreateRenderers () {
 	if (checkRenderer != 0) {
 		display.removeWidget (checkRenderer);
 		OS.g_object_unref (checkRenderer);
-		checkRenderer = isOwnerDrawn ? OS.g_object_new (display.gtk_cell_renderer_toggle_get_type(), 0) : GTK.gtk_cell_renderer_toggle_new ();
+		if (GTK.GTK4) {
+			checkRenderer = GTK.gtk_cell_renderer_toggle_new ();
+		} else {
+			checkRenderer = isOwnerDrawn ? OS.g_object_new (display.gtk_cell_renderer_toggle_get_type(), 0) : GTK.gtk_cell_renderer_toggle_new ();
+		}
 		if (checkRenderer == 0) error (SWT.ERROR_NO_HANDLES);
 		OS.g_object_ref (checkRenderer);
 		display.addWidget (checkRenderer, this);
@@ -3818,7 +3820,7 @@ public void setHeaderVisible (boolean show) {
  */
 public void setLinesVisible (boolean show) {
 	checkWidget();
-	//Note: this is overriden by the active theme in GTK3.
+	//Note: this is overridden by the active theme in GTK3.
 	GTK.gtk_tree_view_set_grid_lines (handle, show ? GTK.GTK_TREE_VIEW_GRID_LINES_VERTICAL : GTK.GTK_TREE_VIEW_GRID_LINES_NONE);
 }
 

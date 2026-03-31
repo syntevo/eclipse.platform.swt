@@ -110,7 +110,7 @@ public abstract class Widget {
 	/* The preferred size of a child has changed */
 	static final int LAYOUT_CHANGED = 1<<18;
 
-	/* A layout was requested in this widget hierachy */
+	/* A layout was requested in this widget hierarchy */
 	static final int LAYOUT_CHILD = 1<<19;
 
 	/* More global state flags */
@@ -950,7 +950,7 @@ long gtk_enter_notify_event (long widget, long event) {
 	return 0;
 }
 
-long gtk_event_after (long widget, long event) {
+long gtk3_event_after (long widget, long event) {
 	return 0;
 }
 
@@ -996,11 +996,11 @@ long gtk_insert_text (long widget, long new_text, long new_text_length, long pos
 	return 0;
 }
 
-long gtk_key_press_event (long widget, long event) {
+long gtk3_key_press_event (long widget, long event) {
 	return sendKeyEvent (SWT.KeyDown, event) ? 0 : 1;
 }
 
-long gtk_key_release_event (long widget, long event) {
+long gtk3_key_release_event (long widget, long event) {
 	return sendKeyEvent (SWT.KeyUp, event) ? 0 : 1;
 }
 
@@ -1061,7 +1061,7 @@ long gtk_populate_popup (long widget, long menu) {
 	return 0;
 }
 
-long gtk_popup_menu (long widget) {
+long gtk3_popup_menu (long widget) {
 	return 0;
 }
 
@@ -2592,7 +2592,7 @@ long windowProc (long handle, long user_data) {
 		case MAP: return gtk_map (handle);
 		case MONTH_CHANGED: return gtk_month_changed (handle);
 		case OUTPUT: return gtk_output (handle);
-		case POPUP_MENU: return gtk_popup_menu (handle);
+		case POPUP_MENU: return gtk3_popup_menu (handle);
 		case PREEDIT_CHANGED: return gtk_preedit_changed (handle);
 		case REALIZE: return gtk_realize (handle);
 		case START_INTERACTIVE_SEARCH: return gtk_start_interactive_search (handle);
@@ -2626,7 +2626,7 @@ long windowProc (long handle, long arg0, long user_data) {
 		case CONFIGURE_EVENT: return gtk_configure_event (handle, arg0);
 		case DELETE_EVENT: return gtk_delete_event (handle, arg0);
 		case ENTER_NOTIFY_EVENT: return gtk_enter_notify_event (handle, arg0);
-		case EVENT_AFTER: return gtk_event_after (handle, arg0);
+		case EVENT_AFTER: return gtk3_event_after (handle, arg0);
 		case EXPOSE_EVENT: {
 			if (!GTK.GTK_IS_CONTAINER (handle)) {
 				return gtk_draw (handle, arg0);
@@ -2636,8 +2636,8 @@ long windowProc (long handle, long arg0, long user_data) {
 		case FOCUS: return gtk_focus (handle, arg0);
 		case FOCUS_IN_EVENT: return gtk_focus_in_event (handle, arg0);
 		case FOCUS_OUT_EVENT: return gtk_focus_out_event (handle, arg0);
-		case KEY_PRESS_EVENT: return gtk_key_press_event (handle, arg0);
-		case KEY_RELEASE_EVENT: return gtk_key_release_event (handle, arg0);
+		case KEY_PRESS_EVENT: return gtk3_key_press_event (handle, arg0);
+		case KEY_RELEASE_EVENT: return gtk3_key_release_event (handle, arg0);
 		case INPUT: return gtk_input (handle, arg0);
 		case LEAVE_NOTIFY_EVENT: return gtk_leave_notify_event (handle, arg0);
 		case MAP_EVENT: return gtk_map_event (handle, arg0);

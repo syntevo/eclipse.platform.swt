@@ -57,10 +57,6 @@ public class Composite extends Scrollable {
 
 	static final int TOOLTIP_LIMIT = 4096;
 
-	static {
-		DPIZoomChangeRegistry.registerHandler(Composite::handleDPIChange, Composite.class);
-	}
-
 /**
  * Prevents uninitialized instances from being created outside the package.
  */
@@ -211,31 +207,29 @@ Widget [] computeTabList () {
 }
 
 @Override
-Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
+Point computeSizeInPixels (Point hintInPoints, int zoom, boolean changed) {
 	display.runSkin ();
-	Point size;
+	Point sizeInPoints;
 	if (layout != null) {
-		if (wHint == SWT.DEFAULT || hHint == SWT.DEFAULT) {
+		if (hintInPoints.x == SWT.DEFAULT || hintInPoints.y == SWT.DEFAULT) {
 			changed |= (state & LAYOUT_CHANGED) != 0;
 			state &= ~LAYOUT_CHANGED;
-			int zoom = getZoom();
-			size = DPIUtil.scaleUp(layout.computeSize (this, DPIUtil.scaleDown(wHint, zoom), DPIUtil.scaleDown(hHint, zoom), changed), zoom);
+			sizeInPoints = layout.computeSize (this, hintInPoints.x, hintInPoints.y, changed);
 		} else {
-			size = new Point (wHint, hHint);
+			sizeInPoints = hintInPoints;
 		}
 	} else {
-		size = minimumSize (wHint, hHint, changed);
-		if (size.x == 0) size.x = DEFAULT_WIDTH;
-		if (size.y == 0) size.y = DEFAULT_HEIGHT;
+		sizeInPoints = minimumSize (hintInPoints, changed);
+		if (sizeInPoints.x == 0) sizeInPoints.x = DEFAULT_WIDTH;
+		if (sizeInPoints.y == 0) sizeInPoints.y = DEFAULT_HEIGHT;
 	}
-	if (wHint != SWT.DEFAULT) size.x = wHint;
-	if (hHint != SWT.DEFAULT) size.y = hHint;
+	if (hintInPoints.x != SWT.DEFAULT) sizeInPoints.x = hintInPoints.x;
+	if (hintInPoints.y != SWT.DEFAULT) sizeInPoints.y = hintInPoints.y;
 	/*
 	 * Since computeTrim can be overridden by subclasses, we cannot
 	 * call computeTrimInPixels directly.
 	 */
-	int zoom = getZoom();
-	Rectangle trim = DPIUtil.scaleUp(computeTrim (0, 0, DPIUtil.scaleDown(size.x, zoom), DPIUtil.scaleDown(size.y, zoom)), zoom);
+	Rectangle trim = Win32DPIUtils.pointToPixelWithSufficientlyLargeSize(computeTrim (0, 0, sizeInPoints.x, sizeInPoints.y), getZoom());
 	return new Point (trim.width, trim.height);
 }
 
@@ -356,9 +350,9 @@ int applyThemeBackground () {
 public void drawBackground (GC gc, int x, int y, int width, int height, int offsetX, int offsetY) {
 	checkWidget ();
 	int zoom = getZoom();
-	Rectangle rectangle = DPIUtil.scaleUp(new Rectangle(x, y, width, height), zoom);
-	offsetX = DPIUtil.scaleUp(offsetX, zoom);
-	offsetY = DPIUtil.scaleUp(offsetY, zoom);
+	Rectangle rectangle = Win32DPIUtils.pointToPixel(new Rectangle(x, y, width, height), zoom);
+	offsetX = DPIUtil.pointToPixel(offsetX, zoom);
+	offsetY = DPIUtil.pointToPixel(offsetY, zoom);
 	drawBackgroundInPixels(gc, rectangle.x, rectangle.y, rectangle.width, rectangle.height, offsetX, offsetY);
 }
 
@@ -873,16 +867,15 @@ void markLayout (boolean changed, boolean all) {
 	}
 }
 
-Point minimumSize (int wHint, int hHint, boolean changed) {
+Point minimumSize (Point hintInPoints, boolean changed) {
 	/*
 	 * Since getClientArea can be overridden by subclasses, we cannot
 	 * call getClientAreaInPixels directly.
 	 */
-	int zoom = getZoom();
-	Rectangle clientArea = DPIUtil.scaleUp(getClientArea (), zoom);
+	Rectangle clientArea = getClientArea ();
 	int width = 0, height = 0;
 	for (Control element : _getChildren ()) {
-		Rectangle rect = DPIUtil.scaleUp(element.getBounds (), zoom);
+		Rectangle rect = element.getBounds ();
 		width = Math.max (width, rect.x - clientArea.x + rect.width);
 		height = Math.max (height, rect.y - clientArea.y + rect.height);
 	}
@@ -1539,7 +1532,7 @@ LRESULT WM_PAINT (long wParam, long lParam) {
 
 					Event event = new Event ();
 					event.gc = gc;
-					event.setBounds(DPIUtil.scaleDown(new Rectangle(ps.left, ps.top, width, height), getZoom()));
+					event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(ps.left, ps.top, width, height), getZoom()));
 					sendEvent (SWT.Paint, event);
 					if (data.focusDrawn && !isDisposed ()) updateUIState ();
 					gc.dispose ();
@@ -1622,7 +1615,7 @@ LRESULT WM_PAINT (long wParam, long lParam) {
 						if ((style & (SWT.DOUBLE_BUFFERED | SWT.NO_BACKGROUND | SWT.TRANSPARENT)) == 0) {
 							drawBackground (gc.handle, rect);
 						}
-						event.setBounds(DPIUtil.scaleDown(new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top), zoom));
+						event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top), zoom));
 						event.count = count - 1 - i;
 						sendEvent (SWT.Paint, event);
 					}
@@ -1632,7 +1625,7 @@ LRESULT WM_PAINT (long wParam, long lParam) {
 						OS.SetRect (rect, ps.left, ps.top, ps.right, ps.bottom);
 						drawBackground (gc.handle, rect);
 					}
-					event.setBounds(DPIUtil.scaleDown(new Rectangle(ps.left, ps.top, width, height), zoom));
+					event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(ps.left, ps.top, width, height), zoom));
 					sendEvent (SWT.Paint, event);
 				}
 				// widget could be disposed at this point
@@ -1644,7 +1637,7 @@ LRESULT WM_PAINT (long wParam, long lParam) {
 					}
 					gc.dispose();
 					if (!isDisposed ()) {
-						paintGC.drawImage (image, DPIUtil.scaleDown(ps.left, zoom), DPIUtil.scaleDown(ps.top, zoom));
+						paintGC.drawImage (image, DPIUtil.pixelToPoint(ps.left, zoom), DPIUtil.pixelToPoint(ps.top, zoom));
 					}
 					image.dispose ();
 					gc = paintGC;
@@ -1707,7 +1700,7 @@ LRESULT WM_PRINTCLIENT (long wParam, long lParam) {
 			GC gc = createNewGC(wParam, data);
 			Event event = new Event ();
 			event.gc = gc;
-			event.setBounds(DPIUtil.scaleDown(new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top), getZoom()));
+			event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top), getZoom()));
 			sendEvent (SWT.Paint, event);
 			event.gc = null;
 			gc.dispose ();
@@ -1977,13 +1970,11 @@ public String toString() {
 	return super.toString() + " [layout=" + layout + "]";
 }
 
-private static void handleDPIChange(Widget widget, int newZoom, float scalingFactor) {
-	if (!(widget instanceof Composite composite)) {
-		return;
+@Override
+void handleDPIChange(Event event, float scalingFactor) {
+	super.handleDPIChange(event, scalingFactor);
+	for (Control child : getChildren()) {
+		child.sendZoomChangedEvent(event, getShell());
 	}
-	for (Control child : composite.getChildren()) {
-		DPIZoomChangeRegistry.applyChange(child, newZoom, scalingFactor);
-	}
-	composite.redrawInPixels (null, true);
 }
 }

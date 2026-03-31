@@ -126,8 +126,10 @@ static int checkStyle (int style) {
 	return checkBits (style, SWT.HORIZONTAL, SWT.VERTICAL, 0, 0, 0, 0);
 }
 
-@Override Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
+@Override
+Point computeSizeInPixels (Point hintInPoints, int zoom, boolean changed) {
 	checkWidget ();
+	Point hintInPixels = Win32DPIUtils.pointToPixelAsSufficientlyLargeSize(hintInPoints, zoom);
 	int border = getBorderWidthInPixels ();
 	int width = border * 2, height = border * 2;
 	if ((style & SWT.HORIZONTAL) != 0) {
@@ -135,8 +137,8 @@ static int checkStyle (int style) {
 	} else {
 		width += 3; height += DEFAULT_HEIGHT;
 	}
-	if (wHint != SWT.DEFAULT) width = wHint + (border * 2);
-	if (hHint != SWT.DEFAULT) height = hHint + (border * 2);
+	if (hintInPoints.x != SWT.DEFAULT) width = hintInPixels.x + (border * 2);
+	if (hintInPoints.y != SWT.DEFAULT) height = hintInPixels.y + (border * 2);
 	return new Point (width, height);
 }
 
@@ -244,7 +246,7 @@ LRESULT WM_KEYDOWN (long wParam, long lParam) {
 			OS.SetCursorPos (cursorPt.x, cursorPt.y);
 
 			Event event = new Event ();
-			event.setBounds(DPIUtil.scaleDown(new Rectangle(newX, newY, width, height), getZoom()));
+			event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(newX, newY, width, height), getZoom()));
 			sendSelectionEvent  (SWT.Selection, event, true);
 			if (isDisposed ()) return LRESULT.ZERO;
 			if (event.doit) {
@@ -284,7 +286,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 
 	/* The event must be sent because doit flag is used */
 	Event event = new Event ();
-	event.setBounds(DPIUtil.scaleDown(new Rectangle(lastX, lastY, width, height), getZoom()));
+	event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(lastX, lastY, width, height), getZoom()));
 	if ((style & SWT.SMOOTH) == 0) {
 		event.detail = SWT.DRAG;
 	}
@@ -292,7 +294,7 @@ LRESULT WM_LBUTTONDOWN (long wParam, long lParam) {
 	if (isDisposed ()) return LRESULT.ZERO;
 
 	/* Draw the banding rectangle */
-	Rectangle boundsInPixels = DPIUtil.scaleUp(event.getBounds(), getZoom());
+	Rectangle boundsInPixels = Win32DPIUtils.pointToPixel(event.getBounds(), getZoom());
 	if (event.doit) {
 		dragging = true;
 		lastX = boundsInPixels.x;
@@ -320,19 +322,21 @@ LRESULT WM_LBUTTONUP (long wParam, long lParam) {
 	dragging = false;
 	RECT rect = new RECT ();
 	OS.GetWindowRect (handle, rect);
-	int width = rect.right - rect.left;
-	int height = rect.bottom - rect.top;
+	int widthInPixels = rect.right - rect.left;
+	int heightInPixels = rect.bottom - rect.top;
 
 	/* The event must be sent because doit flag is used */
 	Event event = new Event ();
-	event.setBounds(DPIUtil.scaleDown(new Rectangle(lastX, lastY, width, height), getZoom()));
-	drawBand (lastX, lastY, width, height);
+	event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(lastX, lastY, widthInPixels, heightInPixels), getZoom()));
+	drawBand (lastX, lastY, widthInPixels, heightInPixels);
 	sendSelectionEvent (SWT.Selection, event, true);
 	if (isDisposed ()) return result;
 	Rectangle bounds = event.getBounds();
 	if (event.doit) {
 		if ((style & SWT.SMOOTH) != 0) {
-			setBounds (bounds.x, bounds.y, width, height);
+			int xInPixels = DPIUtil.pointToPixel(bounds.x, getZoom());
+			int yInPixels = DPIUtil.pointToPixel(bounds.y, getZoom());
+			setBoundsInPixels (xInPixels, yInPixels, widthInPixels, heightInPixels);
 			// widget could be disposed at this point
 		}
 	}
@@ -369,7 +373,7 @@ LRESULT WM_MOUSEMOVE (long wParam, long lParam) {
 	int zoom = getZoom();
 	/* The event must be sent because doit flag is used */
 	Event event = new Event ();
-	event.setBounds(DPIUtil.scaleDown(new Rectangle(newX, newY, width, height), zoom));
+	event.setBounds(Win32DPIUtils.pixelToPoint(new Rectangle(newX, newY, width, height), zoom));
 	if ((style & SWT.SMOOTH) == 0) {
 		event.detail = SWT.DRAG;
 	}
@@ -377,8 +381,8 @@ LRESULT WM_MOUSEMOVE (long wParam, long lParam) {
 	if (isDisposed ()) return LRESULT.ZERO;
 	if (event.doit) {
 		Rectangle bounds = event.getBounds();
-		lastX = DPIUtil.scaleUp(bounds.x, zoom);
-		lastY = DPIUtil.scaleUp(bounds.y, zoom);
+		lastX = DPIUtil.pointToPixel(bounds.x, zoom);
+		lastY = DPIUtil.pointToPixel(bounds.y, zoom);
 	}
 	int flags = OS.RDW_UPDATENOW | OS.RDW_ALLCHILDREN;
 	OS.RedrawWindow (hwndTrack, null, 0, flags);

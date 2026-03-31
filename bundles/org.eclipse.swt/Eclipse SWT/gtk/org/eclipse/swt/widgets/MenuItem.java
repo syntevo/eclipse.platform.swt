@@ -986,8 +986,9 @@ private void _setEnabledOrDisabledImage() {
 			defaultDisableImage = new Image(getDisplay(), image, SWT.IMAGE_DISABLE);
 		}
 		_setImage(defaultDisableImage);
+	} else {
+		_setImage(image);
 	}
-	if (enabled && image != null) _setImage(image);
 }
 
 /**
@@ -1429,6 +1430,7 @@ private MaskKeysym getMaskKeysym() {
 	}
 	return maskKeysym;
 }
+
 boolean updateAcceleratorText (boolean show) {
 	if (accelerator != 0) return false;
 	MaskKeysym maskKeysym = null;

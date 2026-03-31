@@ -144,7 +144,12 @@ private NSString appendSelectedExtension (NSString filename) {
 		NSString ext = filename.pathExtension();
 		if (ext == null || ext.length() == 0) {
 			filename = filename.stringByAppendingPathExtension(NSString.stringWith(extension));
-		}
+		}else if (!ext.getString().equalsIgnoreCase(extension)) {
+        	NSString originalName = filename.stringByDeletingPathExtension();
+        	NSString newFilename = originalName.stringByAppendingPathExtension(NSString.stringWith(extension));
+        	filename = newFilename;
+
+    }
 	}
 	return filename;
 }
@@ -625,7 +630,7 @@ public void setFileName (String string) {
  * @see #setFilterNames to specify the user-friendly
  * names corresponding to the extensions
  */
-public void setFilterExtensions (String [] extensions) {
+public void setFilterExtensions (String... extensions) {
 	filterExtensions = extensions;
 }
 
@@ -663,7 +668,7 @@ public void setFilterIndex (int index) {
  *
  * @see #setFilterExtensions
  */
-public void setFilterNames (String [] names) {
+public void setFilterNames (String... names) {
 	filterNames = names;
 }
 

@@ -18,40 +18,69 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.graphics.Resource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.platform.suite.api.AfterSuite;
+import org.junit.platform.suite.api.BeforeSuite;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
 /**
  * Suite for running most SWT test cases (all except for browser tests).
  */
-@Suite
-@SelectClasses({ Test_org_eclipse_swt_SWT.class, Test_org_eclipse_swt_SWTException.class,
-		Test_org_eclipse_swt_SWTError.class, Test_org_eclipse_swt_widgets_Display.class, AllGraphicsTests.class,
-		AllWidgetTests.class, Test_org_eclipse_swt_layout_GridData.class,
-		Test_org_eclipse_swt_events_ControlEvent.class, Test_org_eclipse_swt_events_ModifyEvent.class,
-		Test_org_eclipse_swt_events_ArmEvent.class, Test_org_eclipse_swt_events_ShellEvent.class,
-		Test_org_eclipse_swt_events_TypedEvent.class, Test_org_eclipse_swt_events_PaintEvent.class,
-		Test_org_eclipse_swt_events_VerifyEvent.class, Test_org_eclipse_swt_events_KeyEvent.class,
-		Test_org_eclipse_swt_events_TraverseEvent.class, Test_org_eclipse_swt_events_DisposeEvent.class,
-		Test_org_eclipse_swt_events_SelectionEvent.class, Test_org_eclipse_swt_events_HelpEvent.class,
-		Test_org_eclipse_swt_events_FocusEvent.class, Test_org_eclipse_swt_events_MouseEvent.class,
-		Test_org_eclipse_swt_events_MenuEvent.class, Test_org_eclipse_swt_events_TreeEvent.class,
-		Test_org_eclipse_swt_layout_FormAttachment.class, Test_org_eclipse_swt_layout_BorderLayout.class,
-		Test_org_eclipse_swt_printing_PrintDialog.class, Test_org_eclipse_swt_printing_PrinterData.class,
-		Test_org_eclipse_swt_printing_Printer.class, Test_org_eclipse_swt_program_Program.class,
-		Test_org_eclipse_swt_accessibility_Accessible.class,
-		Test_org_eclipse_swt_accessibility_AccessibleControlEvent.class,
-		Test_org_eclipse_swt_accessibility_AccessibleEvent.class,
-		Test_org_eclipse_swt_accessibility_AccessibleTextEvent.class,
-		Test_org_eclipse_swt_internal_SVGRasterizer.class,
-		DPIUtilTests.class})
+@Suite(failIfNoTests = false)
+@SelectClasses({ //
+		// Basic tests
+		Test_org_eclipse_swt_SWT.class, //
+		Test_org_eclipse_swt_SWTException.class, //
+		Test_org_eclipse_swt_SWTError.class, //
+		Test_org_eclipse_swt_widgets_Display.class, //
+		// Groups of tests
+		AllGraphicsTests.class, //
+		AllWidgetTests.class, //
+		// Rest of tests alphabetically
+		DPIUtilTests.class, //
+		JSVGRasterizerTest.class, //
+		Test_org_eclipse_swt_accessibility_Accessible.class, //
+		Test_org_eclipse_swt_accessibility_AccessibleControlEvent.class, //
+		Test_org_eclipse_swt_accessibility_AccessibleEvent.class, //
+		Test_org_eclipse_swt_accessibility_AccessibleTextEvent.class, //
+		Test_org_eclipse_swt_dnd_ByteArrayTransfer.class, //
+		Test_org_eclipse_swt_dnd_Clipboard.class, //
+		Test_org_eclipse_swt_dnd_FileTransfer.class, //
+		Test_org_eclipse_swt_dnd_HTMLTransfer.class, //
+		Test_org_eclipse_swt_dnd_ImageTransfer.class, //
+		Test_org_eclipse_swt_dnd_RTFTransfer.class, //
+		Test_org_eclipse_swt_dnd_TextTransfer.class, //
+		Test_org_eclipse_swt_dnd_URLTransfer.class, //
+		Test_org_eclipse_swt_events_ArmEvent.class, //
+		Test_org_eclipse_swt_events_ControlEvent.class, //
+		Test_org_eclipse_swt_events_DisposeEvent.class, //
+		Test_org_eclipse_swt_events_FocusEvent.class, //
+		Test_org_eclipse_swt_events_HelpEvent.class, //
+		Test_org_eclipse_swt_events_KeyEvent.class, //
+		Test_org_eclipse_swt_events_MenuEvent.class, //
+		Test_org_eclipse_swt_events_ModifyEvent.class, //
+		Test_org_eclipse_swt_events_MouseEvent.class, //
+		Test_org_eclipse_swt_events_PaintEvent.class, //
+		Test_org_eclipse_swt_events_SelectionEvent.class, //
+		Test_org_eclipse_swt_events_ShellEvent.class, //
+		Test_org_eclipse_swt_events_TraverseEvent.class, //
+		Test_org_eclipse_swt_events_TreeEvent.class, //
+		Test_org_eclipse_swt_events_TypedEvent.class, //
+		Test_org_eclipse_swt_events_VerifyEvent.class, //
+		Test_org_eclipse_swt_internal_SVGRasterizer.class, //
+		Test_org_eclipse_swt_layout_BorderLayout.class, //
+		Test_org_eclipse_swt_layout_FormAttachment.class, //
+		Test_org_eclipse_swt_layout_GridData.class, //
+		Test_org_eclipse_swt_printing_PrintDialog.class, //
+		Test_org_eclipse_swt_printing_Printer.class, //
+		Test_org_eclipse_swt_printing_PrinterData.class, //
+		Test_org_eclipse_swt_program_Program.class, //
+})
 public class AllNonBrowserTests {
 	private static List<Error> leakedResources;
 
-	@BeforeAll
-	public static void beforeClass() {
+	@BeforeSuite
+	public static void beforeSuite() {
 		// Set up ResourceTracked to detect any leaks
 		leakedResources = new ArrayList<> ();
 		Resource.setNonDisposeHandler (error -> {
@@ -64,11 +93,11 @@ public class AllNonBrowserTests {
 
 	/*
 	 * It would be easier to understand if errors here were reported
-	 * through  a test and not through @AfterClass, but this is a
+	 * through  a test and not through @AfterSuite, but this is a
 	 * suite class and not a test class, so it can't have tests.
 	 */
-	@AfterAll
-	public static void afterClass() {
+	@AfterSuite
+	public static void afterSuite() {
 		// Run GC in order do detect any outstanding leaks
 		System.gc ();
 		// And wait a bit to let Resource.ResourceTracker, that is
@@ -82,8 +111,7 @@ public class AllNonBrowserTests {
 		}
 
 		for (Error leak : leakedResources) {
-			// For some reason, printing to System.err in JUnit test has no effect
-			leak.printStackTrace (System.out);
+			leak.printStackTrace ();
 		}
 
 		if (0 != leakedResources.size ()) {

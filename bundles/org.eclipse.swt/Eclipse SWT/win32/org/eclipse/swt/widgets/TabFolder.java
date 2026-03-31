@@ -90,7 +90,6 @@ public class TabFolder extends Composite {
 		lpWndClass.hInstance = OS.GetModuleHandle (null);
 		lpWndClass.style &= ~(OS.CS_HREDRAW | OS.CS_VREDRAW | OS.CS_GLOBALCLASS);
 		OS.RegisterClass (TabFolderClass, lpWndClass);
-		DPIZoomChangeRegistry.registerHandler(TabFolder::handleDPIChange, TabFolder.class);
 	}
 
 /**
@@ -179,9 +178,10 @@ protected void checkSubclass () {
 	if (!isValidSubclass ()) error (SWT.ERROR_INVALID_SUBCLASS);
 }
 
-@Override Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
+@Override
+Point computeSizeInPixels (Point hintInPoints, int zoom, boolean changed) {
 	checkWidget ();
-	Point size = super.computeSizeInPixels (wHint, hHint, changed);
+	Point size = super.computeSizeInPixels (hintInPoints, zoom, changed);
 	RECT insetRect = new RECT (), itemRect = new RECT ();
 	OS.SendMessage (handle, OS.TCM_ADJUSTRECT, 0, insetRect);
 	int width = insetRect.left - insetRect.right;
@@ -455,8 +455,8 @@ int imageIndex (Image image) {
 	 */
 	if (image == null) return -1;
 	if (imageList == null) {
-		Rectangle bounds = DPIUtil.scaleBounds(image.getBounds(), this.getZoom(), 100);
-		imageList = display.getImageList (style & SWT.RIGHT_TO_LEFT, bounds.width, bounds.height, this.getZoom());
+		Rectangle boundsInPoints = image.getBounds();
+		imageList = display.getImageList (style & SWT.RIGHT_TO_LEFT, boundsInPoints.width, boundsInPoints.height, getZoom());
 		int index = imageList.add (image);
 		long hImageList = imageList.getHandle(getZoom());
 		OS.SendMessage (handle, OS.TCM_SETIMAGELIST, 0, hImageList);
@@ -499,7 +499,7 @@ public int indexOf (TabItem item) {
 }
 
 @Override
-Point minimumSize (int wHint, int hHint, boolean flushCache) {
+Point minimumSize (Point hintInPoints, boolean flushCache) {
 	int width = 0, height = 0;
 	for (Control child : _getChildren ()) {
 		int index = 0;
@@ -508,9 +508,8 @@ Point minimumSize (int wHint, int hHint, boolean flushCache) {
 			if (items [index].control == child) break;
 			index++;
 		}
-		int zoom = getZoom();
 		if (index == count) {
-			Rectangle rect = DPIUtil.scaleUp(child.getBounds (), zoom);
+			Rectangle rect = child.getBounds ();
 			width = Math.max (width, rect.x + rect.width);
 			height = Math.max (height, rect.y + rect.height);
 		} else {
@@ -518,7 +517,7 @@ Point minimumSize (int wHint, int hHint, boolean flushCache) {
 			 * Since computeSize can be overridden by subclasses, we cannot
 			 * call computeSizeInPixels directly.
 			 */
-			Point size = DPIUtil.scaleUp(child.computeSize (DPIUtil.scaleDown(wHint, zoom), DPIUtil.scaleDown(hHint, zoom), flushCache), zoom);
+			Point size = child.computeSize (hintInPoints.x, hintInPoints.y, flushCache);
 			width = Math.max (width, size.x);
 			height = Math.max (height, size.y);
 		}
@@ -837,9 +836,9 @@ void updateOrientation () {
 	OS.SetWindowPos (handle, 0, 0, 0, width - 1, height - 1, OS.SWP_NOMOVE | OS.SWP_NOZORDER);
 	OS.SetWindowPos (handle, 0, 0, 0, width, height, OS.SWP_NOMOVE | OS.SWP_NOZORDER);
 	if (imageList != null) {
-		Point size = imageList.getImageSize ();
+		Point sizeInPoints = imageList.getImageSize();
 		display.releaseImageList (imageList);
-		imageList = display.getImageList (style & SWT.RIGHT_TO_LEFT, size.x, size.y, this.getZoom());
+		imageList = display.getImageList (style & SWT.RIGHT_TO_LEFT, sizeInPoints.x, sizeInPoints.y, this.getZoom());
 		long hImageList = imageList.getHandle(getZoom());
 		OS.SendMessage (handle, OS.TCM_SETIMAGELIST, 0, hImageList);
 		TCITEM tcItem = new TCITEM ();
@@ -1128,18 +1127,16 @@ LRESULT wmNotifyChild (NMHDR hdr, long wParam, long lParam) {
 	return super.wmNotifyChild (hdr, wParam, lParam);
 }
 
-private static void handleDPIChange(Widget widget, int newZoom, float scalingFactor) {
-	if (!(widget instanceof TabFolder tabFolder)) {
-		return;
+@Override
+void handleDPIChange(Event event, float scalingFactor) {
+	super.handleDPIChange(event, scalingFactor);
+	Display display = getDisplay();
+	if (imageList != null) {
+		display.releaseImageList (imageList);
+		imageList = null;
 	}
-	Display display = tabFolder.getDisplay();
-	if (tabFolder.imageList != null) {
-		display.releaseImageList (tabFolder.imageList);
-		tabFolder.imageList = null;
+	for (int i = 0; i < getItemCount(); i++) {
+		items[i].notifyListeners(SWT.ZoomChanged, event);
 	}
-	for (int i = 0; i < tabFolder.getItemCount(); i++) {
-		DPIZoomChangeRegistry.applyChange(tabFolder.items[i], newZoom, scalingFactor);
-	}
-	tabFolder.layout(true, true);
 }
 }

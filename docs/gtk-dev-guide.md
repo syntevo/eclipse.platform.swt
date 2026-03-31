@@ -33,7 +33,7 @@ Upon completion of this document, hopefully you will know SWT-fu (as in kung-fu)
 
 **Knowledge Pre-requisites**
 
-* Solid Java knowledge: from class inheritence to multi-threading
+* Solid Java knowledge: from class inheritance to multi-threading
 * Some C experience: know thy pointers and make files
 * GTK background highly recommended but can be learned
 * Eclipse: knowing how to use Eclipse is quite essential. But you don't have to know about JFace/PlatformUI/RCP development internals
@@ -46,9 +46,14 @@ If you have questions, you should post them to: platform-swt-dev@eclipse.org
 
 It's also a good idea to sign up for the SWT mailing list. There are #swt-gtk and #eclipse-dev channels on Freenode (IRC) as well.
 
-**Following SWT bugs in Bugzilla**
+**Following SWT issues on GitHub**
 
-Whenever you work on a project, you should consider following the default assignee of the project in Bugzilla. This way you find out about new issues and what issues get worked on. To do so, go to bugzilla https://bugs.eclipse.org/ -> Preferences -> Email preferences, and add the email below to your watch list: platform-swt-inbox@eclipse.org
+SWT now uses GitHub for issue tracking and discussions. You can:
+* Report bugs and request features: https://github.com/eclipse-platform/eclipse.platform.swt/issues
+* Participate in discussions: https://github.com/eclipse-platform/eclipse.platform.swt/discussions
+* Watch the repository to get notified about new issues and pull requests
+
+Note: Historical issues can still be found in Bugzilla (https://bugs.eclipse.org/), but all new issues should be reported on GitHub.
 
 **Following GTK bugs in Gitlab**
 
@@ -57,11 +62,11 @@ It's good to keep track of GTK bugs, as they affect SWT. To sign up, go to their
 ## SWT Development Environment Setup 
 There is an important distinction when running SWT: using the pre-compiled .JAR file, or using the source code in your local Git repository.
 
-Much of this has been based on : https://www.eclipse.org/swt/git.php . If in doubt, read there for additional info.
+For detailed setup instructions, see the main repository README and contributing guide.
 
 **.JAR** 
 
-You can download the SWT .JAR file, and add it as a library in your project: https://www.eclipse.org/swt/. However, when you make changes to the SWT source code, these changes will not be visible when running SWT. This is only useful if you develop 'using' SWT, but not SWT itself.
+You can download the SWT .JAR file, and add it as a library in your project: https://download.eclipse.org/eclipse/downloads/index.html. However, when you make changes to the SWT source code, these changes will not be visible when running SWT. This is only useful if you develop 'using' SWT, but not SWT itself.
 
 **Source code**
 
@@ -70,7 +75,7 @@ To develop SWT itself, being able to run SWT using the changes made to the sourc
 **Add the SWT project to the build path**
 
 In order to run snippets with the SWT source code, you will need to add the SWT project to the snippets' project build path. To do this:
-* Right click the SWT snippets project in the Package Exlporer
+* Right click the SWT snippets project in the Package Exporter
 * Select "Properties"
 * Select "Java Build Path" on the right hand side
 * Select the "Projects" tab and click "Add..."
@@ -83,7 +88,7 @@ In order to run snippets with the SWT source code, you will need to add the SWT 
 
 **From Eclipse Update Site** 
 
-* Go to https://wiki.eclipse.org/Eclipse_Project_Update_Sites and find the update site for the version of Eclipse you are running
+* Go to the Eclipse Project Update Sites page and find the update site for the version of Eclipse you are running
 * Copy the link and then on Eclipse go to Help -> Install New Software
 * Paste the link into the 'Work with' field and press Enter
 * Check the following to be installed: Eclipse Releng Tools, Eclipse Test Framework, SWT Tools
@@ -120,11 +125,9 @@ Edit the org.eclipse.swt.examples project and add the org.eclipse.swt project as
 
 **Configure git for review**
 
-Please see the eclipse.platform.swt readme for more information.
+Please see the eclipse.platform.swt README for more information on contributing code and setting up your development environment.
 
-**References**
-
-https://www.eclipse.org/swt/fixbugs.php
+For general contribution guidelines, see: https://github.com/eclipse-platform/.github/blob/main/CONTRIBUTING.md
 
 ## GTK .SO bindings
 
@@ -143,8 +146,6 @@ Run the following script to automatically install required dependencies:
 In case your linux distribution is not supported by the script, it will print the relevant libraries that you need to install. 
 
 Tip: If you're still getting compile errors when you're rebuilding SWT libraries, try googling "Packages needed for ERROR_THAT_YOURE_GETTING"
-
-See also [https://bugs.eclipse.org/bugs/show_bug.cgi?id=499577 Bug 499577 - Add install_sysdeps.sh to swt.tools]
 
 **Rebuilding gtk \*.so binaries**
 
@@ -176,16 +177,61 @@ Note, the script doesn't clean the binary repository. Consider using the followi
     cd ~/git/eclipse.platform.swt/bundles/org.eclipse.swt/bin/library && \
     ./build.sh -gtk-all install
 
+**Building with GTK4**
+
+GTK4 support in SWT is currently experimental and under active development. To build SWT with GTK4 support:
+
+<code>./build.sh -gtk4 install</code>
+
+To build both GTK3 and GTK4 bindings:
+
+<code>./build.sh -gtk-all install</code>
+
+Note: When using `-gtk-all`, cleanups are performed before each build to ensure proper linking.
+
+**Running SWT with GTK4**
+
+To run SWT applications with GTK4, set the environment variable:
+
+<code>export SWT_GTK4=1</code>
+
+Current GTK4 Status:
+* GTK4 support is experimental and being actively developed
+* Many widgets are ported and functional
+* Some features may not work the same as in GTK3
+* Testing and bug reports for GTK4 are welcome on GitHub issues
+
+**Verifying the Build**
+
+After building the native libraries, you can verify they work correctly by:
+
+1. Running the ControlExample from org.eclipse.swt.examples:
+   - Open org.eclipse.swt.examples project in Eclipse
+   - Find and run ControlExample.java
+   - This should open a window showcasing various SWT widgets
+
+2. Running snippets from org.eclipse.swt.snippets:
+   - Browse the snippets in the org.eclipse.swt.snippets project
+   - Run any snippet (e.g., Snippet1.java) to test basic functionality
+
+3. For GTK4 testing:
+   - Set environment variable: `SWT_GTK4=1`
+   - Run the same examples to verify GTK4 functionality
+   - Note that some features may behave differently or may not be fully implemented yet
+
+If you encounter "UnsatisfiedLinkError" exceptions, it means the native libraries weren't built correctly or aren't being found. Double-check that:
+- The build completed successfully without errors
+- The .so files were copied to the binary repository
+- Your Eclipse workspace is using the correct .so files
+
 **References**
 
-https://www.eclipse.org/swt/jnigen.php
+JNI Generator Documentation: https://github.com/eclipse-platform/eclipse.platform.swt/tree/master/bundles/org.eclipse.swt.tools
 
 # The SWT codebase
 **Learning SWT**
 
-To learn about SWT, try out a bunch of these snippets: https://www.eclipse.org/swt/snippets/
-
-Note, these are available in the SWT repo, search for "Snippet1.java". The org.eclipse.swt.examples project contains lots of examples to try out. There are also many many SWT tutorials online. For example, http://zetcode.com/gui/javaswt/ comes to mind.
+To learn about SWT, try out the snippets and examples in the repository. Search for "Snippet1.java" in the org.eclipse.swt.snippets project. The org.eclipse.swt.examples project contains lots of examples to try out. There are also many SWT tutorials online.
 
 You should learn at least:
 * Set of basic widgets (Button/Label/Table/Tree etc..)
@@ -196,7 +242,7 @@ You should learn at least:
 
 Widget is the main Widget. Everything else extends Widget. The most interesting classes are Widget, Control and Composite. Most widgets fork off of these. 
 
-As such, it is useful to be aware of fields/methods in parent classes and which methods get overriden by children. In Eclipse, you can Ctrl+click on a method to see it's super implementation, or derived implementations (this is very useful).
+As such, it is useful to be aware of fields/methods in parent classes and which methods get overridden by children. In Eclipse, you can Ctrl+click on a method to see it's super implementation, or derived implementations (this is very useful).
 
 This list below shows the widget hierarchy:
 
@@ -281,11 +327,11 @@ These are typically wrapped in a lock:
 
 **Constants and ENUMS**
 
-C constants and C Enums are delcared as plain ints. like so:
+C constants and C Enums are declared as plain ints. like so:
 
     public static final int GTK_SCROLL_STEP_UP = 6;
 
-*Note: If you need to add a C enum to OS.java, C ENUMS (Enumirations) begin at 0. Do note, that the Javadoc is parsed by the JNI parser. So be careful about what you put in there.*
+*Note: If you need to add a C enum to OS.java, C ENUMS (Enumerations) begin at 0. Do note, that the Javadoc is parsed by the JNI parser. So be careful about what you put in there.*
 
 **Static Strings translated to C-bytes**
 
@@ -441,7 +487,7 @@ C enums don't map onto Java's enums. Instead, to add an enum like GtkAlign to OS
     public static final int GTK_ALIGN_CENTER = 3;
     public static final int GTK_ALIGN_BASELINE = 4;
 
-And when you declare a function, delcare the java-doc parameter cast like this:
+And when you declare a function, declare the java-doc parameter cast like this:
 
     @param gtkalign cast=(GtkAlign)    // note (GtkAlign) with no pointer, not (GtkAlign *)
 
@@ -488,8 +534,7 @@ Alexander Kurtakov taught me this business. If you get stuck here, consider gett
 
 **References**
 
-https://www.eclipse.org/swt/jnigen.php https://www.eclipse.org/swt/jnigen_metadata.php 
-http://homepage.cs.uiowa.edu/~slonnegr/wpj/JNI.pdf
+JNI Generator Documentation: https://github.com/eclipse-platform/eclipse.platform.swt/tree/master/bundles/org.eclipse.swt.tools
 
 ## **SWT Fixed Container**
 SWTFixed is custom C code that we include in SWT. It is a container that allows us to place SWT Widgets with absolute positioning so that subsequent widgets are drawn beneath each other. (In GtkFixed container, subsequent widgets are drawn on top of previous once). This is achieved by using the gtk_widget_show_unraised() method, (show widget, but do not raise it up).
@@ -527,21 +572,27 @@ Specifically:
 ## **SWT and GTK versions**
 With SWT, the version of GTK that you're running on can make a big difference in how your snippet will behave. This is especially true for all things CSS related because there are many changes in that area.
 
-It's not just the difference between GTK3 & GTK4, but keep an eye on the differences between:
+SWT currently supports GTK3.22+ and has experimental GTK4 support.
+
+Key GTK3 versions and their changes:
 * GTK3.8: RHEL 7 and Fedora 19
 * GTK3.10: CSS theming introduced, lots of things break between GTK3.8 and GTK3.10 because of this
-* GTK3.12: nothing super exciting
 * GTK3.14: Fedora 21, RHEL 7.2
 * GTK3.16: Fedora 22, removal of stock icons, gtk_widget_override_* functions become deprecated
 * GTK3.18: Fedora 23, re-skin of File Chooser, CSS nodes.
 * GTK3.20: Fedora 24, complete overhaul of CSS machinery to use CSS nodes. Old style selectors won't work. Changes to GtkInspector.
-* GTK3.22: Fedora 25 CSS parser, GtkHeaderBar and GtkPopOver changes.
+* GTK3.22: Fedora 25, CSS parser, GtkHeaderBar and GtkPopOver changes. Minimum supported version for SWT.
+* GTK3.24: Latest GTK3 release
 
 You can also see the changes here: https://docs.gtk.org/gtk3/changes.html
 
-You can see the changes between GTK3 and GTK4 here: https://docs.gtk.org/gtk4/migrating-3to4.html
+GTK4 Migration:
+* GTK4 is a major version change with significant API changes
+* See migration guide: https://docs.gtk.org/gtk4/migrating-3to4.html
+* SWT GTK4 support is experimental and under active development
+* To track GTK4 issues, see: https://github.com/eclipse-platform/eclipse.platform.swt/issues?q=is%3Aissue+label%3Agtk4
 
-Because of the faster pace at which the GTK development cycle works, it is imperative to be able to test on different versions of GTK (within reason). Usually testing 2-3 versions behind is useful for Fedora. Try to test on GTK3.22 as RHEL customers use this and require an especially stable platform. GTK4 support is experimental and being worked on, so testing is based on individual components that are ported.
+**Finding GTK version requirements**
 
 To find out which exact versions are currently supported by SWT, inspect GTK's Display.java:
 
@@ -556,13 +607,11 @@ And search for code like this:
 
 This means GTK3.22 onward are supported.
 
-Once in a while, you will come across bugs where the version is bumped. Keep an eye on this by following platform-swt-inbox@eclipse.org in the Eclipse Bugzilla. For example:
-  https://bugs.eclipse.org/bugs/show_bug.cgi?id=446454
+For GTK4, check the same file for GTK4_MAJOR, GTK4_MINOR constants to see the minimum GTK4 version supported.
 
 **Finding what version of GTK Eclipse is running on**
 
-Leo Ufimstev wrote an excellent blog post on this subject:
-https://coffeeorientedprogramming.wordpress.com/2014/09/29/how-to-compile-various-gtk3-versions-and-run-eclipse-apps-with-those/
+You can check which GTK version your Eclipse is using by examining the GTK_VERSION constants in Display.java or by running SWT snippets with debug output.
 
 **GTK Versions on Fedora/Red Hat**
 
@@ -667,8 +716,8 @@ You should consider browsing unstable API more often than stable API. Often you 
 **Getting help with GTK**
 
 * GTK IRC channel: Folks are very helpful here. I often got responses very quickly. Mostly good for quick little bits and general wisdom.
-* GTK bugzilla: If you think you have come across a bug, or need some official statement from GTK folks about some functionality (e.g if something doesn't work in SWT, have a link to a GTK bug that explains things). Posting a bug to the GTK bugzilla is the way to go. E.g: https://bugzilla.gnome.org/show_bug.cgi?id=747798
-* Mailing lists: I didn't get many responses when I asked complex questions, but for small & straight forward stuff, people respond quite well: See: http://www.gtk.org/mailing-lists.php
+* GTK GitLab Issues: If you think you have come across a bug in GTK, or need some official statement from GTK folks about some functionality. For example: https://gitlab.gnome.org/GNOME/gtk/-/issues
+* Mailing lists: See GTK documentation for mailing list information
 * Stack Overflow: For your broken snippets. Tag things with GTK http://stackoverflow.com/
 * See: http://www.gtk.org/development.php
 
@@ -698,11 +747,7 @@ GtkInspector launched at the start of an application sometimes does not show new
 
 **References**
 
-Upgrade Ubuntu's GTK to use GtkInspector: http://www.webupd8.org/2014/10/how-to-install-gnome-314-in-ubuntu.html
-
-Leo's blog post on it: https://coffeeorientedprogramming.wordpress.com/2014/10/27/how-to-tell-if-you-are-running-eclipse-on-gtk2-or-on-gtk3/comment-page-1/#comment-8
-
-Matthias Clasen's blog post: http://blogs.gnome.org/mclasen/2014/11/23/gtk-inspector-update/ https://wiki.gnome.org/Projects/GTK+/Inspector
+For more information on GtkInspector, see: https://wiki.gnome.org/Projects/GTK/Inspector
 
 ## **C/C++ Development in Eclipse**
 Eclipse has a plugin/perspective called "C/C++ Development Tools" or CDT. This is useful for reading the GTK code base as well as writing small native GTK snippets.
@@ -710,7 +755,7 @@ Eclipse has a plugin/perspective called "C/C++ Development Tools" or CDT. This i
 **Getting started**
 
 If you are using Fedora Eclipse you can install the CDT using dnf:
-  sudo dnf install eclispe-cdt
+  sudo dnf install eclipse-cdt
 
 Alternatively if you are using upstream Eclipse, you can get it from the CDT update site: https://eclipse.org/cdt/downloads.php
 
@@ -743,7 +788,7 @@ You should try all of the above:
 
 **Import GTK source code into Eclipse for browsing**
 
-You can pull GTK sources and tie them into your Eclipse, so that you can navigate/read the source code easier. I then use the GTK source code as a way of reading GTK API. Compared to the web-documentation, reading the source code allows you to quickly jump to struct definitions and see examples of how/where functions are called via call-hierachy.
+You can pull GTK sources and tie them into your Eclipse, so that you can navigate/read the source code easier. I then use the GTK source code as a way of reading GTK API. Compared to the web-documentation, reading the source code allows you to quickly jump to struct definitions and see examples of how/where functions are called via call-hierarchy.
 
 You also see how certain objects 'relate' to each other, which you sometimes don't see in the web-documentation. You will often find that many functions are just wrappers around other functions. The most frequent use-case is when I write a GTK snippet, I can just jump to the function definition and read the documentation without plowing through the web-documents.
 
@@ -840,7 +885,7 @@ You should now be able to create your project.
 
 Normally, if you create a GTK project you include the "usr/include/gtk+" paths. The problem with that is that "/usr/include/gtk" only contains header files, not the .c source code files from the GitHub repo. As such you won't be able to see the "guts" of GTK, which are often very useful and essential for when you're debugging SWT.
 
-If you point your include to the GTK GitHub repo instead, then it might not compile unless you go thourgh the effort to compile the related libs (GLib/pixbuf etc…), which is quite a bit of effort. I.e, it's easier to use the GTK that is build in with your system for compilation.
+If you point your include to the GTK GitHub repo instead, then it might not compile unless you go through the effort to compile the related libs (GLib/pixbuf etc…), which is quite a bit of effort. I.e, it's easier to use the GTK that is build in with your system for compilation.
 
 The solution (which at least works for me) is to point the compiler to the system "usr/include" path (1*) and point the indexer to the GTK GitHub repository (2*). This way, when you are compiling, all will compile well and when you are writing code you easy quick-lookup to the GTK source code without having to compile all of this business.
 
@@ -848,13 +893,15 @@ The solution (which at least works for me) is to point the compiler to the syste
 
 Create a new Eclipse C project (not C++) -> select Executable project, with "Hello World GTK Project" as a template:
 
-![Create New Project](https://wiki.eclipse.org/images/1/1a/Create_new_project.png)
+![Create New Project](images/Create_new_project.png)
+
 
 If this template is missing, you need to install 'pkg-config' plugin into Eclipse first. Also it's missing if you selected 'C++' as it's only available for 'C' projects. Go to project properties -> C/C++ Build -> Settings -> 'Pkg-config' tab, and select the gtk+-3.0 option.
 
-Go to project properties -> C/C++ Build -> Settings -> 'Pkg-config' tab, and select the gtk+-3.0 option.
+Go to project properties -> C/C++ Build -> Settings -> 'Pkg-config' tab, and select the gtk+-3.0 option (or gtk+-4.0 for GTK4).
 
-![Project Properties](https://wiki.eclipse.org/images/5/57/Project_properties.png)
+![Project Properties](images/Project_properties.png)
+
 
 Inside src, you should see a .c file that has a hello-world template. This is in the package explorer. Now you should be able to build & run (or debug) the GTK application. (Note, before running the first time, you need to build the project). It should build very quickly. However, when you look up functions, you won't be able to look into the .c files. In order to do this, you need to set the indexer to search inside your GTK git repository.
 
@@ -862,23 +909,24 @@ Inside src, you should see a .c file that has a hello-world template. This is in
 
 Under the project's properties, there should be a C/C++ Build section. Under Manage Configurations, there will be an "add an indexer" option.
 
-![Add Indexer](https://wiki.eclipse.org/images/a/a6/Add_indexer.png)
+![Add Indexer](images/Add_indexer.png)
 
 
 Under "C/C++ General" -> Indexer, click "Enable project specific settings". Under "Indexing Strategy", select "Use a fixed build configuration" and select your newly created 'indexer' configuration.
 
-![Indexer Configuration](https://wiki.eclipse.org/images/2/28/Indexer_configuration.png)
+![Indexer Configuration](images/Indexer_configuration.png)
 
 
 Under "C/C++ General" -> "Path and Symbols", switch to the 'indexer' configuration, and in the "Include" -> "GNU C", add your workspace GTK/glib/cairo/gtk-pixbuf/pixman projects.
 
-![Paths and Symbols](https://wiki.eclipse.org/images/b/b3/Paths_and_symbols.png)
+![Paths and Symbols](images/Paths_and_symbols.png)
+
 
 Now click on OK. Right click on your project -> Indexer -> Rebuild index. Now you should be able to build the project as usual, but also when you open function definitions, you should be able to see the GTK source code from your GitHub repo.
 
 **Debugging GTK applications**
 
-Besides stepping through a GTK appliction, you also use the GtkInspector, which can be ran for a GTK3.14+ application to see real-time information about your running GTK application.
+Besides stepping through a GTK application, you also use the GtkInspector, which can be ran for a GTK3.14+ application to see real-time information about your running GTK application.
 
 You can set launch flags to help debug GTK apps as well as SWT snippets. Set the following global variable to get detailed frame-sizes:
 
@@ -896,9 +944,10 @@ NOTE: the following documentation explains how to enable full debugging capabili
 
 **How it works**
 
-To debug the 'C' part of a running Java application, you need to 'attach' yourself to the Java Virtual Machine (JVM) from inside Eclipse. But before doing so, you need to compile GTK and SWT bindings with debug flags and optimizations turned off. Here is a diagram to illustrate:
+To debug the 'C' part of a running Java application, you need to 'attach' yourself to the Java Virtual Machine (JVM) from inside Eclipse. But before doing so, you need to compile GTK and SWT bindings with debug flags and optimizations turned off.
 
-![Debug Native GTK](https://wiki.eclipse.org/images/d/dc/Debug_native_gtk.png)
+![Debug Native GTK](images/Debug_native_gtk.png)
+
 
 Further, since eclipse.platform.swt is a Java project that contains C code, you will have to create a C project and link to that folder to debug the C code. As a note, the source and binaries will be in different folders, so you will need to create a source and a debug C project.
 
@@ -921,11 +970,12 @@ You will need to compile GTK with debugging support and optimizations turned off
 
 Similar to the GTK compilation instructions, you need edit the SWT snippet run configuration and set the environmental variable to point to the freshly compiled .libs folder. E.g:
    
-    LD_LIBRARY_PATH = /home/lufimtse/
+    LD_LIBRARY_PATH = /home/lufimtse/git/gtk+/gtk/.libs
 
-NOTE: You will have to do this for every single widget/SWT snippet that you wish to debug at the GTK level. git/gtk+/gtk/.libs
+![LD_LIBRARY_PATH](images/Ld_library_path.png)
 
-![LD_LIBRARY_PATH](https://wiki.eclipse.org/images/9/9f/Ld_library_path.png)
+
+NOTE: You will have to do this for every single widget/SWT snippet that you wish to debug at the GTK level.
 
 **Debug GTK via attach-process**
 
@@ -935,7 +985,7 @@ Inside the GTK code base somewhere, set a break point in a common area:
 
     gtkmain.c:gtk_main_do_event(GdkEvent *event)         #This will be triggered an almost every GDK event
 
-Launch your SWT application. In terminal execute jps (java proccesses) and identify the PID of your SWT appplication.
+Launch your SWT application. In terminal execute jps (java processes) and identify the PID of your SWT application.
 
     lufimtse@unused-10-15-18-183 pathscripts$ jps
     357 Jps
@@ -946,11 +996,13 @@ As a side note, I often set the title of a snippet to the PID of the process. Th
 
 In Eclipse, press Ctrl+3, then search for 'Debug Attached Executable'. (I usually search for 'attached' and it pops up). Search for 'java'. You should see a list of multiple java processes. Pick the one that has the PID of your snippet:
 
-![JPS to attach to a running JVM process](https://wiki.eclipse.org/images/f/f6/Jps.png)
+![JPS to attach to a running JVM process](images/Jps.png)
+
 
 If things went well, Eclipse should break inside the file pthread_join.c somewhere at the 'wait for child' section. Press F8 (continue). Then try to move the SWT widget or do something with it. Eclipse should stop at the gtk_main_do_event(..) function and you should be able to step through the code.
 
-![Breakpoint set in gtk_main_do_event()](https://wiki.eclipse.org/images/e/ed/Main_do.png)
+![Breakpoint set in gtk_main_do_event()](images/Main_do.png)
+
 
 **Debugging swtFixed custom code**
 
@@ -958,7 +1010,7 @@ SWT keeps its source code in one place, but during a project clean-up & rebuild,
 
 As such, to make changes that have an impact on the code, you need to edit code in the src folder, but to debug you need to open the source code from the binary folder.
 
-To make matters more complicated, during a rebuild, SWT tools will erase the whole binary folder and re-create it. This means that if you imported the folder as a project, the pointer to that folder is lost and the project 'dissapers' from Eclipse. However, there is a way to get around it. You can create a project in some other folder and add a link the SWT binary folder as a source. This way the project survives re-builds.
+To make matters more complicated, during a rebuild, SWT tools will erase the whole binary folder and re-create it. This means that if you imported the folder as a project, the pointer to that folder is lost and the project 'disappears' from Eclipse. However, there is a way to get around it. You can create a project in some other folder and add a link the SWT binary folder as a source. This way the project survives re-builds.
 
 
 Source code lies here: (e.g for changes to source code):
@@ -1000,7 +1052,7 @@ SWT Tools then copies code here (for debugging, don't edit as this folder is del
   * This site is good for the conversion: http://www.binaryhexconverter.com/hex-to-decimal-converter
   * You can also convert using the built in Long library in Java:
   Long.toHexString (OS.gtk_widget_get_window(<handle>);
-* [Identify which GdkWindow maps to which GtkWidget using GtkInspector](https://wiki.eclipse.org/images/8/8f/Gdk_window.png) 
+* Identify which GdkWindow maps to which GtkWidget using GtkInspector - see [images/Gdk_window.png](images/Gdk_window.png) or [images/README.md](images/README.md) for download instructions.
 * Remember to cast when writing native GTK applications:
   * GtkWidget *button, sometimes a function can accept any widget
   * Bug you need to cast to a particular widget, i.e.: ((GtkButton*)button)->x
@@ -1022,8 +1074,7 @@ SWT Tools then copies code here (for debugging, don't edit as this folder is del
 * When upgrading major Eclipse versions (ex Mars to Neo), you should probably create a new workspace. Often old workspaces break and cause very odd behaviour (ex .classpath files missing from navigator, broken plugins etc.)
 
 # Appendix
-* Eclipse Release milestones and release candidates: https://wiki.eclipse.org/Simultaneous_Release
 * Mystical ~/.swt folder
   * Sometimes you may observe a ~/.swt folder in your system. This folder is generated if you launch an SWT application that uses the SWT .jar file instead of the SWT sources. Sometimes this can be instances of Eclipse.
   * On Fedora 22, I once had to soft link the content of that folder to where I keep the regular compiled os.c files to make eclipse use the newly compiled SWT instead of the jar version
-* Eclipse CSS is different from GTK CSS. Eclipse dark-theme keeps its CSS in: http://git.eclipse.org/c/platform/eclipse.platform.ui.git/tree/bundles/org.eclipse.ui.themes/css
+* Eclipse CSS is different from GTK CSS. Eclipse dark-theme CSS can be found in the eclipse.platform.ui repository

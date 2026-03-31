@@ -14,18 +14,21 @@
 package org.eclipse.swt.tests.junit;
 
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
@@ -36,6 +39,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageGcDrawer;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
@@ -48,7 +52,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.test.Screenshots;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 public class SwtTestUtil {
 	/**
@@ -98,13 +102,129 @@ public class SwtTestUtil {
 	public final static boolean isWindowsOS = System.getProperty("os.name").startsWith("Windows");
 	public final static boolean isLinux = System.getProperty("os.name").equals("Linux");
 
+	private static boolean checkEnvVarMatches(String name, String regex) {
+		String value = System.getenv(name);
+		if (value == null) {
+			return false;
+		}
+		return value.matches(regex);
+	}
 
-	/** Useful if you want some tests not to run on Jenkins with user "genie.platform" */
-	public final static boolean isRunningOnContinousIntegration = isGTK && ("genie.platform".equalsIgnoreCase(System.getProperty("user.name")));
+	public static final String GITHUB_DETECT_ENV_VAR = "GITHUB_ACTIONS";
+	public static final String GITHUB_DETECT_REGEX = "true";
 
-	public final static boolean isX11 = isGTK
-			&& "x11".equals(System.getProperty("org.eclipse.swt.internal.gdk.backend"));
+	/**
+	 * Return true if we are probably running on GitHub Actions.
+	 *
+	 * To enable or disable tests on Jenkins with annotations use
+	 * {@link EnabledIfEnvironmentVariable} and related classes with
+	 * {@link #GITHUB_DETECT_ENV_VAR} and {@link #GITHUB_DETECT_REGEX}
+	 */
+	public static boolean isRunningOnGitHubActions() {
+		return checkEnvVarMatches(GITHUB_DETECT_ENV_VAR, GITHUB_DETECT_REGEX);
+	}
 
+	public static final String JENKINS_DETECT_ENV_VAR = "JOB_NAME";
+	public static final String JENKINS_DETECT_REGEX = ".*";
+
+	/**
+	 * Return true if we are probably running on Jenkins.
+	 *
+	 * To enable or disable tests on Jenkins with annotations use
+	 * {@link EnabledIfEnvironmentVariable} and related classes with
+	 * {@link #JENKINS_DETECT_ENV_VAR} and {@link #JENKINS_DETECT_REGEX}
+	 */
+	public static boolean isRunningOnJenkins() {
+		return checkEnvVarMatches(JENKINS_DETECT_ENV_VAR, JENKINS_DETECT_REGEX);
+	}
+
+	/**
+	 * Return whether running on x11. This is dynamically set at runtime and cannot
+	 * be accessed before the corresponding property is initialized in Display.
+	 *
+	 * <strong>Note:</strong> this method still must be called after the first
+	 * Display is created to be valid
+	 */
+	public final static boolean isX11() {
+		if (!isGTK) {
+			return false;
+		}
+		String backend = System.getProperty("org.eclipse.swt.internal.gdk.backend");
+
+		if ("x11".equals(backend)) {
+			return true;
+		} else if ("wayland".equals(backend)) {
+			return false;
+		}
+		fail("org.eclipse.swt.internal.gdk.backend System property is not set yet. Create a new Display before calling isX11");
+		throw new IllegalStateException("unreachable");
+	}
+
+	/**
+	 * Return whether running on Wayland. This is dynamically set at runtime and cannot
+	 * be accessed before the corresponding property is initialized in Display.
+	 *
+	 * <strong>Note:</strong> this method still must be called after the first
+	 * Display is created to be valid
+	 */
+	public final static boolean isWayland() {
+		if (!isGTK) {
+			return false;
+		}
+		String backend = System.getProperty("org.eclipse.swt.internal.gdk.backend");
+
+		if ("wayland".equals(backend)) {
+			return true;
+		} else if ("x11".equals(backend)) {
+			return false;
+		}
+		fail("org.eclipse.swt.internal.gdk.backend System property is not set yet. Create a new Display before calling isWayland");
+		throw new IllegalStateException("unreachable");
+	}
+
+	/**
+	 * Return whether running on GTK3. This is dynamically set at runtime and cannot
+	 * be accessed before the corresponding property is initialized in OS.
+	 *
+	 * <strong>Note:</strong> this method still must be called after the static
+	 * block of OS is run.
+	 */
+	public final static boolean isGTK3() {
+		if (!isGTK) {
+			return false;
+		}
+
+		String version = System.getProperty("org.eclipse.swt.internal.gtk.version", "");
+		if (version.startsWith("3")) {
+			return true;
+		} else if (!version.isBlank()) {
+			return false;
+		}
+		fail("org.eclipse.swt.internal.gtk.version System property is not set yet. Create a new Display (or otherwise access OS) before calling isGTK4");
+		throw new IllegalStateException("unreachable");
+	}
+
+	/**
+	 * Return whether running on GTK4. This is dynamically set at runtime and cannot
+	 * be accessed before the corresponding property is initialized in OS.
+	 *
+	 * <strong>Note:</strong> this method still must be called after the static
+	 * block of OS is run.
+	 */
+	public final static boolean isGTK4() {
+		if (!isGTK) {
+			return false;
+		}
+
+		String version = System.getProperty("org.eclipse.swt.internal.gtk.version", "");
+		if (version.startsWith("4")) {
+			return true;
+		} else if (!version.isBlank()) {
+			return false;
+		}
+		fail("org.eclipse.swt.internal.gtk.version System property is not set yet. Create a new Display (or otherwise access OS) before calling isGTK4");
+		throw new IllegalStateException("unreachable");
+	}
 
 	/**
 	 * The palette used by images. See {@link #getAllPixels(Image)} and {@link #createImage}
@@ -128,19 +248,19 @@ public class SwtTestUtil {
 public static void assertSWTProblem(String message, int expectedCode, Throwable actualThrowable) {
 	if (actualThrowable instanceof SWTError) {
 		SWTError error = (SWTError) actualThrowable;
-		assertEquals(message, expectedCode, error.code);
+		assertEquals(expectedCode, error.code, message);
 	} else if (actualThrowable instanceof SWTException) {
 		SWTException exception = (SWTException) actualThrowable;
-		assertEquals(message, expectedCode, exception.code);
+		assertEquals(expectedCode, exception.code, message);
 	} else {
 		try {
 			SWT.error(expectedCode);
 		} catch (Throwable expectedThrowable) {
 			if (actualThrowable.getMessage().length() > expectedThrowable.getMessage().length()) {
-				assertTrue(message, actualThrowable.getMessage().startsWith(expectedThrowable.getMessage()));
+				assertTrue(actualThrowable.getMessage().startsWith(expectedThrowable.getMessage()), message);
 			}
 			else {
-				assertEquals(message, expectedThrowable.getMessage(), actualThrowable.getMessage());
+				assertEquals(expectedThrowable.getMessage(), actualThrowable.getMessage(), message);
 			}
 		}
 	}
@@ -165,7 +285,12 @@ public static boolean isBidi() {
 public static void openShell(Shell shell) {
 	if (shell != null && !shell.getVisible()) {
 		if (isGTK) {
-			waitEvent(() -> shell.open(), shell, SWT.Paint, 1000);
+			if (isGTK4() || isWayland()) {
+				waitAllEvents(() -> shell.open(), shell, Set.of(SWT.Paint, SWT.Activate, SWT.FocusIn), 1000);
+			} else {
+				waitEvent(() -> shell.open(), shell, SWT.Paint, 1000);
+			}
+			processEvents();
 		} else {
 			shell.open();
 		}
@@ -367,7 +492,7 @@ public static void assertSimilarBrightness(String message, int expected, int act
 		// 2) and ensure  brightness is within 12.5% of the range.
 		double expectedIntensity = getBrightness(expected);
 		double actualIntensity = getBrightness(actual);
-		assertEquals(message, expectedIntensity, actualIntensity, 255f / 8);
+		assertEquals(expectedIntensity, actualIntensity, 255f / 8, message);
 	}
 }
 
@@ -399,12 +524,15 @@ public static void processEvents(int timeoutMs, BooleanSupplier breakCondition) 
 	long targetTimestamp = System.currentTimeMillis() + timeoutMs;
 	Display display = Display.getCurrent();
 	while (!breakCondition.getAsBoolean()) {
-		if (!display.readAndDispatch()) {
-			if (System.currentTimeMillis() < targetTimestamp) {
-				Thread.sleep(50);
-			} else {
+		while (display.readAndDispatch()) {
+			if (System.currentTimeMillis() >= targetTimestamp) {
 				return;
 			}
+		}
+		if (System.currentTimeMillis() < targetTimestamp) {
+			Thread.sleep(50);
+		} else {
+			return;
 		}
 	}
 }
@@ -445,6 +573,45 @@ public static boolean waitEvent(Runnable trigger, Control control, int swtEvent,
 }
 
 /**
+ * Wait until specified control receives all the specified event.
+ *
+ * @param trigger       may be null. Code that is expected to send event.
+ *                      Note that if you trigger it outside, then event may
+ *                      arrive *before* you call this function, and it will
+ *                      fail to receive event.
+ * @param control       control expected to receive the event
+ * @param swtEvents     events, such as SWT.Paint
+ * @param timeoutMsec   how long to wait for event
+ * @return <code>true</code> if event was received
+ */
+public static boolean waitAllEvents(Runnable trigger, Control control, Set<Integer> swtEvents, int timeoutMsec) {
+	Map<Integer, Listener> eventsLeftToReceive = new HashMap<>();
+	for (Integer swtEvent : swtEvents) {
+		Listener listener = event -> {
+			control.removeListener(swtEvent, eventsLeftToReceive.get(swtEvent));
+			eventsLeftToReceive.remove(swtEvent);
+		};
+		eventsLeftToReceive.put(swtEvent, listener);
+		control.addListener(swtEvent, listener);
+	}
+	try {
+		if (trigger != null)
+			trigger.run();
+
+		long start = System.currentTimeMillis();
+		while (!eventsLeftToReceive.isEmpty()) {
+			if (System.currentTimeMillis() - start > timeoutMsec)
+				return false;
+			processEvents();
+		}
+	} finally {
+		eventsLeftToReceive.forEach((swtEvent, listener) -> control.removeListener(swtEvent, listener));
+	}
+
+	return true;
+}
+
+/**
  * Wait until specified Shell becomes active, or internal timeout elapses.
  *
  * @param trigger       may be null. Code that causes Shell to become active.
@@ -473,7 +640,7 @@ public static void waitShellActivate(Runnable trigger, Shell shell) {
 	// Something went wrong? Get more info to diagnose
 	Screenshots.takeScreenshot(SwtTestUtil.class, "waitShellActivate-" + System.currentTimeMillis());
 	dumpShellState(System.out);
-	assertThat("Shell did not activate", shell.getDisplay().getActiveShell(), is(shell));
+	assertEquals(shell.getDisplay().getActiveShell(), shell, "Shell did not activate");
 	fail("SWT.Activate was not received but Shell is (incorrectly?) reported active");
 }
 
@@ -503,8 +670,9 @@ public static boolean hasPixel(Control control, Color expectedColor) {
  *         widget
  */
 public static boolean hasPixel(Control control, Color expectedColor, Rectangle rect) {
+	ImageGcDrawer noOpGcDrawer = (gc, height, width) -> {};
 	GC gc = new GC(control);
-	final Image image = new Image(control.getDisplay(), control.getSize().x, control.getSize().y);
+	final Image image = new Image(control.getDisplay(), noOpGcDrawer, control.getSize().x, control.getSize().y);
 	gc.copyArea(image, 0, 0);
 	gc.dispose();
 	boolean result = hasPixel(image, expectedColor, rect);
@@ -580,19 +748,99 @@ public static boolean hasPixelNotMatching(Image image, Color nonMatchingColor, R
 	return false;
 }
 
-public static Path getPath(String fileName, TemporaryFolder tempFolder) {
-	Path filePath = tempFolder.getRoot().toPath().resolve("image-resources").resolve(Path.of(fileName));
-	if (!Files.isRegularFile(filePath)) {
+public static Path getPath(String fileName, Path tempFolder) {
+	Path filePath = tempFolder.resolve("image-resources").resolve(Path.of(fileName));
+	return copyFile(fileName, filePath);
+}
+
+public static Path copyFile(String sourceFilename, Path destinationPath) {
+	if (!Files.isRegularFile(destinationPath)) {
 		// Extract resource on the classpath to a temporary file to ensure it's
 		// available as plain file, even if this bundle is packed as jar
-		try (InputStream inStream = SwtTestUtil.class.getResourceAsStream(fileName)) {
-			assertNotNull(inStream, "InputStream == null for file " + fileName);
-			Files.createDirectories(filePath.getParent());
-			Files.copy(inStream, filePath);
+		try (InputStream inStream = SwtTestUtil.class.getResourceAsStream(sourceFilename)) {
+			assertNotNull(inStream, "InputStream == null for file " + sourceFilename);
+			Files.createDirectories(destinationPath.getParent());
+			Files.copy(inStream, destinationPath);
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
-	return filePath;
+	return destinationPath;
+}
+
+@FunctionalInterface
+public interface ExceptionalSupplier<T> {
+	T get() throws Exception;
+}
+
+/**
+ * When running some operations, such as requesting remote process read the
+ * clipboard, we need to have the event queue processing otherwise the remote
+ * won't be able to read our clipboard contribution.
+ *
+ * This method starts the supplier in a new thread and runs the event loop until
+ * the thread completes, or until a timeout is reached.
+ */
+static <T> T runOperationInThread(ExceptionalSupplier<T> supplier) throws RuntimeException {
+	return runOperationInThread(10000, supplier);
+}
+
+/**
+ * When running some operations, such as requesting remote process read the
+ * clipboard, we need to have the event queue processing otherwise the remote
+ * won't be able to read our clipboard contribution.
+ *
+ * This method starts the supplier in a new thread and runs the event loop until
+ * the thread completes, or until a timeout is reached.
+ */
+static <T> T runOperationInThread(int timeoutMs, ExceptionalSupplier<T> supplier) throws RuntimeException {
+	Object[] supplierValue = new Object[1];
+	Exception[] supplierException = new Exception[1];
+	Runnable task = () -> {
+		try {
+			supplierValue[0] = supplier.get();
+		} catch (Exception e) {
+			supplierValue[0] = null;
+			supplierException[0] = e;
+		}
+	};
+	Thread thread = new Thread(task, SwtTestUtil.class.getName() + ".runOperationInThread");
+	thread.setDaemon(true);
+	thread.start();
+	BooleanSupplier done = () -> !thread.isAlive();
+	try {
+		processEvents(timeoutMs, done);
+	} catch (InterruptedException e) {
+		throw new RuntimeException("Failed while running thread", e);
+	}
+	assertTrue(done.getAsBoolean());
+	if (supplierException[0] != null) {
+		throw new RuntimeException("Failed while running thread", supplierException[0]);
+	}
+	@SuppressWarnings("unchecked")
+	T result = (T) supplierValue[0];
+	return result;
+}
+
+/**
+ * Capture any output on System.err
+ *
+ * This method does not capture output on stderr from C level, such as
+ * Gdk-CRITICAL messages.
+ *
+ * @param runnable to run while capturing output
+ * @return output on System.err
+ */
+public static String runWithCapturedStderr(Runnable runnable) {
+	PrintStream originalErr = System.err;
+	ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+	System.setErr(new PrintStream(errContent, true, StandardCharsets.UTF_8));
+	try {
+		runnable.run();
+		return errContent.toString(StandardCharsets.UTF_8);
+
+	} finally {
+		System.setErr(originalErr);
+	}
 }
 }

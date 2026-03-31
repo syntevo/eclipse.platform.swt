@@ -3557,6 +3557,9 @@ void setBackground () {
  * <p>
  * Note: This operation is a hint and may be overridden by the platform.
  * </p>
+ * <p>
+ * Note: The background color can be overridden by setting a background image.
+ * </p>
  * @param color the new color (or null)
  *
  * @exception IllegalArgumentException <ul>
@@ -3596,6 +3599,9 @@ private void _setBackground (Color color) {
  * <p>
  * Note: This operation is a hint and may be overridden by the platform.
  * For example, on Windows the background of a Button cannot be changed.
+ * </p>
+ * <p>
+ * Note: Setting a background image overrides a set background color.
  * </p>
  * @param image the new image (or null)
  *

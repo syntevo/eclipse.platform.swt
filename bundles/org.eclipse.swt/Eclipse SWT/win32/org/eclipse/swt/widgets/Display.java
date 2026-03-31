@@ -565,11 +565,6 @@ public class Display extends Device implements Executor {
 		};
 	}
 
-	static {
-		CommonWidgetsDPIChangeHandlers.registerCommonHandlers();
-	}
-
-
 /*
 * TEMPORARY CODE.
 */
@@ -962,7 +957,7 @@ protected void create (DeviceData data) {
 	checkDisplay (thread = Thread.currentThread (), true);
 	if (DPIUtil.isMonitorSpecificScalingActive()) {
 		setMonitorSpecificScaling(true);
-		DPIUtil.setAutoScaleForMonitorSpecificScaling();
+		Win32DPIUtils.setAutoScaleForMonitorSpecificScaling();
 	}
 	createDisplay (data);
 	register (this);
@@ -1191,32 +1186,39 @@ static long create32bitDIB (long hBitmap, int alpha, byte [] alphaData, int tran
 }
 
 static Image createIcon (Image image, int zoom) {
-	Device device = image.getDevice ();
+	Device device = image.getDevice();
 	ImageData data = image.getImageData(zoom);
-	if (data.alpha == -1 && data.alphaData == null) {
-		ImageData mask = data.getTransparencyMask ();
-		return new Image (device, data, mask);
+	switch (data.getTransparencyType()) {
+	case SWT.TRANSPARENCY_MASK:
+	case SWT.TRANSPARENCY_PIXEL:
+		ImageData mask = data.getTransparencyMask();
+		return new Image(device, data, mask);
+	case SWT.TRANSPARENCY_ALPHA:
+	case SWT.NONE:
+	default:
+		int width = data.width, height = data.height;
+		long hMask, hBitmap;
+		long hDC = device.internal_new_GC(null);
+		long dstHdc = OS.CreateCompatibleDC(hDC), oldDstBitmap;
+		hBitmap = Display.create32bitDIB(Image.win32_getHandle(image, zoom), data.alpha, data.alphaData,
+				data.transparentPixel);
+		hMask = OS.CreateBitmap(width, height, 1, 1, null);
+		oldDstBitmap = OS.SelectObject(dstHdc, hMask);
+		OS.PatBlt(dstHdc, 0, 0, width, height, OS.BLACKNESS);
+		OS.SelectObject(dstHdc, oldDstBitmap);
+		OS.DeleteDC(dstHdc);
+		device.internal_dispose_GC(hDC, null);
+		ICONINFO info = new ICONINFO();
+		info.fIcon = true;
+		info.hbmColor = hBitmap;
+		info.hbmMask = hMask;
+		long hIcon = OS.CreateIconIndirect(info);
+		if (hIcon == 0)
+			SWT.error(SWT.ERROR_NO_HANDLES);
+		OS.DeleteObject(hBitmap);
+		OS.DeleteObject(hMask);
+		return Image.win32_new(device, SWT.ICON, hIcon, zoom);
 	}
-	int width = data.width, height = data.height;
-	long hMask, hBitmap;
-	long hDC = device.internal_new_GC (null);
-	long dstHdc = OS.CreateCompatibleDC (hDC), oldDstBitmap;
-	hBitmap = Display.create32bitDIB (Image.win32_getHandle(image, zoom), data.alpha, data.alphaData, data.transparentPixel);
-	hMask = OS.CreateBitmap (width, height, 1, 1, null);
-	oldDstBitmap = OS.SelectObject (dstHdc, hMask);
-	OS.PatBlt (dstHdc, 0, 0, width, height, OS.BLACKNESS);
-	OS.SelectObject (dstHdc, oldDstBitmap);
-	OS.DeleteDC (dstHdc);
-	device.internal_dispose_GC (hDC, null);
-	ICONINFO info = new ICONINFO ();
-	info.fIcon = true;
-	info.hbmColor = hBitmap;
-	info.hbmMask = hMask;
-	long hIcon = OS.CreateIconIndirect (info);
-	if (hIcon == 0) SWT.error(SWT.ERROR_NO_HANDLES);
-	OS.DeleteObject (hBitmap);
-	OS.DeleteObject (hMask);
-	return Image.win32_new (device, SWT.ICON, hIcon, zoom);
 }
 
 long getTextSearchIcon(int size) {
@@ -1467,7 +1469,7 @@ public Widget findWidget (Widget widget, long id) {
 
 long foregroundIdleProc (long code, long wParam, long lParam) {
 	if (code >= 0) {
-		Runnable processMessages = () -> {
+		Supplier<Boolean> processMessages = () -> {
 			sendPostExternalEventDispatchEvent ();
 			if (runMessagesInIdle) {
 				if (runMessagesInMessageProc) {
@@ -1493,6 +1495,7 @@ long foregroundIdleProc (long code, long wParam, long lParam) {
 			int flags = OS.PM_NOREMOVE | OS.PM_NOYIELD | OS.PM_QS_INPUT;
 			if (!OS.PeekMessage (msg, 0, 0, 0, flags)) wakeThread ();
 			sendPreExternalEventDispatchEvent ();
+			return true;
 		};
 		if (!synchronizer.isMessagesEmpty()) {
 			// Windows hooks will inherit the thread DPI awareness from
@@ -1501,7 +1504,7 @@ long foregroundIdleProc (long code, long wParam, long lParam) {
 			// This requires to reset the thread DPi awareness to make
 			// sure, all UI updates caused by this will be executed
 			// with the correct DPI awareness
-			runWithProperDPIAwareness(processMessages);
+			Win32DPIUtils.runWithProperDPIAwareness(this, processMessages);
 		}
 	}
 	return OS.CallNextHookEx (idleHook, (int)code, wParam, lParam);
@@ -1598,7 +1601,7 @@ public Menu getMenuBar () {
 @Override
 public Rectangle getBounds() {
 	checkDevice ();
-	return DPIUtil.autoScaleDown(getBoundsInPixels());
+	return Win32DPIUtils.pixelToPoint(getBoundsInPixels(), DPIUtil.getDeviceZoom());
 }
 
 Rectangle getBoundsInPixels () {
@@ -1671,7 +1674,7 @@ int getClickCount (int type, int button, long hwnd, long lParam) {
 @Override
 public Rectangle getClientArea () {
 	checkDevice ();
-	return DPIUtil.autoScaleDown(getClientAreaInPixels());
+	return Win32DPIUtils.pixelToPoint(getClientAreaInPixels(), DPIUtil.getDeviceZoom());
 }
 
 Rectangle getClientAreaInPixels () {
@@ -1728,6 +1731,28 @@ public Control getCursorControl () {
 public Point getCursorLocation () {
 	checkDevice ();
 	return coordinateSystemMapper.getCursorLocation();
+}
+
+Rectangle fitRectangleBoundsIntoMonitorWithCursor(RECT rect) {
+	Rectangle monitorBounds = coordinateSystemMapper.getContainingMonitorBoundsInPixels(getCursorLocation());
+	if (monitorBounds == null) {
+		return null;
+	}
+	int rectWidth = rect.right - rect.left;
+	int rectHeight = rect.bottom - rect.top;
+	if (rect.left < monitorBounds.x) {
+		rect.left = monitorBounds.x;
+	}
+	int monitorBoundsRightEnd = monitorBounds.x + monitorBounds.width;
+	if (rect.right > monitorBoundsRightEnd) {
+		if (rectWidth <= monitorBounds.width) {
+			rect.left = monitorBoundsRightEnd - rectWidth;
+		} else {
+			rect.left = monitorBounds.x;
+		}
+		rectWidth = monitorBoundsRightEnd - rect.left;
+	}
+	return new Rectangle(rect.left, rect.top, rectWidth, rectHeight);
 }
 
 Point getCursorLocationInPixels () {
@@ -2045,7 +2070,7 @@ ImageList getImageList (int style, int width, int height, int zoom) {
 		imageList = newList;
 	}
 
-	ImageList list = new ImageList (style, width, height, zoom);
+	ImageList list = new ImageList (style, DPIUtil.pointToPixel(width, zoom), DPIUtil.pointToPixel(height, zoom), zoom);
 	imageList [i] = list;
 	list.addRef();
 	return list;
@@ -2075,7 +2100,7 @@ ImageList getImageListToolBar (int style, int width, int height, int zoom) {
 		toolImageList = newList;
 	}
 
-	ImageList list = new ImageList (style, width, height, zoom);
+	ImageList list = new ImageList (style, DPIUtil.pointToPixel(width, zoom), DPIUtil.pointToPixel(height, zoom), zoom);
 	toolImageList [i] = list;
 	list.addRef();
 	return list;
@@ -2105,7 +2130,7 @@ ImageList getImageListToolBarDisabled (int style, int width, int height, int zoo
 		toolDisabledImageList = newList;
 	}
 
-	ImageList list = new ImageList (style, width, height, zoom);
+	ImageList list = new ImageList (style, DPIUtil.pointToPixel(width, zoom), DPIUtil.pointToPixel(height, zoom), zoom);
 	toolDisabledImageList [i] = list;
 	list.addRef();
 	return list;
@@ -2135,7 +2160,7 @@ ImageList getImageListToolBarHot (int style, int width, int height, int zoom) {
 		toolHotImageList = newList;
 	}
 
-	ImageList list = new ImageList (style, width, height, zoom);
+	ImageList list = new ImageList (style, DPIUtil.pointToPixel(width, zoom), DPIUtil.pointToPixel(height, zoom), zoom);
 	toolHotImageList [i] = list;
 	list.addRef();
 	return list;
@@ -2206,16 +2231,10 @@ Monitor getMonitor (long hmonitor) {
 	OS.GetMonitorInfo (hmonitor, lpmi);
 	Monitor monitor = new Monitor ();
 	monitor.handle = hmonitor;
-	Rectangle boundsInPixels = new Rectangle(lpmi.rcMonitor_left, lpmi.rcMonitor_top, lpmi.rcMonitor_right - lpmi.rcMonitor_left,lpmi.rcMonitor_bottom - lpmi.rcMonitor_top);
-	Rectangle clientAreaInPixels = new Rectangle(lpmi.rcWork_left, lpmi.rcWork_top, lpmi.rcWork_right - lpmi.rcWork_left, lpmi.rcWork_bottom - lpmi.rcWork_top);
 	int [] dpiX = new int[1];
 	int [] dpiY = new int[1];
 	int result = OS.GetDpiForMonitor (monitor.handle, OS.MDT_EFFECTIVE_DPI, dpiX, dpiY);
 	result = (result == OS.S_OK) ? DPIUtil.mapDPIToZoom (dpiX[0]) : 100;
-
-	int autoscaleZoom = DPIUtil.getZoomForAutoscaleProperty(result);
-	monitor.setBounds(coordinateSystemMapper.mapMonitorBounds(boundsInPixels, autoscaleZoom));
-	monitor.setClientArea(coordinateSystemMapper.mapMonitorBounds(clientAreaInPixels, autoscaleZoom));
 	if (result == 0) {
 		System.err.println("***WARNING: GetDpiForMonitor: SWT could not get valid monitor scaling factor.");
 		result = 100;
@@ -2225,6 +2244,12 @@ Monitor getMonitor (long hmonitor) {
 	 * to scaling issue on OS Win8.1 and above, for more details refer bug 537614.
 	 */
 	monitor.zoom = result;
+	Rectangle.WithMonitor boundsInPixels = new Rectangle.WithMonitor(lpmi.rcMonitor_left, lpmi.rcMonitor_top, lpmi.rcMonitor_right - lpmi.rcMonitor_left,lpmi.rcMonitor_bottom - lpmi.rcMonitor_top, monitor);
+	Rectangle.WithMonitor clientAreaInPixels = new Rectangle.WithMonitor(lpmi.rcWork_left, lpmi.rcWork_top, lpmi.rcWork_right - lpmi.rcWork_left, lpmi.rcWork_bottom - lpmi.rcWork_top, monitor);
+
+	monitor.setBounds(coordinateSystemMapper.mapMonitorBounds(boundsInPixels));
+	monitor.setClientArea(coordinateSystemMapper.mapMonitorBounds(clientAreaInPixels));
+
 	return monitor;
 }
 
@@ -2592,7 +2617,7 @@ public Image getSystemImage (int id) {
 
 private ImageDataProvider getImageDataProviderForIcon(int iconName) {
 	return zoom -> {
-		int scaledIconSize = DPIUtil.scaleUp(ICON_SIZE_AT_100, zoom);
+		int scaledIconSize = DPIUtil.pointToPixel(ICON_SIZE_AT_100, zoom);
 		long [] hIcon = new long [1];
 		OS.LoadIconWithScaleDown(0, iconName, scaledIconSize, scaledIconSize, hIcon);
 		Image image = Image.win32_new (this, SWT.ICON, hIcon[0], zoom);
@@ -3149,20 +3174,20 @@ Rectangle mapInPixels (Control from, Control to, int x, int y, int width, int he
 	return new Rectangle (rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
-Point translateFromDisplayCoordinates(Point point, int zoom) {
-	return coordinateSystemMapper.translateFromDisplayCoordinates(point, zoom);
+Point translateFromDisplayCoordinates(Point point) {
+	return coordinateSystemMapper.translateFromDisplayCoordinates(point);
 }
 
-Point translateToDisplayCoordinates(Point point, int zoom) {
-	return coordinateSystemMapper.translateToDisplayCoordinates(point, zoom);
+Point translateToDisplayCoordinates(Point point) {
+	return coordinateSystemMapper.translateToDisplayCoordinates(point);
 }
 
-Rectangle translateFromDisplayCoordinates(Rectangle rect, int zoom) {
-	return coordinateSystemMapper.translateFromDisplayCoordinates(rect, zoom);
+Rectangle translateFromDisplayCoordinates(Rectangle rect) {
+	return coordinateSystemMapper.translateFromDisplayCoordinates(rect);
 }
 
-Rectangle translateToDisplayCoordinates(Rectangle rect, int zoom) {
-	return coordinateSystemMapper.translateToDisplayCoordinates(rect, zoom);
+Rectangle translateToDisplayCoordinates(Rectangle rect) {
+	return coordinateSystemMapper.translateToDisplayCoordinates(rect);
 }
 
 long messageProc (long hwnd, long msg, long wParam, long lParam) {
@@ -3462,10 +3487,11 @@ long msgFilterProc (long code, long wParam, long lParam) {
 				// This requires to reset the thread DPi awareness to make
 				// sure, all UI updates caused by this will be executed
 				// with the correct DPI awareness
-				runWithProperDPIAwareness(() -> {
+				Win32DPIUtils.runWithProperDPIAwareness(this, () -> {
 					if (!OS.PeekMessage (msg, 0, 0, 0, flags)) {
 						if (runAsyncMessages (false)) wakeThread ();
 					}
+					return true;
 				});
 			}
 			break;
@@ -3623,7 +3649,7 @@ public boolean post (Event event) {
 					int y = OS.GetSystemMetrics (OS.SM_YVIRTUALSCREEN);
 					int width = OS.GetSystemMetrics (OS.SM_CXVIRTUALSCREEN);
 					int height = OS.GetSystemMetrics (OS.SM_CYVIRTUALSCREEN);
-					Point loc = DPIUtil.scaleUp(event.getLocation(), getDeviceZoom());
+					Point loc = Win32DPIUtils.pointToPixelAsLocation(event.getLocation(), getDeviceZoom());
 					inputs.dx = ((loc.x - x) * 65535 + width - 2) / (width - 1);
 					inputs.dy = ((loc.y - y) * 65535 + height - 2) / (height - 1);
 				} else {
@@ -5391,7 +5417,7 @@ public boolean setRescalingAtRuntime(boolean activate) {
 
 private boolean setMonitorSpecificScaling(boolean activate) {
 	int desiredApiAwareness = activate ? OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 : OS.DPI_AWARENESS_CONTEXT_SYSTEM_AWARE;
-	if (setDPIAwareness(desiredApiAwareness)) {
+	if (Win32DPIUtils.setDPIAwareness(desiredApiAwareness)) {
 		rescalingAtRuntime = activate;
 		coordinateSystemMapper = activate ? new MultiZoomCoordinateSystemMapper(this, this::getMonitors) : new SingleZoomCoordinateSystemMapper(this);
 		// dispose a existing font registry for the default display
@@ -5401,40 +5427,4 @@ private boolean setMonitorSpecificScaling(boolean activate) {
 	return false;
 }
 
-private boolean setDPIAwareness(int desiredDpiAwareness) {
-	if (desiredDpiAwareness == OS.GetThreadDpiAwarenessContext()) {
-		return true;
-	}
-	if (desiredDpiAwareness == OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) {
-		// "Per Monitor V2" only available in more recent Windows version
-		boolean perMonitorV2Available = OsVersion.IS_WIN10_1809;
-		if (!perMonitorV2Available) {
-			System.err.println("***WARNING: the OS version does not support DPI awareness mode PerMonitorV2.");
-			return false;
-		}
-	}
-	long setDpiAwarenessResult = OS.SetThreadDpiAwarenessContext(desiredDpiAwareness);
-	if (setDpiAwarenessResult == 0L) {
-		System.err.println("***WARNING: setting DPI awareness failed.");
-		return false;
-	}
-	return true;
-}
-
-private void runWithProperDPIAwareness(Runnable operation) {
-	if (isRescalingAtRuntime()) {
-		// refreshing is only necessary, when monitor specific scaling is active
-		long previousDPIAwareness = OS.GetThreadDpiAwarenessContext();
-		if (!setDPIAwareness(OS.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
-			// awareness was not changed, so no need to reset it
-			previousDPIAwareness = 0;
-		}
-		operation.run();
-		if (previousDPIAwareness > 0) {
-			OS.SetThreadDpiAwarenessContext(previousDPIAwareness);
-		}
-	} else {
-		operation.run();
-	}
-}
 }

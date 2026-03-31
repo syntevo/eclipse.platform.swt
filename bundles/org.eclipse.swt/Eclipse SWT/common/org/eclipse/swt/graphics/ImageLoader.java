@@ -55,6 +55,8 @@ import org.eclipse.swt.internal.image.*;
  */
 public class ImageLoader {
 
+	public static final int MAX_SIZE = Integer.getInteger("org.eclipse.swt.internal.imageLoader.maxSize", 5_000).intValue();
+
 	/**
 	 * the array of ImageData objects in this ImageLoader.
 	 * This array is read in when the load method is called,
@@ -151,16 +153,24 @@ void reset() {
  * </ul>
  */
 public ImageData[] load(InputStream stream) {
-	load(stream, FileFormat.DEFAULT_ZOOM, FileFormat.DEFAULT_ZOOM);
+	loadByZoom(stream, FileFormat.DEFAULT_ZOOM, FileFormat.DEFAULT_ZOOM);
 	return data;
 }
 
-List<ElementAtZoom<ImageData>> load(InputStream stream, int fileZoom, int targetZoom) {
+List<ElementAtZoom<ImageData>> loadByZoom(InputStream stream, int fileZoom, int targetZoom) {
 	if (stream == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	reset();
 	List<ElementAtZoom<ImageData>> images = NativeImageLoader.load(new ElementAtZoom<>(stream, fileZoom), this, targetZoom);
 	data = images.stream().map(ElementAtZoom::element).toArray(ImageData[]::new);
 	return images;
+}
+
+ImageData loadBySize(InputStream stream, int width, int height) {
+	if (stream == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	reset();
+	ImageData image = NativeImageLoader.load(stream, this, width, height);
+	data = new ImageData[] {image};
+	return image;
 }
 
 static boolean canLoadAtZoom(InputStream stream, int fileZoom, int targetZoom) {
@@ -187,14 +197,24 @@ static boolean canLoadAtZoom(InputStream stream, int fileZoom, int targetZoom) {
  * </ul>
  */
 public ImageData[] load(String filename) {
-	load(filename, FileFormat.DEFAULT_ZOOM, FileFormat.DEFAULT_ZOOM);
+	loadByZoom(filename, FileFormat.DEFAULT_ZOOM, FileFormat.DEFAULT_ZOOM);
 	return data;
 }
 
-List<ElementAtZoom<ImageData>> load(String filename, int fileZoom, int targetZoom) {
+List<ElementAtZoom<ImageData>> loadByZoom(String filename, int fileZoom, int targetZoom) {
 	if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
 	try (InputStream stream = new FileInputStream(filename)) {
-		return load(stream, fileZoom, targetZoom);
+		return loadByZoom(stream, fileZoom, targetZoom);
+	} catch (IOException e) {
+		SWT.error(SWT.ERROR_IO, e);
+	}
+	return null;
+}
+
+ImageData loadBySize(String filename, int width, int height) {
+	if (filename == null) SWT.error(SWT.ERROR_NULL_ARGUMENT);
+	try (InputStream stream = new FileInputStream(filename)) {
+		return loadBySize(stream, width, height);
 	} catch (IOException e) {
 		SWT.error(SWT.ERROR_IO, e);
 	}
@@ -209,6 +229,19 @@ static boolean canLoadAtZoom(String filename, int fileZoom, int targetZoom) {
 		SWT.error(SWT.ERROR_IO, e);
 	}
 	return false;
+}
+
+static boolean isDynamicallySizable(String filename) {
+	try (InputStream stream = new FileInputStream(filename)) {
+		return FileFormat.isDynamicallySizableFormat(stream);
+	} catch (IOException e) {
+		SWT.error(SWT.ERROR_IO, e);
+	}
+	return false;
+}
+
+static boolean isDynamicallySizable(InputStream stream) {
+	return FileFormat.isDynamicallySizableFormat(stream);
 }
 
 /**

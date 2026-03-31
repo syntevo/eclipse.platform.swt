@@ -50,7 +50,6 @@ public class List extends Scrollable {
 		WNDCLASS lpWndClass = new WNDCLASS ();
 		OS.GetClassInfo (0, ListClass, lpWndClass);
 		ListProc = lpWndClass.lpfnWndProc;
-		DPIZoomChangeRegistry.registerHandler(List::handleDPIChange, List.class);
 	}
 
 /**
@@ -214,10 +213,12 @@ static int checkStyle (int style) {
 	return checkBits (style, SWT.SINGLE, SWT.MULTI, 0, 0, 0, 0);
 }
 
-@Override Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
+@Override
+Point computeSizeInPixels (Point hintInPoints, int zoom, boolean changed) {
 	checkWidget ();
+	Point hintInPixels = Win32DPIUtils.pointToPixelAsSufficientlyLargeSize(hintInPoints, zoom);
 	int width = 0, height = 0;
-	if (wHint == SWT.DEFAULT) {
+	if (hintInPoints.x == SWT.DEFAULT) {
 		if ((style & SWT.H_SCROLL) != 0) {
 			width = (int)OS.SendMessage (handle, OS.LB_GETHORIZONTALEXTENT, 0, 0);
 			width -= INSET;
@@ -247,15 +248,15 @@ static int checkStyle (int style) {
 			OS.ReleaseDC (handle, hDC);
 		}
 	}
-	if (hHint == SWT.DEFAULT) {
+	if (hintInPoints.y == SWT.DEFAULT) {
 		int count = (int)OS.SendMessage (handle, OS.LB_GETCOUNT, 0, 0);
 		int itemHeight = (int)OS.SendMessage (handle, OS.LB_GETITEMHEIGHT, 0, 0);
 		height = count * itemHeight;
 	}
 	if (width == 0) width = DEFAULT_WIDTH;
 	if (height == 0) height = DEFAULT_HEIGHT;
-	if (wHint != SWT.DEFAULT) width = wHint;
-	if (hHint != SWT.DEFAULT) height = hHint;
+	if (hintInPoints.x != SWT.DEFAULT) width = hintInPixels.x;
+	if (hintInPoints.y != SWT.DEFAULT) height = hintInPixels.y;
 	int border = getBorderWidthInPixels ();
 	width += border * 2 + INSET;
 	height += border * 2;
@@ -473,7 +474,7 @@ public int getItemCount () {
  */
 public int getItemHeight () {
 	checkWidget ();
-	return DPIUtil.scaleDown(getItemHeightInPixels(), getZoom());
+	return DPIUtil.pixelToPoint(getItemHeightInPixels(), getZoom());
 }
 
 int getItemHeightInPixels () {
@@ -1564,7 +1565,7 @@ void updateMenuLocation (Event event) {
 	}
 	Point pt = toDisplayInPixels (x, y);
 	int zoom = getZoom();
-	event.setLocation(DPIUtil.scaleDown(pt.x, zoom), DPIUtil.scaleDown(pt.y, zoom));
+	event.setLocation(DPIUtil.pixelToPoint(pt.x, zoom), DPIUtil.pixelToPoint(pt.y, zoom));
 }
 
 @Override
@@ -1852,13 +1853,12 @@ LRESULT wmCommandChild (long wParam, long lParam) {
 	return super.wmCommandChild (wParam, lParam);
 }
 
-private static void handleDPIChange(Widget widget, int newZoom, float scalingFactor) {
-	if (!(widget instanceof List list)) {
-		return;
-	}
-	if((list.style & SWT.H_SCROLL) != 0) {
+@Override
+void handleDPIChange(Event event, float scalingFactor) {
+	super.handleDPIChange(event, scalingFactor);
+	if((style & SWT.H_SCROLL) != 0) {
 		// Recalculate the Scroll width, as length of items has changed
-		list.setScrollWidth();
+		setScrollWidth();
 	}
 }
 }

@@ -247,6 +247,8 @@ public class GDK extends OS {
 	/** @param event cast=(GdkEventAny *) */
 	public static final native long GDK_EVENT_WINDOW(long event);
 	/** @param display cast=(GdkDisplay *) */
+	public static final native boolean GDK_IS_WAYLAND_DISPLAY(long display);
+	/** @param display cast=(GdkDisplay *) */
 	public static final native boolean GDK_IS_X11_DISPLAY(long display);
 	/** @method flags=const */
 	public static final native long GDK_TYPE_RGBA();
@@ -283,12 +285,6 @@ public class GDK extends OS {
 	 */
 	/* [GTK3 only, if-def'd in os.h] */
 	public static final native long gdk_x11_window_lookup_for_display(long gdkdisplay, long xid);
-	/**
-	 * @param gdkdisplay cast=(GdkDisplay *)
-	 * @param xid cast=(Window)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native long gdk_x11_surface_lookup_for_display(long gdkdisplay, long xid);
 	/**
 	 * @method flags=dynamic
 	 * @param atom_name cast=(const gchar *),flags=no_out critical
@@ -350,18 +346,6 @@ public class GDK extends OS {
 	 */
 	/* [GTK4 only, if-def'd in os.h] */
 	public static final native int gdk_surface_get_height(long surface);
-	/**
-	 * @param surface cast=(GdkSurface *)
-	 * @param region cast=(cairo_region_t *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native void gdk_surface_set_input_region(long surface, long region);
-	/**
-	 * @param surface cast=(GdkSurface *)
-	 * @param region cast=(cairo_region_t *)
-	 */
-	/* [GTK4 only, if-def'd in os.h] */
-	public static final native void gdk_surface_set_opaque_region(long surface, long region);
 	/**
 	 * @param cairo cast=(cairo_t *)
 	 * @param pixbuf cast=(const GdkPixbuf *)
@@ -625,11 +609,20 @@ public class GDK extends OS {
 	 */
 	public static final native long gdk_pango_layout_get_clip_region(long layout, int x_origin, int y_origin, int[] index_ranges, int n_ranges);
 
-	/** @param animation cast=(GdkPixbufAnimation *) */
+	/**
+	 * @param animation cast=(GdkPixbufAnimation *)
+	 * @method flags=ignore_deprecations
+	 */
 	public static final native boolean gdk_pixbuf_animation_is_static_image(long animation);
-	/** @param iter cast=(GdkPixbufAnimationIter *) */
+	/**
+	 * @param iter cast=(GdkPixbufAnimationIter *)
+	 * @method flags=ignore_deprecations
+	 */
 	public static final native int gdk_pixbuf_animation_iter_get_delay_time(long iter);
-	/** @param iter cast=(GdkPixbufAnimationIter *) */
+	/**
+	 * @param iter cast=(GdkPixbufAnimationIter *)
+	 * @method flags=ignore_deprecations
+	 */
 	public static final native long gdk_pixbuf_animation_iter_get_pixbuf(long iter);
 	/**
 	 * @method flags=ignore_deprecations
@@ -643,7 +636,10 @@ public class GDK extends OS {
 	 * @param start_time cast=(const GTimeVal *)
 	 */
 	public static final native long gdk_pixbuf_animation_get_iter(long animation, long start_time);
-	/** @param animation cast=(GdkPixbufAnimation *) */
+	/**
+	 * @param animation cast=(GdkPixbufAnimation *)
+	 * @method flags=ignore_deprecations
+	 */
 	public static final native long gdk_pixbuf_animation_get_static_image(long animation);
 	/**
 	 * @param src_pixbuf cast=(GdkPixbuf *)
@@ -670,7 +666,10 @@ public class GDK extends OS {
 	public static final native long gdk_pixbuf_loader_get_format(long loader);
 	/** @param format cast=(GdkPixbufFormat *) */
 	public static final native long gdk_pixbuf_format_get_name(long format);
-	/** @param loader cast=(GdkPixbufLoader *) */
+	/**
+	 * @param loader cast=(GdkPixbufLoader *)
+	 * @method flags=ignore_deprecations
+	 */
 	public static final native long gdk_pixbuf_loader_get_animation(long loader);
 	/**
 	 * @param data cast=(const guchar *)

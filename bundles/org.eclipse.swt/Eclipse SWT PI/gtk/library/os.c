@@ -53,6 +53,18 @@ JNIEXPORT jlong JNICALL GDK_NATIVE(GDK_1EVENT_1WINDOW)
 }
 #endif
 
+#ifndef NO_GDK_1IS_1WAYLAND_1DISPLAY
+JNIEXPORT jboolean JNICALL GDK_NATIVE(GDK_1IS_1WAYLAND_1DISPLAY)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jboolean rc = 0;
+	GDK_NATIVE_ENTER(env, that, GDK_1IS_1WAYLAND_1DISPLAY_FUNC);
+	rc = (jboolean)GDK_IS_WAYLAND_DISPLAY((GdkDisplay *)arg0);
+	GDK_NATIVE_EXIT(env, that, GDK_1IS_1WAYLAND_1DISPLAY_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_GDK_1IS_1X11_1DISPLAY
 JNIEXPORT jboolean JNICALL GDK_NATIVE(GDK_1IS_1X11_1DISPLAY)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -1495,6 +1507,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1animation_1get_1static_1image
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1get_1static_1image)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -1504,9 +1517,11 @@ JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1get_1static_1image)
 	GDK_NATIVE_EXIT(env, that, gdk_1pixbuf_1animation_1get_1static_1image_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1animation_1is_1static_1image
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jboolean JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1is_1static_1image)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -1516,6 +1531,7 @@ JNIEXPORT jboolean JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1is_1static_1image)
 	GDK_NATIVE_EXIT(env, that, gdk_1pixbuf_1animation_1is_1static_1image_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1animation_1iter_1advance
@@ -1533,6 +1549,7 @@ G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1animation_1iter_1get_1delay_1time
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jint JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1iter_1get_1delay_1time)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -1542,9 +1559,11 @@ JNIEXPORT jint JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1iter_1get_1delay_1time
 	GDK_NATIVE_EXIT(env, that, gdk_1pixbuf_1animation_1iter_1get_1delay_1time_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1animation_1iter_1get_1pixbuf
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1iter_1get_1pixbuf)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -1554,6 +1573,7 @@ JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1animation_1iter_1get_1pixbuf)
 	GDK_NATIVE_EXIT(env, that, gdk_1pixbuf_1animation_1iter_1get_1pixbuf_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1copy
@@ -1751,6 +1771,7 @@ fail:
 #endif
 
 #ifndef NO_gdk_1pixbuf_1loader_1get_1animation
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1loader_1get_1animation)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -1760,6 +1781,7 @@ JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1pixbuf_1loader_1get_1animation)
 	GDK_NATIVE_EXIT(env, that, gdk_1pixbuf_1loader_1get_1animation_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gdk_1pixbuf_1loader_1get_1format
@@ -2374,26 +2396,6 @@ JNIEXPORT void JNICALL GDK_NATIVE(gdk_1surface_1set_1cursor)
 	GDK_NATIVE_ENTER(env, that, gdk_1surface_1set_1cursor_FUNC);
 	gdk_surface_set_cursor((GdkSurface *)arg0, (GdkCursor *)arg1);
 	GDK_NATIVE_EXIT(env, that, gdk_1surface_1set_1cursor_FUNC);
-}
-#endif
-
-#ifndef NO_gdk_1surface_1set_1input_1region
-JNIEXPORT void JNICALL GDK_NATIVE(gdk_1surface_1set_1input_1region)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	GDK_NATIVE_ENTER(env, that, gdk_1surface_1set_1input_1region_FUNC);
-	gdk_surface_set_input_region((GdkSurface *)arg0, (cairo_region_t *)arg1);
-	GDK_NATIVE_EXIT(env, that, gdk_1surface_1set_1input_1region_FUNC);
-}
-#endif
-
-#ifndef NO_gdk_1surface_1set_1opaque_1region
-JNIEXPORT void JNICALL GDK_NATIVE(gdk_1surface_1set_1opaque_1region)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	GDK_NATIVE_ENTER(env, that, gdk_1surface_1set_1opaque_1region_FUNC);
-	gdk_surface_set_opaque_region((GdkSurface *)arg0, (cairo_region_t *)arg1);
-	GDK_NATIVE_EXIT(env, that, gdk_1surface_1set_1opaque_1region_FUNC);
 }
 #endif
 
@@ -3116,18 +3118,6 @@ JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1x11_1surface_1get_1xid)
 	GDK_NATIVE_ENTER(env, that, gdk_1x11_1surface_1get_1xid_FUNC);
 	rc = (jlong)gdk_x11_surface_get_xid((GdkSurface *)arg0);
 	GDK_NATIVE_EXIT(env, that, gdk_1x11_1surface_1get_1xid_FUNC);
-	return rc;
-}
-#endif
-
-#ifndef NO_gdk_1x11_1surface_1lookup_1for_1display
-JNIEXPORT jlong JNICALL GDK_NATIVE(gdk_1x11_1surface_1lookup_1for_1display)
-	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
-{
-	jlong rc = 0;
-	GDK_NATIVE_ENTER(env, that, gdk_1x11_1surface_1lookup_1for_1display_FUNC);
-	rc = (jlong)gdk_x11_surface_lookup_for_display((GdkDisplay *)arg0, (Window)arg1);
-	GDK_NATIVE_EXIT(env, that, gdk_1x11_1surface_1lookup_1for_1display_FUNC);
 	return rc;
 }
 #endif
@@ -4079,6 +4069,7 @@ JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1check_1version)
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1add_1palette
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1add_1palette)
 	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jint arg2, jint arg3, jlong arg4)
 {
@@ -4086,9 +4077,11 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1add_1palette)
 	gtk_color_chooser_add_palette((GtkColorChooser *)arg0, (GtkOrientation)arg1, (gint)arg2, (gint)arg3, (GdkRGBA *)arg4);
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1add_1palette_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1dialog_1new
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1color_1chooser_1dialog_1new)
 	(JNIEnv *env, jclass that, jbyteArray arg0, jlong arg1)
 {
@@ -4102,9 +4095,11 @@ fail:
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1dialog_1new_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1get_1rgba
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1get_1rgba)
 	(JNIEnv *env, jclass that, jlong arg0, jobject arg1)
 {
@@ -4116,9 +4111,11 @@ fail:
 	if (arg1 && lparg1) setGdkRGBAFields(env, arg1, lparg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1get_1rgba_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1get_1use_1alpha
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jboolean JNICALL GTK_NATIVE(gtk_1color_1chooser_1get_1use_1alpha)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -4128,9 +4125,11 @@ JNIEXPORT jboolean JNICALL GTK_NATIVE(gtk_1color_1chooser_1get_1use_1alpha)
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1get_1use_1alpha_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1set_1rgba
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1set_1rgba)
 	(JNIEnv *env, jclass that, jlong arg0, jobject arg1)
 {
@@ -4142,9 +4141,11 @@ fail:
 	if (arg1 && lparg1) setGdkRGBAFields(env, arg1, lparg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1set_1rgba_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1color_1chooser_1set_1use_1alpha
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1set_1use_1alpha)
 	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
 {
@@ -4152,6 +4153,7 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1color_1chooser_1set_1use_1alpha)
 	gtk_color_chooser_set_use_alpha((GtkColorChooser *)arg0, (gboolean)arg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1color_1chooser_1set_1use_1alpha_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1combo_1box_1get_1active
@@ -4730,6 +4732,7 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1expander_1set_1label_1widget)
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1add_1filter
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1add_1filter)
 	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
 {
@@ -4737,9 +4740,11 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1add_1filter)
 	gtk_file_chooser_add_filter((GtkFileChooser *)arg0, (GtkFileFilter *)arg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1add_1filter_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1get_1filter
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1file_1chooser_1get_1filter)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -4749,6 +4754,7 @@ JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1file_1chooser_1get_1filter)
 	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1get_1filter_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1native_1new
@@ -4782,6 +4788,7 @@ fail:
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1set_1current_1name
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1current_1name)
 	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1)
 {
@@ -4793,9 +4800,11 @@ fail:
 	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, 0);
 	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1current_1name_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1set_1filter
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1filter)
 	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
 {
@@ -4803,9 +4812,11 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1filter)
 	gtk_file_chooser_set_filter((GtkFileChooser *)arg0, (GtkFileFilter *)arg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1filter_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1file_1chooser_1set_1select_1multiple
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1select_1multiple)
 	(JNIEnv *env, jclass that, jlong arg0, jboolean arg1)
 {
@@ -4813,6 +4824,7 @@ JNIEXPORT void JNICALL GTK_NATIVE(gtk_1file_1chooser_1set_1select_1multiple)
 	gtk_file_chooser_set_select_multiple((GtkFileChooser *)arg0, (gboolean)arg1);
 	GTK_NATIVE_EXIT(env, that, gtk_1file_1chooser_1set_1select_1multiple_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1file_1filter_1add_1pattern
@@ -4868,6 +4880,7 @@ fail:
 #endif
 
 #ifndef NO_gtk_1font_1chooser_1dialog_1new
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1font_1chooser_1dialog_1new)
 	(JNIEnv *env, jclass that, jbyteArray arg0, jlong arg1)
 {
@@ -4881,9 +4894,11 @@ fail:
 	GTK_NATIVE_EXIT(env, that, gtk_1font_1chooser_1dialog_1new_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1font_1chooser_1get_1font
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1font_1chooser_1get_1font)
 	(JNIEnv *env, jclass that, jlong arg0)
 {
@@ -4893,9 +4908,11 @@ JNIEXPORT jlong JNICALL GTK_NATIVE(gtk_1font_1chooser_1get_1font)
 	GTK_NATIVE_EXIT(env, that, gtk_1font_1chooser_1get_1font_FUNC);
 	return rc;
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1font_1chooser_1set_1font
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 JNIEXPORT void JNICALL GTK_NATIVE(gtk_1font_1chooser_1set_1font)
 	(JNIEnv *env, jclass that, jlong arg0, jbyteArray arg1)
 {
@@ -4907,6 +4924,7 @@ fail:
 	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, 0);
 	GTK_NATIVE_EXIT(env, that, gtk_1font_1chooser_1set_1font_FUNC);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
 #endif
 
 #ifndef NO_gtk_1frame_1get_1label_1widget
@@ -10051,6 +10069,18 @@ JNIEXPORT jint JNICALL OS_NATIVE(GValue_1sizeof)
 }
 #endif
 
+#ifndef NO_G_1IS_1VALUE
+JNIEXPORT jboolean JNICALL OS_NATIVE(G_1IS_1VALUE)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jboolean rc = 0;
+	OS_NATIVE_ENTER(env, that, G_1IS_1VALUE_FUNC);
+	rc = (jboolean)G_IS_VALUE(arg0);
+	OS_NATIVE_EXIT(env, that, G_1IS_1VALUE_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_G_1OBJECT_1CLASS_1CONSTRUCTOR
 JNIEXPORT jlong JNICALL OS_NATIVE(G_1OBJECT_1CLASS_1CONSTRUCTOR)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -10169,6 +10199,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(G_1TYPE_1INT64)
 }
 #endif
 
+#ifndef NO_G_1TYPE_1INVALID
+JNIEXPORT jlong JNICALL OS_NATIVE(G_1TYPE_1INVALID)
+	(JNIEnv *env, jclass that)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, G_1TYPE_1INVALID_FUNC);
+	rc = (jlong)G_TYPE_INVALID;
+	OS_NATIVE_EXIT(env, that, G_1TYPE_1INVALID_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_G_1TYPE_1LONG
 JNIEXPORT jlong JNICALL OS_NATIVE(G_1TYPE_1LONG)
 	(JNIEnv *env, jclass that)
@@ -10201,6 +10243,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(G_1VALUE_1TYPE)
 	OS_NATIVE_ENTER(env, that, G_1VALUE_1TYPE_FUNC);
 	rc = (jlong)G_VALUE_TYPE(arg0);
 	OS_NATIVE_EXIT(env, that, G_1VALUE_1TYPE_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_G_1VALUE_1TYPE_1NAME
+JNIEXPORT jlong JNICALL OS_NATIVE(G_1VALUE_1TYPE_1NAME)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, G_1VALUE_1TYPE_1NAME_FUNC);
+	rc = (jlong)G_VALUE_TYPE_NAME(arg0);
+	OS_NATIVE_EXIT(env, that, G_1VALUE_1TYPE_1NAME_FUNC);
 	return rc;
 }
 #endif
@@ -10700,6 +10754,18 @@ JNIEXPORT jlong JNICALL OS_NATIVE(g_1app_1info_1get_1all)
 }
 #endif
 
+#ifndef NO_g_1app_1info_1get_1commandline
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1app_1info_1get_1commandline)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1app_1info_1get_1commandline_FUNC);
+	rc = (jlong)g_app_info_get_commandline((GAppInfo *)arg0);
+	OS_NATIVE_EXIT(env, that, g_1app_1info_1get_1commandline_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1app_1info_1get_1default_1for_1type
 JNIEXPORT jlong JNICALL OS_NATIVE(g_1app_1info_1get_1default_1for_1type)
 	(JNIEnv *env, jclass that, jbyteArray arg0, jboolean arg1)
@@ -11138,6 +11204,22 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(g_1error_1matches)
 }
 #endif
 
+#ifndef NO_g_1error_1new_1literal
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1error_1new_1literal)
+	(JNIEnv *env, jclass that, jlong arg0, jint arg1, jstring arg2)
+{
+	const char *lparg2= NULL;
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1error_1new_1literal_FUNC);
+	if (arg2) if ((lparg2 = (*env)->GetStringUTFChars(env, arg2, NULL)) == NULL) goto fail;
+	rc = (jlong)g_error_new_literal((GQuark)arg0, (gint)arg1, lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseStringUTFChars(env, arg2, lparg2);
+	OS_NATIVE_EXIT(env, that, g_1error_1new_1literal_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1file_1error_1quark
 JNIEXPORT jint JNICALL OS_NATIVE(g_1file_1error_1quark)
 	(JNIEnv *env, jclass that)
@@ -11434,6 +11516,18 @@ JNIEXPORT jint JNICALL OS_NATIVE(g_1idle_1add)
 	OS_NATIVE_ENTER(env, that, g_1idle_1add_FUNC);
 	rc = (jint)g_idle_add((GSourceFunc)arg0, (gpointer)arg1);
 	OS_NATIVE_EXIT(env, that, g_1idle_1add_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1io_1error_1quark
+JNIEXPORT jint JNICALL OS_NATIVE(g_1io_1error_1quark)
+	(JNIEnv *env, jclass that)
+{
+	jint rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1io_1error_1quark_FUNC);
+	rc = (jint)g_io_error_quark();
+	OS_NATIVE_EXIT(env, that, g_1io_1error_1quark_FUNC);
 	return rc;
 }
 #endif
@@ -11750,6 +11844,78 @@ JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1input_1stream_1new_1from_1data)
 	OS_NATIVE_ENTER(env, that, g_1memory_1input_1stream_1new_1from_1data_FUNC);
 	rc = (jlong)g_memory_input_stream_new_from_data((const void *)arg0, (gssize)arg1, (GDestroyNotify)arg2);
 	OS_NATIVE_EXIT(env, that, g_1memory_1input_1stream_1new_1from_1data_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1get_1data
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1get_1data)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1get_1data_FUNC);
+	rc = (jlong)g_memory_output_stream_get_data((GMemoryOutputStream*)arg0);
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1get_1data_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1get_1data_1size
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1get_1data_1size)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1get_1data_1size_FUNC);
+	rc = (jlong)g_memory_output_stream_get_data_size((GMemoryOutputStream*)arg0);
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1get_1data_1size_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1get_1size
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1get_1size)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1get_1size_FUNC);
+	rc = (jlong)g_memory_output_stream_get_size((GMemoryOutputStream*)arg0);
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1get_1size_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1new_1resizable
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1new_1resizable)
+	(JNIEnv *env, jclass that)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1new_1resizable_FUNC);
+	rc = (jlong)g_memory_output_stream_new_resizable();
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1new_1resizable_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1steal_1as_1bytes
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1steal_1as_1bytes)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1steal_1as_1bytes_FUNC);
+	rc = (jlong)g_memory_output_stream_steal_as_bytes((GMemoryOutputStream*)arg0);
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1steal_1as_1bytes_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1memory_1output_1stream_1steal_1data
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1memory_1output_1stream_1steal_1data)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1memory_1output_1stream_1steal_1data_FUNC);
+	rc = (jlong)g_memory_output_stream_steal_data((GMemoryOutputStream*)arg0);
+	OS_NATIVE_EXIT(env, that, g_1memory_1output_1stream_1steal_1data_FUNC);
 	return rc;
 }
 #endif
@@ -12081,6 +12247,80 @@ JNIEXPORT void JNICALL OS_NATIVE(g_1object_1unref)
 	OS_NATIVE_ENTER(env, that, g_1object_1unref_FUNC);
 	g_object_unref((gpointer)arg0);
 	OS_NATIVE_EXIT(env, that, g_1object_1unref_FUNC);
+}
+#endif
+
+#ifndef NO_g_1output_1stream_1splice_1async
+JNIEXPORT void JNICALL OS_NATIVE(g_1output_1stream_1splice_1async)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jint arg2, jint arg3, jlong arg4, jlong arg5, jlong arg6)
+{
+	OS_NATIVE_ENTER(env, that, g_1output_1stream_1splice_1async_FUNC);
+	g_output_stream_splice_async((GOutputStream*)arg0, (GInputStream *)arg1, (GOutputStreamSpliceFlags)arg2, (int)arg3, (GCancellable *)arg4, (GAsyncReadyCallback)arg5, (gpointer)arg6);
+	OS_NATIVE_EXIT(env, that, g_1output_1stream_1splice_1async_FUNC);
+}
+#endif
+
+#ifndef NO_g_1output_1stream_1splice_1finish
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1output_1stream_1splice_1finish)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jlongArray arg2)
+{
+	jlong *lparg2=NULL;
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1output_1stream_1splice_1finish_FUNC);
+	if (arg2) if ((lparg2 = (*env)->GetLongArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	rc = (jlong)g_output_stream_splice_finish((GOutputStream*)arg0, (GAsyncResult*)arg1, (GError**)lparg2);
+fail:
+	if (arg2 && lparg2) (*env)->ReleaseLongArrayElements(env, arg2, lparg2, 0);
+	OS_NATIVE_EXIT(env, that, g_1output_1stream_1splice_1finish_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1output_1stream_1write_1all
+JNIEXPORT jboolean JNICALL OS_NATIVE(g_1output_1stream_1write_1all)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jlong arg2, jlongArray arg3, jlong arg4, jlongArray arg5)
+{
+	jlong *lparg3=NULL;
+	jlong *lparg5=NULL;
+	jboolean rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1output_1stream_1write_1all_FUNC);
+	if (arg3) if ((lparg3 = (*env)->GetLongArrayElements(env, arg3, NULL)) == NULL) goto fail;
+	if (arg5) if ((lparg5 = (*env)->GetLongArrayElements(env, arg5, NULL)) == NULL) goto fail;
+	rc = (jboolean)g_output_stream_write_all((GOutputStream*)arg0, (void*)arg1, (gsize)arg2, (gsize*)lparg3, (GCancellable*)arg4, (GError**)lparg5);
+fail:
+	if (arg5 && lparg5) (*env)->ReleaseLongArrayElements(env, arg5, lparg5, 0);
+	if (arg3 && lparg3) (*env)->ReleaseLongArrayElements(env, arg3, lparg3, 0);
+	OS_NATIVE_EXIT(env, that, g_1output_1stream_1write_1all_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1output_1stream_1write_1all_1async
+JNIEXPORT void JNICALL OS_NATIVE(g_1output_1stream_1write_1all_1async)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jlong arg2, jint arg3, jlong arg4, jlong arg5, jlong arg6)
+{
+	OS_NATIVE_ENTER(env, that, g_1output_1stream_1write_1all_1async_FUNC);
+	g_output_stream_write_all_async((GOutputStream*)arg0, (void*)arg1, (gsize)arg2, (int)arg3, (GCancellable*)arg4, (GAsyncReadyCallback)arg5, (gpointer)arg6);
+	OS_NATIVE_EXIT(env, that, g_1output_1stream_1write_1all_1async_FUNC);
+}
+#endif
+
+#ifndef NO_g_1output_1stream_1write_1all_1finish
+JNIEXPORT jboolean JNICALL OS_NATIVE(g_1output_1stream_1write_1all_1finish)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1, jlongArray arg2, jlongArray arg3)
+{
+	jlong *lparg2=NULL;
+	jlong *lparg3=NULL;
+	jboolean rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1output_1stream_1write_1all_1finish_FUNC);
+	if (arg2) if ((lparg2 = (*env)->GetLongArrayElements(env, arg2, NULL)) == NULL) goto fail;
+	if (arg3) if ((lparg3 = (*env)->GetLongArrayElements(env, arg3, NULL)) == NULL) goto fail;
+	rc = (jboolean)g_output_stream_write_all_finish((GOutputStream*)arg0, (GAsyncResult*)arg1, (gsize*)lparg2, (GError**)lparg3);
+fail:
+	if (arg3 && lparg3) (*env)->ReleaseLongArrayElements(env, arg3, lparg3, 0);
+	if (arg2 && lparg2) (*env)->ReleaseLongArrayElements(env, arg2, lparg2, 0);
+	OS_NATIVE_EXIT(env, that, g_1output_1stream_1write_1all_1finish_FUNC);
+	return rc;
 }
 #endif
 
@@ -12586,6 +12826,18 @@ JNIEXPORT jboolean JNICALL OS_NATIVE(g_1type_1is_1a)
 }
 #endif
 
+#ifndef NO_g_1type_1name
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1type_1name)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1type_1name_FUNC);
+	rc = (jlong)g_type_name((GType)arg0);
+	OS_NATIVE_EXIT(env, that, g_1type_1name_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1type_1parent
 JNIEXPORT jlong JNICALL OS_NATIVE(g_1type_1parent)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -12652,6 +12904,24 @@ fail:
 	if (arg0 && lparg0) (*env)->ReleaseByteArrayElements(env, arg0, lparg0, 0);
 	OS_NATIVE_EXIT(env, that, g_1uri_1parse_FUNC);
 	return rc;
+}
+#endif
+
+#ifndef NO_g_1uri_1unref
+JNIEXPORT void JNICALL OS_NATIVE(g_1uri_1unref)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	OS_NATIVE_ENTER(env, that, g_1uri_1unref_FUNC);
+/*
+	g_uri_unref(arg0);
+*/
+	{
+		OS_LOAD_FUNCTION(fp, g_uri_unref)
+		if (fp) {
+			((void (CALLING_CONVENTION*)(jlong))fp)(arg0);
+		}
+	}
+	OS_NATIVE_EXIT(env, that, g_1uri_1unref_FUNC);
 }
 #endif
 
@@ -12811,6 +13081,18 @@ fail:
 }
 #endif
 
+#ifndef NO_g_1value_1get_1boxed
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1value_1get_1boxed)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1value_1get_1boxed_FUNC);
+	rc = (jlong)g_value_get_boxed((const GValue *)arg0);
+	OS_NATIVE_EXIT(env, that, g_1value_1get_1boxed_FUNC);
+	return rc;
+}
+#endif
+
 #ifndef NO_g_1value_1get_1double
 JNIEXPORT jdouble JNICALL OS_NATIVE(g_1value_1get_1double)
 	(JNIEnv *env, jclass that, jlong arg0)
@@ -12831,6 +13113,18 @@ JNIEXPORT jfloat JNICALL OS_NATIVE(g_1value_1get_1float)
 	OS_NATIVE_ENTER(env, that, g_1value_1get_1float_FUNC);
 	rc = (jfloat)g_value_get_float((GValue *)arg0);
 	OS_NATIVE_EXIT(env, that, g_1value_1get_1float_FUNC);
+	return rc;
+}
+#endif
+
+#ifndef NO_g_1value_1get_1gtype
+JNIEXPORT jlong JNICALL OS_NATIVE(g_1value_1get_1gtype)
+	(JNIEnv *env, jclass that, jlong arg0)
+{
+	jlong rc = 0;
+	OS_NATIVE_ENTER(env, that, g_1value_1get_1gtype_FUNC);
+	rc = (jlong)g_value_get_gtype((const GValue *)arg0);
+	OS_NATIVE_EXIT(env, that, g_1value_1get_1gtype_FUNC);
 	return rc;
 }
 #endif
@@ -12958,6 +13252,16 @@ JNIEXPORT void JNICALL OS_NATIVE(g_1value_1set_1string)
 fail:
 	if (arg1 && lparg1) (*env)->ReleaseByteArrayElements(env, arg1, lparg1, 0);
 	OS_NATIVE_EXIT(env, that, g_1value_1set_1string_FUNC);
+}
+#endif
+
+#ifndef NO_g_1value_1take_1boxed
+JNIEXPORT void JNICALL OS_NATIVE(g_1value_1take_1boxed)
+	(JNIEnv *env, jclass that, jlong arg0, jlong arg1)
+{
+	OS_NATIVE_ENTER(env, that, g_1value_1take_1boxed_FUNC);
+	g_value_take_boxed((GValue *)arg0, (gconstpointer)arg1);
+	OS_NATIVE_EXIT(env, that, g_1value_1take_1boxed_FUNC);
 }
 #endif
 

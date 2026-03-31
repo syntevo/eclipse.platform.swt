@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -200,7 +200,7 @@ Point computeSizeInPixels (int wHint, int hHint, boolean changed) {
 	* tall as the font height.
 	*
 	* NOTE: This work around does not fix the case when there are
-	* muliple lines of text.
+	* multiple lines of text.
 	*/
 	if (hHint == SWT.DEFAULT && labelHandle != 0) {
 		long layout = GTK.gtk_label_get_layout (labelHandle);

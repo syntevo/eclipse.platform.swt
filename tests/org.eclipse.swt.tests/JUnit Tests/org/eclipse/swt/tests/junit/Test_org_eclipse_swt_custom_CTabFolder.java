@@ -14,11 +14,11 @@
 package org.eclipse.swt.tests.junit;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -53,9 +53,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Widget;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * Automated Test Suite for class org.eclipse.swt.custom.CTabFolder
@@ -65,7 +65,7 @@ import org.junit.Test;
 public class Test_org_eclipse_swt_custom_CTabFolder extends Test_org_eclipse_swt_widgets_Composite {
 
 @Override
-@Before
+@BeforeEach
 public void setUp() {
 	super.setUp();
 	shell.setLayout(new FillLayout());
@@ -237,14 +237,14 @@ public void test_consistency_DragDetect () {
 
 @Test
 public void test_setHighlightEnabled () {
-	assertTrue("By default, highlighting should be enabled", ctabFolder.getHighlightEnabled());
+	assertTrue(ctabFolder.getHighlightEnabled());
 	ctabFolder.setHighlightEnabled(false);
 	assertFalse(ctabFolder.getHighlightEnabled());
 	ctabFolder.setHighlightEnabled(true);
 	assertTrue(ctabFolder.getHighlightEnabled());
 }
 
-@Ignore("Currently failing due to Bug 507611. E.g: Height is 50 instead of being at least 59")
+@Disabled("Currently failing due to Bug 507611. E.g: Height is 50 instead of being at least 59")
 @Test
 public void test_checkSize() {
 	shell.setLayout(new GridLayout(1, false));
@@ -271,8 +271,7 @@ public void test_checkSize() {
 	shell.open();
 	int folderY = folder.getSize().y;
 	int expectedminHeight = systemImage.getImageData().height + text2.getFont().getFontData()[0].getHeight();
-	assertTrue("\nBug 507611 - CTabFolder is too thin for its actual content. \nCtabFolder height:"
-								+folderY+"\nExpected min:"+expectedminHeight,  folderY > expectedminHeight);
+	assertTrue(folderY > expectedminHeight);
 }
 
 /**
@@ -305,8 +304,7 @@ public void test_nestedTabHighlighting () {
 
 	// nothing is selected, expect no highlight
 	boolean shouldHighlightConsoleViewTab = reflection_shouldHighlight(partStackTabFolder);
-	assertFalse("expected CTabFolder to not need highlighting without any selection",
-			shouldHighlightConsoleViewTab);
+	assertFalse(shouldHighlightConsoleViewTab);
 
 	// "click" on the Console View tab
 	partStackTabFolder.notifyListeners(SWT.Activate, new Event());
@@ -323,8 +321,7 @@ public void test_nestedTabHighlighting () {
 
 	// the Console View tab is selected, so it should still be highlighted
 	shouldHighlightConsoleViewTab = reflection_shouldHighlight(partStackTabFolder);
-	assertTrue("Bug 528251 - View tab not highlighted due to another view with a CTabFolder",
-			shouldHighlightConsoleViewTab);
+	assertTrue(shouldHighlightConsoleViewTab);
 }
 
 /** Test for Bug 559887: Chevron not updated on foreground color or font change. */
@@ -525,9 +522,9 @@ private ToolItem showChevron() {
 	shell.setSize(newWidth, shell.getSize().y);
 	boolean resizeFailed = Math.abs(newWidth - shell.getSize().x) > 10;
 	ToolItem chevron = getChevron(ctabFolder);
-	assertNotNull("Chevron not shown" + (resizeFailed
+	assertNotNull(chevron, "Chevron not shown" + (resizeFailed
 			? ". Shell could not be resized to the desired size. Tab row width might be smaller than the minimum shell width."
-			: ""), chevron);
+			: ""));
 	return chevron;
 }
 
@@ -540,8 +537,8 @@ private ToolItem showChevron() {
  */
 private ToolItem getChevron(CTabFolder tabFolder) {
 	for (Control child : tabFolder.getChildren()) {
-		if (child instanceof ToolBar) {
-			for (ToolItem toolItem : ((ToolBar)child).getItems()) {
+		if (child instanceof ToolBar toolBar) {
+			for (ToolItem toolItem : toolBar.getItems()) {
 				if ((toolItem.getStyle() & SWT.PUSH) != 0
 						&& toolItem.getText().isEmpty()
 						&& SWT.getMessage("SWT_ShowList").equals(toolItem.getToolTipText())
@@ -561,31 +558,29 @@ private void checkElementOverlap(CTabFolder tabFolder) {
 	subControls.addAll(Arrays.asList(tabFolder.getItems()));
 	for (int i = 0; i < subControls.size(); i++) {
 		Rectangle boundsA = null;
-		if (subControls.get(i) instanceof Control) {
-			if (!((Control) subControls.get(i)).isVisible())
+		if (subControls.get(i) instanceof Control c) {
+			if (!c.isVisible())
 				continue;
-			boundsA = ((Control) subControls.get(i)).getBounds();
-		} else if (subControls.get(i) instanceof CTabItem) {
-			if (!((CTabItem) subControls.get(i)).isShowing())
+			boundsA = c.getBounds();
+		} else if (subControls.get(i) instanceof CTabItem cTab) {
+			if (!cTab.isShowing())
 				continue;
-			boundsA = ((CTabItem) subControls.get(i)).getBounds();
+			boundsA = cTab.getBounds();
 		}
 		for (int j = i + 1; j < subControls.size(); j++) {
 			Rectangle boundsB = null;
-			if (subControls.get(j) instanceof Control) {
-				if (!((Control) subControls.get(j)).isVisible())
+			if (subControls.get(j) instanceof Control c) {
+				if (!c.isVisible())
 					continue;
-				boundsB = ((Control) subControls.get(j)).getBounds();
-			} else if (subControls.get(j) instanceof CTabItem) {
-				if (!((CTabItem) subControls.get(j)).isShowing())
+				boundsB = c.getBounds();
+			} else if (subControls.get(j) instanceof CTabItem cTab) {
+				if (!cTab.isShowing())
 					continue;
-				boundsB = ((CTabItem) subControls.get(j)).getBounds();
+				boundsB = cTab.getBounds();
 			}
-			assertFalse("Overlap between <" + subControls.get(i) + "> and <" + subControls.get(j) + ">\n" + boundsA
-					+ " overlaps " + boundsB, boundsA.intersects(boundsB));
+			assertFalse(boundsA.intersects(boundsB));
 		}
-		assertEquals("Element <" + subControls.get(i) + "> outside folder.", folderBounds.intersection(boundsA),
-				boundsA);
+		assertEquals(folderBounds.intersection(boundsA), boundsA);
 	}
 }
 
@@ -608,8 +603,8 @@ private void assertTabElementsInLine() {
 	List<Rectangle> tabBarElementBounds = new ArrayList<>();
 	Arrays.stream(ctabFolder.getItems()).filter(CTabItem::isShowing).map(this::getBoundsInShell).forEach(tabBarElementBounds::add);
 	for (Control child : ctabFolder.getChildren()) {
-		if (child instanceof ToolBar) {
-			for (ToolItem toolItem : ((ToolBar)child).getItems()) {
+		if (child instanceof ToolBar toolBarChild) {
+			for (ToolItem toolItem : toolBarChild.getItems()) {
 				if (toolItem.getImage() != null) {
 					tabBarElementBounds.add(getBoundsInShell(toolItem));
 				}
@@ -619,12 +614,10 @@ private void assertTabElementsInLine() {
 	Rectangle maxBound = tabBarElementBounds.get(0);
 	for (Rectangle bound : tabBarElementBounds) {
 		if (bound.height > maxBound.height) {
-			assertTrue("Element at " + maxBound + " is not on line.",
-					bound.y <= maxBound.y && (bound.y + bound.height) >= (maxBound.y + maxBound.height));
+			assertTrue(bound.y <= maxBound.y && (bound.y + bound.height) >= (maxBound.y + maxBound.height));
 			maxBound = bound;
 		} else {
-			assertTrue("Element at " + bound + " is not on line.",
-					bound.y >= maxBound.y && (bound.y + bound.height) <= (maxBound.y + maxBound.height));
+			assertTrue(bound.y >= maxBound.y && (bound.y + bound.height) <= (maxBound.y + maxBound.height));
 		}
 	}
 }
@@ -632,15 +625,15 @@ private void assertTabElementsInLine() {
 private Rectangle getBoundsInShell(Widget control) {
 	Control parent;
 	Rectangle bounds;
-	if (control instanceof Control) {
-		parent = ((Control)control).getParent();
-		bounds = ((Control)control).getBounds();
-	} else if (control instanceof CTabItem) {
-		parent = ((CTabItem)control).getParent();
-		bounds = ((CTabItem)control).getBounds();
-	} else if (control instanceof ToolItem) {
-		parent = ((ToolItem)control).getParent();
-		bounds = ((ToolItem)control).getBounds();
+	if (control instanceof Control c) {
+		parent = c.getParent();
+		bounds = c.getBounds();
+	} else if (control instanceof CTabItem cTab) {
+		parent = cTab.getParent();
+		bounds = cTab.getBounds();
+	} else if (control instanceof ToolItem toolItem) {
+		parent = toolItem.getParent();
+		bounds = toolItem.getBounds();
 	} else {
 		throw new UnsupportedOperationException("Widget must provide bounds and parent");
 	}
