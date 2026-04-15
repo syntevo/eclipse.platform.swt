@@ -20,7 +20,10 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 import java.util.jar.Attributes;
 
 public class Library {
@@ -78,18 +81,6 @@ static String os() {
 	if (osName.equals ("Mac OS X")) return "macosx"; //$NON-NLS-1$ $NON-NLS-2$
 	if (osName.startsWith ("Win")) return "win32"; //$NON-NLS-1$ $NON-NLS-2$
 	return osName;
-}
-
-static void chmod(String permision, String path) {
-	if (os().equals ("win32")) return; //$NON-NLS-1$
-	try {
-		Runtime.getRuntime ().exec (new String []{"chmod", permision, path}).waitFor(); //$NON-NLS-1$
-	} catch (Throwable e) {
-		try {
-			new File(path).setExecutable(true);
-		} catch (Throwable e1) {
-		}
-	}
 }
 
 /* Use method instead of in-lined constants to avoid compiler warnings */
@@ -177,13 +168,26 @@ static boolean extract (String extractToFilePath, String mappedName) {
 			}
 
 	// Make it executable
-	chmod ("755", tempFile.getPath()); //$NON-NLS-1$
+	Path tempFilePath = tempFile.toPath();
+	if (!os().equals("win32")) {
+		try {
+			Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions(tempFilePath);
+			posixFilePermissions.add(PosixFilePermission.OWNER_EXECUTE);
+			Files.setPosixFilePermissions(tempFilePath, posixFilePermissions);
+		} catch (IOException e) {
+			try {
+				tempFile.setExecutable(true);
+			} catch (Throwable ex) {
+				return false;
+			}
+		}
+    }
 
 	// "Publish" file now that it's ready to use.
 	// If there is a file already, then someone published while we were
 	// extracting, just delete our file and consider it a success.
 	try {
-		Files.move (tempFile.toPath(), file.toPath());
+		Files.move (tempFilePath, file.toPath());
 	} catch (Throwable e) {
 		tempFile.delete();
 	}
