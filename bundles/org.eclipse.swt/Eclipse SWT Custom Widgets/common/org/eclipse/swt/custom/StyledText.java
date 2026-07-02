@@ -6103,6 +6103,12 @@ void handleTextChanged(TextChangedEvent event) {
 	}
 	int firstLine = content.getLineAtOffset(lastTextChangeStart);
 	resetCache(firstLine, 0);
+	if (!isFixedLineHeight() && !lineExists(topIndex)) {
+		// Shrinking wrapped content can leave an unfocused widget with a stale
+		// topIndex that no longer maps to a real line during caret updates.
+		topIndex = Math.max(0, content.getLineCount() - 1);
+		topIndexY = 0;
+	}
 	if (!isFixedLineHeight() && isFocusControl() && topIndex > firstLine) {
 		topIndex = firstLine;
 		if (topIndex < 0) {

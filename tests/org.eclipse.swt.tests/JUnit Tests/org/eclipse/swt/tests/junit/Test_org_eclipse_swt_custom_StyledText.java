@@ -197,8 +197,9 @@ public class Test_org_eclipse_swt_custom_StyledText extends Test_org_eclipse_swt
 			styledText.setTopIndex(styledText.getLineCount() - 1);
 			styledText.setCaretOffset(styledText.getCharCount());
 
-			assertThrows(IllegalArgumentException.class, () ->
-					styledText.replaceTextRange(1, 28, replacementText));
+			styledText.replaceTextRange(1, 28, replacementText);
+			assertEquals(styledText.getCharCount(), styledText.getCaretOffset());
+			assertTrue(styledText.getTopIndex() < styledText.getLineCount());
 		}
 		finally {
 			styledText.dispose();
