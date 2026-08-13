@@ -37,6 +37,7 @@ class TreeTableCommon {
 		long originalList = list;
 
 		Display display = control.getDisplay();
+		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
 		int width = 0, height = 0;
 		int[] w = new int[1], h = new int[1];
 		int[] yy = new int[count], hh = new int[count];
@@ -46,6 +47,7 @@ class TreeTableCommon {
 			long path = OS.g_list_data (list);
 			GTK.gtk_tree_view_get_cell_area (handle, path, 0, rect);
 			icons[i] = GTK.gtk_tree_view_create_row_drag_icon(handle, path);
+			Cairo.cairo_surface_set_device_scale(icons[i], scaleFactor, scaleFactor);
 			switch (Cairo.cairo_surface_get_type(icons[i])) {
 				case Cairo.CAIRO_SURFACE_TYPE_IMAGE:
 					w[0] = Cairo.cairo_image_surface_get_width(icons[i]);
@@ -56,6 +58,8 @@ class TreeTableCommon {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 			}
+			w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
+			h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
 			width = Math.max(width, w[0]);
 			height = rect.y + h[0] - yy[0];
 			yy[i] = rect.y;
@@ -78,8 +82,10 @@ class TreeTableCommon {
 		if ((count == 1) && (sourceWidth == width)) {
 			surface = icons[0];
 		} else {
-			surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, width, height);
+			surface = Cairo.cairo_image_surface_create(
+					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);
 			if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_set_operator(cairo, Cairo.CAIRO_OPERATOR_SOURCE);

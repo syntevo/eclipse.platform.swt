@@ -98,9 +98,11 @@ public class ListDragSourceEffect extends DragSourceEffect {
 		long originalList = list;
 
 		Display display = dragList.getDisplay();
+		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
 		if (count == 1) {
 			long path = OS.g_list_nth_data (list, 0);
 			long icon = GTK.gtk_tree_view_create_row_drag_icon (handle, path);
+			Cairo.cairo_surface_set_device_scale(icon, scaleFactor, scaleFactor);
 			dragSourceImage =  Image.gtk_new (display, SWT.ICON, icon, 0);
 			GTK.gtk_tree_path_free (path);
 		} else {
@@ -113,6 +115,7 @@ public class ListDragSourceEffect extends DragSourceEffect {
 				long path = OS.g_list_data (list);
 				GTK.gtk_tree_view_get_cell_area (handle, path, 0, rect);
 				icons[i] = GTK.gtk_tree_view_create_row_drag_icon(handle, path);
+				Cairo.cairo_surface_set_device_scale(icons[i], scaleFactor, scaleFactor);
 				switch (Cairo.cairo_surface_get_type(icons[i])) {
 				case Cairo.CAIRO_SURFACE_TYPE_IMAGE:
 					w[0] = Cairo.cairo_image_surface_get_width(icons[i]);
@@ -123,6 +126,8 @@ public class ListDragSourceEffect extends DragSourceEffect {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 				}
+				w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
+				h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
 				width = Math.max(width, w[0]);
 				height = rect.y + h[0] - yy[0];
 				yy[i] = rect.y;
@@ -130,8 +135,10 @@ public class ListDragSourceEffect extends DragSourceEffect {
 				list = OS.g_list_next (list);
 				GTK.gtk_tree_path_free (path);
 			}
-			long surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, width, height);
+			long surface = Cairo.cairo_image_surface_create(
+					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);
 			if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_set_operator(cairo, Cairo.CAIRO_OPERATOR_SOURCE);
