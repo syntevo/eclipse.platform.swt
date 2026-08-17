@@ -16,6 +16,7 @@ package org.eclipse.swt.internal.dnd.gtk;
 import org.eclipse.swt.*;
 import org.eclipse.swt.dnd.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.widgets.*;
@@ -98,7 +99,7 @@ public class ListDragSourceEffect extends DragSourceEffect {
 		long originalList = list;
 
 		Display display = dragList.getDisplay();
-		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
+		double scaleFactor = Math.max(GTK.gtk_widget_get_scale_factor(handle), DPIUtil.getDeviceZoom() / 100.0);
 		if (count == 1) {
 			long path = OS.g_list_nth_data (list, 0);
 			long icon = GTK.gtk_tree_view_create_row_drag_icon (handle, path);
@@ -126,8 +127,8 @@ public class ListDragSourceEffect extends DragSourceEffect {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 				}
-				w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
-				h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
+				w[0] = (int) Math.ceil(w[0] / scaleFactor);
+				h[0] = (int) Math.ceil(h[0] / scaleFactor);
 				width = Math.max(width, w[0]);
 				height = rect.y + h[0] - yy[0];
 				yy[i] = rect.y;
@@ -136,7 +137,7 @@ public class ListDragSourceEffect extends DragSourceEffect {
 				GTK.gtk_tree_path_free (path);
 			}
 			long surface = Cairo.cairo_image_surface_create(
-					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
+					Cairo.CAIRO_FORMAT_ARGB32, (int) Math.ceil(width * scaleFactor), (int) Math.ceil(height * scaleFactor));
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);

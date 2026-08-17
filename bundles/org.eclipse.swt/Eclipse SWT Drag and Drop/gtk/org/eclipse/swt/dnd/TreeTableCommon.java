@@ -15,6 +15,7 @@ package org.eclipse.swt.dnd;
 
 import org.eclipse.swt.*;
 import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.internal.*;
 import org.eclipse.swt.internal.cairo.*;
 import org.eclipse.swt.internal.gtk.*;
 import org.eclipse.swt.widgets.*;
@@ -37,7 +38,7 @@ class TreeTableCommon {
 		long originalList = list;
 
 		Display display = control.getDisplay();
-		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
+		double scaleFactor = Math.max(GTK.gtk_widget_get_scale_factor(handle), DPIUtil.getDeviceZoom() / 100.0);
 		int width = 0, height = 0;
 		int[] w = new int[1], h = new int[1];
 		int[] yy = new int[count], hh = new int[count];
@@ -58,8 +59,8 @@ class TreeTableCommon {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 			}
-			w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
-			h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
+			w[0] = (int) Math.ceil(w[0] / scaleFactor);
+			h[0] = (int) Math.ceil(h[0] / scaleFactor);
 			width = Math.max(width, w[0]);
 			height = rect.y + h[0] - yy[0];
 			yy[i] = rect.y;
@@ -83,7 +84,7 @@ class TreeTableCommon {
 			surface = icons[0];
 		} else {
 			surface = Cairo.cairo_image_surface_create(
-					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
+					Cairo.CAIRO_FORMAT_ARGB32, (int) Math.ceil(width * scaleFactor), (int) Math.ceil(height * scaleFactor));
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);
