@@ -224,4 +224,6 @@ public class ST {
 	 */
 	public static final int CaretMoved = 3011;
 
+	public static final int PaintLineBackground = 3020;
+
 }
