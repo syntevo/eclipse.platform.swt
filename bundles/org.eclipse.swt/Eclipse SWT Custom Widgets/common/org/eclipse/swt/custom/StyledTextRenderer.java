@@ -43,6 +43,7 @@ class StyledTextRenderer {
 	Font regularFont, boldFont, italicFont, boldItalicFont;
 	int tabWidth;
 	int ascent, descent;
+	int fontAscent, fontDescent;
 	int averageCharWidth;
 	int tabLength;	//tab length in spaces
 
@@ -1448,6 +1449,9 @@ void reset(Set<Integer> lines) {
 }
 void setContent(StyledTextContent content) {
 	reset();
+	// drop the growth caused by fallback fonts of the previous content
+	ascent = fontAscent;
+	descent = fontDescent;
 	this.content = content;
 	lineCount = content.getLineCount();
 	lineSizes = new LineSizeInfo[lineCount];
@@ -1482,8 +1486,8 @@ void setFont(Font font, int tabs) {
 		layout.setStyle(new TextStyle(getFont(SWT.ITALIC), null, null), 2, 2);
 		layout.setStyle(new TextStyle(getFont(SWT.BOLD | SWT.ITALIC), null, null), 3, 3);
 		FontMetrics metrics = layout.getLineMetrics(0);
-		ascent = metrics.getAscent() + metrics.getLeading();
-		descent = metrics.getDescent();
+		ascent = fontAscent = metrics.getAscent() + metrics.getLeading();
+		descent = fontDescent = metrics.getDescent();
 		boldFont.dispose();
 		italicFont.dispose();
 		boldItalicFont.dispose();
