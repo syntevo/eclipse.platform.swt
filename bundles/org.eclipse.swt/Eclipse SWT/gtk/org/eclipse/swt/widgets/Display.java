@@ -4998,10 +4998,12 @@ String debugInfoForIndex(long index) {
 
 void dpiChanged(int newScaleFactor) {
 	DPIUtil.setDeviceZoom (DPIUtil.mapDPIToZoom(getDPI().x * newScaleFactor));
-	Shell[] shells = getShells();
-	for (int i = 0; i < shells.length; i++) {
-		shells[i].layout(true, true);
-	}
+	// The notification can arrive while a widget is still being constructed; layout sends SWT.Skin events, so defer it
+	asyncExec(() -> {
+		for (Shell shell : getShells()) {
+			shell.layout(true, true);
+		}
+	});
 }
 
 String dumpWidgetTableInfo() {
