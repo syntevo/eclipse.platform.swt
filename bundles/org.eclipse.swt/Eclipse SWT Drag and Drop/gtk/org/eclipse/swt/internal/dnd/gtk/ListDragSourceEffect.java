@@ -98,6 +98,10 @@ public class ListDragSourceEffect extends DragSourceEffect {
 		long originalList = list;
 
 		Display display = dragList.getDisplay();
+		// GTK already renders and scales the row surfaces at the widget's native
+		// scale. SWT's zoom can differ (e.g. swt.autoScale=150); using it here
+		// would change the size of the existing row images without adding pixels.
+		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
 		if (count == 1) {
 			long path = OS.g_list_nth_data (list, 0);
 			long icon = GTK.gtk_tree_view_create_row_drag_icon (handle, path);
@@ -123,6 +127,10 @@ public class ListDragSourceEffect extends DragSourceEffect {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 				}
+				// Surface dimensions are in pixels, but cell areas are in GTK
+				// logical coordinates. Round up to include the whole row.
+				w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
+				h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
 				width = Math.max(width, w[0]);
 				height = rect.y + h[0] - yy[0];
 				yy[i] = rect.y;
@@ -130,8 +138,13 @@ public class ListDragSourceEffect extends DragSourceEffect {
 				list = OS.g_list_next (list);
 				GTK.gtk_tree_path_free (path);
 			}
-			long surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, width, height);
+			// A new Cairo image surface defaults to scale 1. Allocate enough
+			// pixels and give it the row surfaces' scale so compositing does not
+			// downsample the rows and leave GTK to enlarge a blurry drag image.
+			long surface = Cairo.cairo_image_surface_create(
+					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);
 			if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_set_operator(cairo, Cairo.CAIRO_OPERATOR_SOURCE);

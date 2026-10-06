@@ -37,6 +37,10 @@ class TreeTableCommon {
 		long originalList = list;
 
 		Display display = control.getDisplay();
+		// GTK already renders and scales the row surfaces at the widget's native
+		// scale. SWT's zoom can differ (e.g. swt.autoScale=150); using it here
+		// would change the size of the existing row images without adding pixels.
+		int scaleFactor = GTK.gtk_widget_get_scale_factor(handle);
 		int width = 0, height = 0;
 		int[] w = new int[1], h = new int[1];
 		int[] yy = new int[count], hh = new int[count];
@@ -56,6 +60,10 @@ class TreeTableCommon {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 			}
+			// Surface dimensions are in pixels, but cell areas and allocations
+			// are in GTK logical coordinates. Round up to include the whole row.
+			w[0] = (w[0] + scaleFactor - 1) / scaleFactor;
+			h[0] = (h[0] + scaleFactor - 1) / scaleFactor;
 			width = Math.max(width, w[0]);
 			height = rect.y + h[0] - yy[0];
 			yy[i] = rect.y;
@@ -78,8 +86,13 @@ class TreeTableCommon {
 		if ((count == 1) && (sourceWidth == width)) {
 			surface = icons[0];
 		} else {
-			surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, width, height);
+			// A new Cairo image surface defaults to scale 1. Allocate enough
+			// pixels and give it the row surfaces' scale so compositing does not
+			// downsample the rows and leave GTK to enlarge a blurry drag image.
+			surface = Cairo.cairo_image_surface_create(
+					Cairo.CAIRO_FORMAT_ARGB32, width * scaleFactor, height * scaleFactor);
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+			Cairo.cairo_surface_set_device_scale(surface, scaleFactor, scaleFactor);
 			long cairo = Cairo.cairo_create(surface);
 			if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_set_operator(cairo, Cairo.CAIRO_OPERATOR_SOURCE);
