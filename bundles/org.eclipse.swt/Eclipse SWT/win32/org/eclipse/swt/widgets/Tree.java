@@ -1036,7 +1036,7 @@ LRESULT CDDS_ITEMPREPAINT (NMTVCUSTOMDRAW nmcd, long wParam, long lParam) {
 			if (clrSortBk != -1) {
 				drawBackground (hDC, cellRect, clrSortBk, 0, 0);
 			} else {
-				if (OS.IsWindowEnabled (handle) || findImageControl () != null) {
+				if (OS.IsWindowEnabled (handle) || hasCustomBackground() || findImageControl () != null) {
 					drawBackground (hDC, rect);
 				} else {
 					fillBackground (hDC, OS.GetBkColor (hDC), rect);
