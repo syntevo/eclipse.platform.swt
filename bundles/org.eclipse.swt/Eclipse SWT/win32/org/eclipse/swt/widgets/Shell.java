@@ -2774,6 +2774,8 @@ LRESULT WM_SETCURSOR (long wParam, long lParam) {
 
 @Override
 LRESULT WM_SHOWWINDOW (long wParam, long lParam) {
+	traceShell("WM_SHOWWINDOW show=" + (wParam != 0)
+	           + " reason=" + lParam, 0);
 	LRESULT result = super.WM_SHOWWINDOW (wParam, lParam);
 	if (result != null) return result;
 	/*
@@ -2797,6 +2799,7 @@ LRESULT WM_SHOWWINDOW (long wParam, long lParam) {
 
 @Override
 LRESULT WM_WINDOWPOSCHANGING (long wParam, long lParam) {
+	traceShell("WM_WINDOWPOSCHANGING", lParam);
 	LRESULT result = super.WM_WINDOWPOSCHANGING (wParam,lParam);
 	if (result != null) return result;
 	WINDOWPOS lpwp = new WINDOWPOS ();

@@ -5911,6 +5911,7 @@ LRESULT WM_VSCROLL (long wParam, long lParam) {
 }
 
 LRESULT WM_WINDOWPOSCHANGED (long wParam, long lParam) {
+	traceShell("WM_WINDOWPOSCHANGED", lParam);
 	try {
 		display.resizeCount++;
 		long code = callWindowProc (handle, OS.WM_WINDOWPOSCHANGED, wParam, lParam);
@@ -6193,5 +6194,35 @@ private static void resizeFont(Control control, int newZoom) {
 		control.setFont(Font.win32_new(font, newZoom));
 	}
 }
-}
+
+	void traceShell(String stage, long windowPosAddress) {
+		if (!(this instanceof Shell shell) || isDisposed()) return;
+
+		long timestamp = System.nanoTime();
+		RECT rect = new RECT();
+		boolean rectOk = OS.GetWindowRect(handle, rect);
+		boolean visible = OS.IsWindowVisible(handle);
+
+		String position = "";
+		if (windowPosAddress != 0) {
+			WINDOWPOS pos = new WINDOWPOS();
+			OS.MoveMemory(pos, windowPosAddress, WINDOWPOS.sizeof);
+			position = " WINDOWPOS=(" + pos.x + "," + pos.y
+			           + " " + pos.cx + "x" + pos.cy + ")"
+			           + " flags=0x" + Integer.toHexString(pos.flags);
+		}
+
+		System.err.println(
+				"tUs=" + timestamp / 1000
+				+ " hwnd=0x" + Long.toHexString(handle)
+				+ " owner=0x" + Long.toHexString(OS.GetWindow(handle, OS.GW_OWNER))
+				+ " title=\"" + shell.getText() + "\""
+				+ " " + stage
+				+ " visible=" + visible
+				+ " rectOk=" + rectOk
+				+ " bounds=(" + rect.left + "," + rect.top
+				+ " " + (rect.right - rect.left)
+				+ "x" + (rect.bottom - rect.top) + ")"
+				+ position);
+	}}
 

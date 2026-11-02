@@ -1301,11 +1301,14 @@ public void setVisible (boolean visible) {
 			}
 			STARTUPINFO lpStartUpInfo = Display.lpStartupInfo;
 			if (lpStartUpInfo != null && (lpStartUpInfo.dwFlags & OS.STARTF_USESHOWWINDOW) != 0) {
+				traceShell("before ShowWindow cmd=" + lpStartUpInfo.wShowWindow, 0);
 				OS.ShowWindow (handle, lpStartUpInfo.wShowWindow);
 			} else {
+				traceShell("before ShowWindow cmd=" + swFlags, 0);
 				OS.ShowWindow (handle, swFlags);
 			}
 			if (isDisposed ()) return;
+			traceShell("after ShowWindow", 0);
 			opened = true;
 			if (!moved) {
 				moved = true;
