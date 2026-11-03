@@ -3935,11 +3935,27 @@ public void setSize (int width, int height) {
 	setSize(new Point(width, height), zoom);
 }
 
+/*
 void setSizeInPixels (int width, int height) {
 	int flags = OS.SWP_NOMOVE | OS.SWP_NOZORDER | OS.SWP_DRAWFRAME | OS.SWP_NOACTIVATE;
 	setBoundsInPixels (0, 0, Math.max (0, width), Math.max (0, height), flags);
 }
+*/
+void setSizeInPixels (int width, int height) {
+	int flags = OS.SWP_NOMOVE | OS.SWP_NOZORDER
+	            | OS.SWP_DRAWFRAME | OS.SWP_NOACTIVATE;
 
+	int x = 0;
+	int y = 0;
+	if (this instanceof Shell && !OS.IsWindowVisible(handle)) {
+		RECT rect = new RECT();
+		OS.GetWindowRect(handle, rect);
+		x = rect.left;
+		y = rect.top;
+	}
+	setBoundsInPixels(x, y, Math.max(0, width),
+	                  Math.max(0, height), flags);
+}
 /**
  * Sets the receiver's size to the point specified by the argument.
  * <p>
