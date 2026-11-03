@@ -644,9 +644,13 @@ void createHandle () {
 		* The fix is to use SetWindowPos() with SWP_DRAWFRAME to force
 		* the frame to be redrawn and resized.
 		*/
+		traceShell("before initial SetWindowLong", 0);
 		OS.SetWindowLong (handle, OS.GWL_STYLE, bits);
+		traceShell("after initial SetWindowLong", 0);
 		int flags = OS.SWP_DRAWFRAME | OS.SWP_NOMOVE | OS.SWP_NOSIZE | OS.SWP_NOZORDER | OS.SWP_NOACTIVATE;
+		traceShell("before initial SetWindowPos", 0);
 		OS.SetWindowPos (handle, 0, 0, 0, 0, 0, flags);
+		traceShell("after initial SetWindowPos", 0);
 	}
 }
 

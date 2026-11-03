@@ -700,6 +700,7 @@ void createHandle () {
 		OS.GetModuleHandle (null),
 		widgetCreateStruct ());
 	if (handle == 0) error (SWT.ERROR_NO_HANDLES);
+	traceShell("after CreateWindowEx", 0);
 	int bits = OS.GetWindowLong (handle, OS.GWL_STYLE);
 	if ((bits & OS.WS_CHILD) != 0) {
 		OS.SetWindowLongPtr (handle, OS.GWLP_ID, handle);
