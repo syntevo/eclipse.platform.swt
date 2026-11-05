@@ -39,6 +39,7 @@ class TreeTableCommon {
 		Display display = control.getDisplay();
 		int width = 0, height = 0;
 		int[] w = new int[1], h = new int[1];
+		double[] scaleX = {1}, scaleY = {1};
 		int[] yy = new int[count], hh = new int[count];
 		long [] icons = new long [count];
 		GdkRectangle rect = new GdkRectangle ();
@@ -56,6 +57,10 @@ class TreeTableCommon {
 					h[0] = Cairo.cairo_xlib_surface_get_height(icons[i]);
 					break;
 			}
+			// the surface size is in pixels, the widget's sizes are in points
+			Cairo.cairo_surface_get_device_scale(icons[i], scaleX, scaleY);
+			w[0] = (int) Math.ceil(w[0] / scaleX[0]);
+			h[0] = (int) Math.ceil(h[0] / scaleY[0]);
 			width = Math.max(width, w[0]);
 			height = rect.y + h[0] - yy[0];
 			yy[i] = rect.y;
@@ -78,8 +83,9 @@ class TreeTableCommon {
 		if ((count == 1) && (sourceWidth == width)) {
 			surface = icons[0];
 		} else {
-			surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, width, height);
+			surface = Cairo.cairo_image_surface_create(Cairo.CAIRO_FORMAT_ARGB32, (int) Math.ceil(width * scaleX[0]), (int) Math.ceil(height * scaleY[0]));
 			if (surface == 0) SWT.error(SWT.ERROR_NO_HANDLES);
+			Cairo.cairo_surface_set_device_scale(surface, scaleX[0], scaleY[0]);
 			long cairo = Cairo.cairo_create(surface);
 			if (cairo == 0) SWT.error(SWT.ERROR_NO_HANDLES);
 			Cairo.cairo_set_operator(cairo, Cairo.CAIRO_OPERATOR_SOURCE);
