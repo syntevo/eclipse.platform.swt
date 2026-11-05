@@ -1033,6 +1033,11 @@ void doCommandBySelector (long id, long sel, long selector) {
 	if (hasKeyboardFocus(id)) {
 		if (imeInComposition ()) return;
 		Shell s = this.getShell();
+		// Return only ended a composition here, so a field editor must not end editing and press the default button
+		if (s.returnCommittedText && !view.isKindOfClass (OS.class_NSTextView)) {
+			s.returnCommittedText = false;
+			return;
+		}
 		NSEvent nsEvent = NSApplication.sharedApplication ().currentEvent ();
 		if (nsEvent != null && nsEvent.type () == OS.NSKeyDown) {
 			/*
@@ -2090,7 +2095,10 @@ boolean insertText (long id, long sel, long string) {
 					for (int i = 0; i < buffer.length; i++) {
 						s.keyInputHappened = true;
 						Event event = new Event ();
-						if (i == 0 && type == OS.NSKeyDown) setKeyState (event, SWT.KeyDown, nsEvent);
+						if (i == 0 && type == OS.NSKeyDown) {
+							setKeyState (event, SWT.KeyDown, nsEvent);
+							s.returnCommittedText = (event.keyCode == SWT.CR || event.keyCode == SWT.KEYPAD_CR) && buffer [i] != SWT.CR;
+						}
 						event.character = buffer [i];
 						if (!sendKeyEvent (SWT.KeyDown, event)) return false;
 					}
@@ -2416,6 +2424,7 @@ void keyDown (long id, long sel, long theEvent) {
 	if (hasKeyboardFocus(id)) {
 		Shell s = this.getShell();
 		s.keyInputHappened = false;
+		s.returnCommittedText = false;
 		boolean textInput = OS.objc_msgSend (id, OS.sel_conformsToProtocol_, OS.objc_getProtocol ("NSTextInput")) != 0;
 		if (!textInput) {
 			// Not a text field, so send a key event here.
@@ -2427,11 +2436,14 @@ void keyDown (long id, long sel, long theEvent) {
 			if (consume [0]) return;
 		} else {
 			// Control is some kind of text field, so the key event will be sent from insertText: or doCommandBySelector:
+			boolean composing = OS.objc_msgSend_bool (id, OS.sel_hasMarkedText);
 			super.keyDown (id, sel, theEvent);
 
 			if (isDisposed ()) return;
 
 			if (imeInComposition ()) return;
+			// the input method took this key, so it must not traverse and press the default button
+			if (composing) return;
 			// If none of those methods triggered a key event send one now.
 			if (!s.keyInputHappened) {
 				NSEvent nsEvent = new NSEvent (theEvent);

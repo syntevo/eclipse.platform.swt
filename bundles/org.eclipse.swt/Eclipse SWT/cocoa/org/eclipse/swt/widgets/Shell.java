@@ -132,6 +132,7 @@ public class Shell extends Decorations {
 	Control lastActive;
 	Rectangle normalBounds;
 	boolean keyInputHappened;
+	boolean returnCommittedText;
 	NSRect currentFrame;
 	NSRect fullScreenFrame;
 	ToolBar toolBar;
