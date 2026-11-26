@@ -22,8 +22,8 @@ import org.eclipse.swt.widgets.*;
  * Compare a mouse and a tablet pen on GTK3 Wayland. Leave the mouse stationary,
  * then tap each painted button and drag from both the canvas and the table.
  * Motion must follow the pen and retain BUTTON1 while the tip is down. Each tap
- * must select its own button. A successful drag reports DragStart, native
- * drag-begin, DragEnter, Drop and DragEnd in that order (with other events between).
+ * must select its own button. A successful drag reports DragStart, DragEnter,
+ * Drop and DragEnd in that order (with other events between).
  * Before the fixes, motion follows the stationary mouse and accepted DragStart
  * events are not followed by DragEnter for the tablet pointer.
  *

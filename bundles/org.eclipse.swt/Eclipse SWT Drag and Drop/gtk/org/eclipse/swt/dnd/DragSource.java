@@ -116,6 +116,7 @@ public class DragSource extends Widget {
 	DragSourceEffect dragEffect;
 
 	long targetList;
+	long dragBeginEvent, dragEventHandler;
 
 	//workaround - remember action performed for DragEnd
 	boolean moveData = false;
@@ -126,7 +127,7 @@ public class DragSource extends Widget {
 	static Callback dragBeginProc, dragPrepareProc, dragEndProc;
 
 	/* GTK3 GtkWidget drag event signal callbacks */
-	static Callback DragBegin, DragGetData, DragEnd, DragDataDelete;
+	static Callback DragBegin, DragGetData, DragEnd, DragDataDelete, DragEvent;
 
 	static {
 		if (GTK.GTK4) {
@@ -138,6 +139,7 @@ public class DragSource extends Widget {
 			DragGetData = new Callback(DragSource.class, "DragGetData", 5);	 //$NON-NLS-1$
 			DragEnd = new Callback(DragSource.class, "DragEnd", 2); //$NON-NLS-1$
 			DragDataDelete = new Callback(DragSource.class, "DragDataDelete", 2); //$NON-NLS-1$
+			DragEvent = new Callback(DragSource.class, "DragEvent", 3); //$NON-NLS-1$
 		}
 	}
 
@@ -208,6 +210,9 @@ public DragSource(Control control, int style) {
 		OS.g_signal_connect(control.handle, OS.drag_data_get, DragGetData.getAddress(), 0);
 		OS.g_signal_connect(control.handle, OS.drag_end, DragEnd.getAddress(), 0);
 		OS.g_signal_connect(control.handle, OS.drag_data_delete, DragDataDelete.getAddress(), 0);
+		if (OS.isWayland()) {
+			dragEventHandler = OS.g_signal_connect(control.handle, OS.event, DragEvent.getAddress(), 0);
+		}
 
 		controlListener = event -> {
 			if (event.type == SWT.Dispose) {
@@ -323,6 +328,22 @@ static long DragGetData(long widget, long context, long selection_data,  long in
 	return 0;
 }
 
+static long DragEvent(long widget, long event, long data) {
+	DragSource source = FindDragSource(widget);
+	if (source != null) source.rememberDragEvent(event);
+	return 0;
+}
+
+void rememberDragEvent(long event) {
+	int type = GDK.gdk_event_get_event_type(event);
+	if (type != GDK.GDK_BUTTON_PRESS && type != GDK.GDK_BUTTON_RELEASE) return;
+	int[] button = new int[1];
+	GDK.gdk_event_get_button(event, button);
+	if (button[0] != 1) return;
+	if (dragBeginEvent != 0) GDK.gdk_event_free(dragBeginEvent);
+	dragBeginEvent = type == GDK.GDK_BUTTON_PRESS ? GDK.gdk_event_copy(event) : 0;
+}
+
 static DragSource FindDragSource(long handle) {
 	Display display = Display.findDisplay(Thread.currentThread());
 	if (display == null || display.isDisposed()) return null;
@@ -386,22 +407,30 @@ boolean canBeginDrag() {
 }
 
 void drag(Event dragEvent) {
-	moveData = false;
-	DNDEvent event = new DNDEvent();
-	event.widget = this;
-	event.x = dragEvent.x;
-	event.y = dragEvent.y;
-	event.time = dragEvent.time;
-	event.doit = true;
-	notifyListeners(DND.DragStart, event);
-	if (!event.doit || !canBeginDrag()) return;
+	// DragDetect is deferred, so GTK no longer has a current event. Retain the
+	// initiating press, including its tablet device, across application callbacks.
+	long nativeEvent = dragBeginEvent;
+	dragBeginEvent = 0;
+	try {
+		moveData = false;
+		DNDEvent event = new DNDEvent();
+		event.widget = this;
+		event.x = dragEvent.x;
+		event.y = dragEvent.y;
+		event.time = dragEvent.time;
+		event.doit = true;
+		notifyListeners(DND.DragStart, event);
+		if (!event.doit || !canBeginDrag()) return;
 
-	int actions = opToOsOp(getStyle());
-	Image image = event.image;
-	long context;
-	context = GTK3.gtk_drag_begin_with_coordinates(control.handle, targetList, actions, 1, 0, -1, -1);
-	if (context != 0 && image != null) {
-		GTK3.gtk_drag_set_icon_surface(context, image.surface);
+		int actions = opToOsOp(getStyle());
+		Image image = event.image;
+		long context;
+		context = GTK3.gtk_drag_begin_with_coordinates(control.handle, targetList, actions, 1, nativeEvent, -1, -1);
+		if (context != 0 && image != null) {
+			GTK3.gtk_drag_set_icon_surface(context, image.surface);
+		}
+	} finally {
+		if (nativeEvent != 0) GDK.gdk_event_free(nativeEvent);
 	}
 }
 
@@ -603,6 +632,14 @@ public Transfer[] getTransfer(){
 
 void onDispose() {
 	if (control == null) return;
+	if (dragEventHandler != 0) {
+		OS.g_signal_handler_disconnect(control.handle, dragEventHandler);
+		dragEventHandler = 0;
+	}
+	if (dragBeginEvent != 0) {
+		GDK.gdk_event_free(dragBeginEvent);
+		dragBeginEvent = 0;
+	}
 	if (targetList != 0) {
 		GTK3.gtk_target_list_unref(targetList);
 	}
