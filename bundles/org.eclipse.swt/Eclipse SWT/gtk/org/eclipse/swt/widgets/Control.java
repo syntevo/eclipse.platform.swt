@@ -4213,6 +4213,13 @@ long gtk_motion_notify_event (long widget, long event) {
 		state[0] = gdkEvent.state;
 		isHint = gdkEvent.is_hint != 0;
 
+		if (isHint && OS.isWayland() && gdkEvent.device != GDK.gdk_get_pointer(GDK.gdk_window_get_display(gdkEvent.window))) {
+			// A tablet has its own pointer. Acknowledge its hint, but keep the
+			// event coordinates and state instead of querying the default mouse.
+			GDK.gdk_window_get_device_position(gdkEvent.window, gdkEvent.device, null, null, null);
+			isHint = false;
+		}
+
 		if (isHint) {
 			int [] pointer_x = new int [1], pointer_y = new int [1], mask = new int [1];
 			long window = eventWindow ();
